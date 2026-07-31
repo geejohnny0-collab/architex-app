@@ -375,10 +375,10 @@ app.get('/api/users', requireAuth, async (req, res) => {
       ...(type && { userType: type.toLowerCase() }),
       ...(search && {
         OR: [
-          // Businesses pop up with ease (partial matching)
-          { AND: [{ userType: 'business' }, { OR: [{ name: { contains: search, mode: 'insensitive' } }, { handle: { contains: search, mode: 'insensitive' } }, { role: { contains: search, mode: 'insensitive' } }] }] },
-          // Developers require full name or handle match to be discovered
-          { AND: [{ userType: 'developer' }, { OR: [{ name: { equals: search.trim(), mode: 'insensitive' } }, { handle: { equals: search.trim().replace(/^@/, ''), mode: 'insensitive' } }] }] }
+          { name: { contains: search.trim(), mode: 'insensitive' } },
+          { handle: { contains: search.trim().replace(/^@/, ''), mode: 'insensitive' } },
+          { role: { contains: search.trim(), mode: 'insensitive' } },
+          { bio: { contains: search.trim(), mode: 'insensitive' } }
         ],
       }),
     };
@@ -427,8 +427,10 @@ app.get('/api/search', requireAuth, async (req, res) => {
             { email: { contains: 'developer@architex.io' } }
           ],
           OR: [
-            { AND: [{ userType: 'business' }, { OR: [{ name: { contains: query, mode: 'insensitive' } }, { handle: { contains: cleanHandle, mode: 'insensitive' } }] }] },
-            { AND: [{ userType: 'developer' }, { OR: [{ name: { equals: query, mode: 'insensitive' } }, { handle: { equals: cleanHandle, mode: 'insensitive' } }] }] }
+            { name: { contains: query, mode: 'insensitive' } },
+            { handle: { contains: cleanHandle, mode: 'insensitive' } },
+            { role: { contains: query, mode: 'insensitive' } },
+            { bio: { contains: query, mode: 'insensitive' } }
           ]
         },
         select: { id: true, name: true, handle: true, avatarUrl: true, userType: true, role: true, verified: true },

@@ -435,40 +435,42 @@ app.get('/api/users/:id', requireAuth,
   }
 );
 
-app.patch('/api/users/me', requireAuth,
-  body('name').optional().trim().notEmpty().isLength({ max: 100 }),
-  body('handle').optional().trim().customSanitizer(val => typeof val === 'string' && val.startsWith('@') ? val.slice(1) : val).matches(/^[a-zA-Z0-9_]+$/).isLength({ min: 2, max: 30 }),
-  body('bio').optional().isLength({ max: 500 }),
-  body('website').optional().isURL({ require_protocol: false }).withMessage('Invalid website URL'),
-  validate,
-  async (req, res) => {
-    const allowed = ['name', 'handle', 'bio', 'role', 'location', 'website', 'github',
-                     'avatarUrl', 'coverUrl', 'skills', 'userType', 'desiredRate',
-                     'expectedSalary', 'workMode', 'openToWork'];
-    const data = {};
-    for (const key of allowed) {
-      if (req.body[key] !== undefined) data[key] = req.body[key];
-    }
-
-    try {
-      if (data.handle) {
-        const existing = await prisma.user.findFirst({
-          where: { handle: data.handle, NOT: { id: req.userId } },
-        });
-        if (existing) return res.status(400).json({ error: 'Handle already taken.' });
-      }
-
-      const user = await prisma.user.update({
-        where: { id: req.userId },
-        data,
-      });
-      res.json({ user: safeUser(user) });
-    } catch (err) {
-      console.error('Update profile error:', err);
-      res.status(500).json({ error: 'Failed to update profile.' });
-    }
+app.patch('/api/users/me', requireAuth, async (req, res) => {
+  const allowed = ['name', 'handle', 'bio', 'role', 'location', 'website', 'github',
+                   'avatarUrl', 'coverUrl', 'skills', 'userType', 'desiredRate',
+                   'expectedSalary', 'workMode', 'openToWork'];
+  const data = {};
+  for (const key of allowed) {
+    if (req.body[key] !== undefined) data[key] = req.body[key];
   }
-);
+
+  try {
+    if (data.handle) {
+      data.handle = String(data.handle).replace(/^@/, '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+      if (data.handle.length >= 2) {
+        const existing = await prisma.user.findFirst({
+          where: { handle: { equals: data.handle, mode: 'insensitive' }, NOT: { id: req.userId } },
+        });
+        if (existing) return res.status(400).json({ error: 'That handle is already taken by another account.' });
+      } else {
+        delete data.handle;
+      }
+    }
+
+    if (data.name) {
+      data.name = String(data.name).trim();
+    }
+
+    const user = await prisma.user.update({
+      where: { id: req.userId },
+      data,
+    });
+    res.json({ user: safeUser(user) });
+  } catch (err) {
+    console.error('Update profile error:', err);
+    res.status(500).json({ error: 'Failed to update profile.' });
+  }
+});
 
 app.post('/api/users/:id/follow', requireAuth,
   param('id').isInt().withMessage('Invalid user ID'),

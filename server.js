@@ -369,7 +369,6 @@ app.get('/api/users', requireAuth, async (req, res) => {
   try {
     const where = {
       NOT: [
-        { id: req.userId },
         { email: { contains: '@example.com' } },
         { email: { contains: 'developer@architex.io' } }
       ],

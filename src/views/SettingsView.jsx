@@ -107,10 +107,49 @@ export default function SettingsView({ currentUser, onLogout, theme, onToggleThe
               </h2>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-                <img src={avatarUrl || 'https://via.placeholder.com/150'} alt="Avatar" style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover' }} />
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '600', marginBottom: '4px' }}>Avatar URL</label>
-                  <input type="text" value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} style={{ width: '100%', padding: '0.55rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', background: 'var(--bg-app)', color: 'var(--text-main)' }} />
+                <img 
+                  src={avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'User')}&background=0a66c2&color=fff&bold=true`} 
+                  alt="Avatar" 
+                  style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--primary)' }} 
+                />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <label style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '0.6rem 1.2rem',
+                    borderRadius: 'var(--radius-full)',
+                    background: 'var(--primary)',
+                    color: '#ffffff',
+                    fontWeight: '700',
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                    width: 'fit-content'
+                  }}>
+                    <Upload size={16} /> {uploadingAvatar ? 'Uploading to Cloudinary...' : '📷 Choose Photo from Library'}
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={async (e) => {
+                        const file = e.target.files[0];
+                        if (!file) return;
+                        setUploadingAvatar(true);
+                        try {
+                          const res = await api.uploadFile(file, 'avatar');
+                          if (res?.url) setAvatarUrl(res.url);
+                        } catch (err) {
+                          console.error('Avatar upload failed:', err);
+                          const reader = new FileReader();
+                          reader.onload = (ev) => setAvatarUrl(ev.target.result);
+                          reader.readAsDataURL(file);
+                        } finally {
+                          setUploadingAvatar(false);
+                        }
+                      }}
+                      style={{ display: 'none' }}
+                    />
+                  </label>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>JPG, PNG or WEBP. Max 10MB.</span>
                 </div>
               </div>
 

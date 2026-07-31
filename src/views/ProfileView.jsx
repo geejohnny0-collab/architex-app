@@ -34,46 +34,27 @@ export default function ProfileView({ user, posts = [], onNavigate, onLikeToggle
         {/* Profile Info Bar */}
         <div style={{ padding: '0 1.5rem 1.5rem 1.5rem', position: 'relative' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '-45px', marginBottom: '1rem', flexWrap: 'wrap', gap: '10px' }}>
-            <div style={{ position: 'relative', cursor: 'pointer' }} onClick={() => onNavigate('settings')} title="Change Profile Picture">
-              {avatarUrl ? (
-                <img 
-                  src={avatarUrl} 
-                  alt={user?.name} 
-                  style={{
-                    width: '90px',
-                    height: '90px',
-                    borderRadius: '50%',
-                    objectFit: 'cover',
-                    border: '4px solid var(--bg-surface)',
-                    boxShadow: '0 4px 14px rgba(0,0,0,0.15)'
-                  }}
-                />
-              ) : (
-                <div style={{
+            <label style={{ position: 'relative', cursor: 'pointer', display: 'inline-block' }} title="Change Profile Picture">
+              <img 
+                src={avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=0a66c2&color=fff&bold=true`} 
+                alt={user?.name} 
+                style={{
                   width: '90px',
                   height: '90px',
                   borderRadius: '50%',
-                  background: 'var(--primary)',
-                  color: '#ffffff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '2rem',
-                  fontWeight: '800',
+                  objectFit: 'cover',
                   border: '4px solid var(--bg-surface)',
                   boxShadow: '0 4px 14px rgba(0,0,0,0.15)'
-                }}>
-                  {initials}
-                </div>
-              )}
+                }}
+              />
               <div style={{
                 position: 'absolute',
                 bottom: '4px',
                 right: '4px',
                 background: 'var(--primary)',
                 color: '#ffffff',
-                width: '26px',
-                height: '26px',
+                width: '28px',
+                height: '28px',
                 borderRadius: '50%',
                 display: 'flex',
                 alignItems: 'center',
@@ -83,7 +64,25 @@ export default function ProfileView({ user, posts = [], onNavigate, onLikeToggle
               }}>
                 📷
               </div>
-            </div>
+              <input 
+                type="file" 
+                accept="image/*" 
+                onChange={async (e) => {
+                  const file = e.target.files[0];
+                  if (!file) return;
+                  try {
+                    const res = await api.uploadFile(file, 'avatar');
+                    if (res?.url) {
+                      await api.patch('/api/users/me', { avatarUrl: res.url });
+                      window.location.reload();
+                    }
+                  } catch (err) {
+                    console.error('Avatar update failed:', err);
+                  }
+                }}
+                style={{ display: 'none' }}
+              />
+            </label>
 
             <div style={{ display: 'flex', gap: '8px' }}>
               <button 

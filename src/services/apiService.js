@@ -131,5 +131,7 @@ const credits = {
   spend: (data) => request('/credits/spend', { method: 'POST', body: JSON.stringify(data) })
 };
 
-export default { auth, users, posts, comments, conversations, notifications, uploads, uploadFile, stripe, credits };
-export { auth, users, posts, comments, conversations, notifications, uploads, stripe, credits };
+const patch = (path, data) => request(path, { method: 'PATCH', body: JSON.stringify(data) });
+
+export default { auth, users, posts, comments, conversations, notifications, uploads, uploadFile, stripe, credits, patch };
+export { auth, users, posts, comments, conversations, notifications, uploads, stripe, credits, patch };

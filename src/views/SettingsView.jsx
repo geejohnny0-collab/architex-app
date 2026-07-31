@@ -38,12 +38,15 @@ export default function SettingsView({ currentUser, onLogout, theme, onToggleThe
   const handleProfileSave = async (e) => {
     e.preventDefault();
     try {
-      const res = await api.patch('/api/users/me', { name, handle, bio, avatarUrl, skills, userType });
-      setUser(res.user);
+      const res = await api.users.updateMe({ name, handle, bio, avatarUrl, skills, userType });
+      if (res?.user) {
+        setUser(res.user);
+        authService.updateStoredUser(res.user);
+      }
       alert('Profile updated to ' + (userType === 'business' ? 'Company Enterprise' : 'Developer') + ' successfully!');
     } catch (err) {
-      console.error(err);
-      alert('Failed to save profile');
+      console.error('Save profile error:', err);
+      alert(err.message || 'Failed to save profile');
     }
   };
 

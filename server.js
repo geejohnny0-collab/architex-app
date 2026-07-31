@@ -514,8 +514,8 @@ app.get('/api/posts', requireAuth, async (req, res) => {
     const { tab, limit = 20, offset = 0 } = req.query;
     let where = {};
     
-    if (!tab || tab === 'foryou') {
-      where = { author: { userType: 'business' } };
+    if (!tab || tab.toLowerCase() === 'foryou' || tab.toLowerCase() === 'for you') {
+      where = {};
     } else if (tab === 'following') {
       const follows = await prisma.follow.findMany({ where: { followerId: req.userId } });
       where.authorId = { in: follows.map(f => f.followingId) };

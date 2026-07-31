@@ -1,0 +1,257 @@
+// prisma/schema.prisma
+// Production PostgreSQL schema for Architex
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── User ────────────────────────────────────────────────────────────────────
+model User {
+  id            Int      @id @default(autoincrement())
+  email         String   @unique
+  passwordHash  String?  // null for OAuth-only accounts
+  name          String
+  handle        String   @unique
+  bio           String?
+  role          String?  // e.g. "Full-Stack Engineer", "Product Designer"
+  userType      String   @default("developer") // "developer" | "business" | "recruiter"
+  location      String?
+  website       String?
+  github        String?
+  avatarUrl     String?
+  coverUrl      String?
+  skills        String   @default("[]") // stored as JSON string for sqlite
+  verified      Boolean  @default(false)
+  googleId      String?  @unique
+  desiredRate   String?  // e.g. "$135/hr"
+  expectedSalary String? // e.g. "$210,000/yr"
+  workMode      String?  // "remote" | "hybrid" | "onsite"
+  openToWork    Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  posts              Post[]
+  comments           Comment[]
+  likes              Like[]
+  sentMessages       Message[]      @relation("SentMessages")
+  receivedMessages   Message[]      @relation("ReceivedMessages")
+  notifications      Notification[]
+  following          Follow[]       @relation("UserFollowing")
+  followers          Follow[]       @relation("UserFollowers")
+  conversationsAsA   Conversation[] @relation("ConversationUserA")
+  conversationsAsB   Conversation[] @relation("ConversationUserB")
+
+
+  credits       Int      @default(0)
+
+  isPro         Boolean  @default(false)
+  isCertified   Boolean  @default(false)
+  transactions  Transaction[]
+  advertisements Advertisement[]
+  boostedJobs   BoostedJob[]
+
+  @@index([email])
+  @@index([handle])
+  @@index([userType])
+}
+
+// ─── Follow ──────────────────────────────────────────────────────────────────
+model Follow {
+  id          Int      @id @default(autoincrement())
+  followerId  Int
+  followingId Int
+  createdAt   DateTime @default(now())
+
+  follower    User @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}
+
+// ─── Post ─────────────────────────────────────────────────────────────────────
+model Post {
+  id            Int      @id @default(autoincrement())
+  content       String
+  category      String   @default("general") // "general" | "hiring" | "code" | "showcase"
+  imageUrl      String?
+  codeSnippet   String?
+  hasProposal   Boolean  @default(false)
+  projectBudget String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  authorId      Int
+
+  author        User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments      Comment[]
+  likes         Like[]
+
+
+  boostedJob    BoostedJob?
+
+  @@index([authorId])
+  @@index([createdAt])
+  @@index([category])
+}
+
+// ─── Comment ─────────────────────────────────────────────────────────────────
+model Comment {
+  id        Int      @id @default(autoincrement())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  postId    Int
+  authorId  Int
+  parentId  Int?     // null = top-level comment, non-null = reply
+
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent    Comment? @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   Comment[] @relation("CommentReplies")
+
+  @@index([postId])
+  @@index([authorId])
+  @@index([parentId])
+}
+
+// ─── Like ─────────────────────────────────────────────────────────────────────
+model Like {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  postId    Int
+  createdAt DateTime @default(now())
+
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@index([postId])
+}
+
+// ─── Conversation ─────────────────────────────────────────────────────────────
+model Conversation {
+  id        Int       @id @default(autoincrement())
+  userAId   Int
+  userBId   Int
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  userA     User      @relation("ConversationUserA", fields: [userAId], references: [id], onDelete: Cascade)
+  userB     User      @relation("ConversationUserB", fields: [userBId], references: [id], onDelete: Cascade)
+  messages  Message[]
+
+  @@unique([userAId, userBId])
+  @@index([userAId])
+  @@index([userBId])
+}
+
+// ─── Message ─────────────────────────────────────────────────────────────────
+model Message {
+  id             Int          @id @default(autoincrement())
+  content        String
+  fileUrl        String?      // optional attachment
+  fileType       String?      // "image" | "pdf" | "video" etc.
+  read           Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  senderId       Int
+  receiverId     Int
+  conversationId Int
+
+  sender         User         @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver       User         @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([createdAt])
+}
+
+// ─── Notification ─────────────────────────────────────────────────────────────
+model Notification {
+  id        Int      @id @default(autoincrement())
+  type      String   // "like" | "comment" | "follow" | "message" | "system" | "proposal_accepted"
+  title     String
+  body      String
+  read      Boolean  @default(false)
+  link      String?  // optional deep-link
+  createdAt DateTime @default(now())
+  userId    Int      // recipient
+
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([read])
+  @@index([createdAt])
+}
+
+// ─── Upload ──────────────────────────────────────────────────────────────────
+model Upload {
+  id           Int      @id @default(autoincrement())
+  url          String   // Cloudinary secure_url
+  publicId     String   // Cloudinary public_id for deletion
+  resourceType String   // "image" | "video" | "raw"
+  format       String?
+  bytes        Int?
+  uploadedById Int
+  purpose      String   // "avatar" | "cover" | "post" | "resume" | "proposal" | "logo"
+  createdAt    DateTime @default(now())
+
+  @@index([uploadedById])
+}
+
+// ─── Monetization ─────────────────────────────────────────────────────────────
+model Transaction {
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  amountCent      Int      // USD in cents
+  stripeSessionId String?  @unique
+  status          String   @default("pending") // "pending" | "completed" | "failed"
+  description     String   // e.g. "Purchased 1000 Credits"
+  createdAt       DateTime @default(now())
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Advertisement {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  companyName String
+  imageUrl    String?
+  targetUrl   String?
+  headline    String
+  description String
+  impressions Int      @default(0)
+  clicks      Int      @default(0)
+  isActive    Boolean  @default(true)
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([isActive])
+  @@index([userId])
+}
+
+model BoostedJob {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  postId      Int      @unique
+  isActive    Boolean  @default(true)
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post        Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([isActive])
+}

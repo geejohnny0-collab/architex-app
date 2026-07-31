@@ -239,7 +239,7 @@ export default function AuthScreen({ onLoginSuccess }) {
             <button 
               type="button"
               onClick={() => {
-                const clientId = import.meta.env?.VITE_GOOGLE_CLIENT_ID || '47362985719-osdkrrqhutsh5jndcq7bh18n9r03aq7h.apps.googleusercontent.com';
+                const clientId = import.meta.env?.VITE_GOOGLE_CLIENT_ID || '47362985719-jqfrc1ca288i2kgpc4ribi1n93no8pf6.apps.googleusercontent.com';
                 const redirectUri = encodeURIComponent(window.location.origin + '/oauth-callback.html');
                 const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=openid%20email%20profile&prompt=select_account`;
                 window.location.href = googleAuthUrl;

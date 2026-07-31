@@ -375,9 +375,10 @@ app.get('/api/users', requireAuth, async (req, res) => {
       ...(type && { userType: type.toLowerCase() }),
       ...(search && {
         OR: [
-          { name: { contains: search, mode: 'insensitive' } },
-          { handle: { contains: search, mode: 'insensitive' } },
-          { role: { contains: search, mode: 'insensitive' } },
+          // Businesses pop up with ease (partial matching)
+          { AND: [{ userType: 'business' }, { OR: [{ name: { contains: search, mode: 'insensitive' } }, { handle: { contains: search, mode: 'insensitive' } }, { role: { contains: search, mode: 'insensitive' } }] }] },
+          // Developers require full name or handle match to be discovered
+          { AND: [{ userType: 'developer' }, { OR: [{ name: { equals: search.trim(), mode: 'insensitive' } }, { handle: { equals: search.trim().replace(/^@/, ''), mode: 'insensitive' } }] }] }
         ],
       }),
     };
@@ -406,6 +407,73 @@ app.get('/api/users', requireAuth, async (req, res) => {
   } catch (err) {
     console.error('Get users error:', err);
     res.status(500).json({ error: 'Failed to fetch users.' });
+  }
+});
+
+app.get('/api/search', requireAuth, async (req, res) => {
+  const { q } = req.query;
+  if (!q || !q.trim()) {
+    return res.json({ profiles: [], posts: [], tags: [], projects: [], jobs: [] });
+  }
+  const query = q.trim();
+  const cleanHandle = query.replace(/^@/, '');
+
+  try {
+    const [profiles, posts, projects, jobs] = await Promise.all([
+      prisma.user.findMany({
+        where: {
+          NOT: [
+            { email: { contains: '@example.com' } },
+            { email: { contains: 'developer@architex.io' } }
+          ],
+          OR: [
+            { AND: [{ userType: 'business' }, { OR: [{ name: { contains: query, mode: 'insensitive' } }, { handle: { contains: cleanHandle, mode: 'insensitive' } }] }] },
+            { AND: [{ userType: 'developer' }, { OR: [{ name: { equals: query, mode: 'insensitive' } }, { handle: { equals: cleanHandle, mode: 'insensitive' } }] }] }
+          ]
+        },
+        select: { id: true, name: true, handle: true, avatarUrl: true, userType: true, role: true, verified: true },
+        take: 10
+      }),
+      prisma.post.findMany({
+        where: {
+          OR: [
+            { content: { contains: query, mode: 'insensitive' } },
+            { category: { contains: query, mode: 'insensitive' } }
+          ]
+        },
+        include: { author: { select: { id: true, name: true, handle: true, avatarUrl: true, userType: true } } },
+        take: 10
+      }),
+      prisma.project.findMany({
+        where: {
+          OR: [
+            { title: { contains: query, mode: 'insensitive' } },
+            { description: { contains: query, mode: 'insensitive' } },
+            { category: { contains: query, mode: 'insensitive' } }
+          ]
+        },
+        take: 10
+      }),
+      prisma.job.findMany({
+        where: {
+          OR: [
+            { title: { contains: query, mode: 'insensitive' } },
+            { description: { contains: query, mode: 'insensitive' } },
+            { role: { contains: query, mode: 'insensitive' } }
+          ]
+        },
+        take: 10
+      })
+    ]);
+
+    const tags = Array.from(new Set(
+      posts.map(p => p.category).filter(c => c && c.toLowerCase().includes(query.toLowerCase()))
+    )).map(t => ({ name: t }));
+
+    res.json({ profiles, posts, tags, projects, jobs });
+  } catch (err) {
+    console.error('Unified search error:', err);
+    res.status(500).json({ error: 'Failed to perform search' });
   }
 });
 

@@ -179,13 +179,16 @@ app.post('/api/auth/signup',
     const { name, email, password, handle, userType, accountType, role, roleTitle, avatarUrl, bio } = req.body;
     const cleanEmail = email.trim().toLowerCase();
     const cleanHandle = handle.trim().toLowerCase();
+    const cleanName = name.trim();
     try {
-      const [byEmail, byHandle] = await Promise.all([
+      const [byEmail, byHandle, byName] = await Promise.all([
         prisma.user.findFirst({ where: { email: { equals: cleanEmail, mode: 'insensitive' } } }),
         prisma.user.findFirst({ where: { handle: { equals: cleanHandle, mode: 'insensitive' } } }),
+        prisma.user.findFirst({ where: { name: { equals: cleanName, mode: 'insensitive' } } }),
       ]);
       if (byEmail) return res.status(400).json({ error: 'An account with that email already exists.' });
       if (byHandle) return res.status(400).json({ error: 'That handle is already taken.' });
+      if (byName) return res.status(400).json({ error: 'An account with that name already exists. Please pick a unique profile name.' });
 
       const passwordHash = await bcrypt.hash(password, 12);
       const finalType = (userType || accountType || 'developer').toLowerCase();

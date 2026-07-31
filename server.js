@@ -437,7 +437,7 @@ app.get('/api/users/:id', requireAuth,
 
 app.patch('/api/users/me', requireAuth,
   body('name').optional().trim().notEmpty().isLength({ max: 100 }),
-  body('handle').optional().trim().matches(/^[a-zA-Z0-9_]+$/).isLength({ min: 2, max: 30 }),
+  body('handle').optional().trim().customSanitizer(val => typeof val === 'string' && val.startsWith('@') ? val.slice(1) : val).matches(/^[a-zA-Z0-9_]+$/).isLength({ min: 2, max: 30 }),
   body('bio').optional().isLength({ max: 500 }),
   body('website').optional().isURL({ require_protocol: false }).withMessage('Invalid website URL'),
   validate,

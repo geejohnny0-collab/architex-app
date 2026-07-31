@@ -38,7 +38,8 @@ export default function SettingsView({ currentUser, onLogout, theme, onToggleThe
   const handleProfileSave = async (e) => {
     e.preventDefault();
     try {
-      const res = await api.users.updateMe({ name, handle, bio, avatarUrl, skills, userType });
+      const cleanHandle = handle.replace(/^@/, '').trim();
+      const res = await api.users.updateMe({ name: name.trim(), handle: cleanHandle, bio, avatarUrl, skills, userType });
       if (res?.user) {
         setUser(res.user);
         authService.updateStoredUser(res.user);

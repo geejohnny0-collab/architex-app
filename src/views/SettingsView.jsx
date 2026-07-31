@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Bell, Lock, User, Shield, Briefcase, Eye, LogOut, CheckCircle, Smartphone, Globe, Upload, HelpCircle, FileText, ChevronRight, Sparkles, Key, Sun, Moon, Save } from 'lucide-react';
 import api from '../services/apiService';
+import authService from '../services/authService';
 
 export default function SettingsView({ currentUser, onLogout, theme, onToggleTheme }) {
   const [activeSubTab, setActiveSubTab] = useState('profile');

@@ -11,6 +11,7 @@ export default function HomeView({
   onAddComment, 
   onOpenCreatePost, 
   onOpenProposalModal,
+  onViewProfile,
   user
 }) {
   const tabs = ['For You', 'Following', 'Businesses', 'Developers', 'Trending', 'AI', 'Local'];
@@ -95,6 +96,7 @@ export default function HomeView({
             <FeedPostCard 
               key={post.id} 
               post={post} currentUser={user}
+              onViewProfile={onViewProfile}
               onLikeToggle={onLikeToggle}
               onSaveToggle={onSaveToggle}
               onAddComment={onAddComment}

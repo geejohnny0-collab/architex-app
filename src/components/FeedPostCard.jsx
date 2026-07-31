@@ -44,6 +44,13 @@ export default function FeedPostCard({
     setCommentInput('');
   };
 
+  const handleProfileClick = () => {
+    const targetId = post.author?.id || post.authorId;
+    if (onViewProfile && targetId) {
+      onViewProfile(targetId);
+    }
+  };
+
 return (
     <article className="glass-panel" style={{ marginBottom: '1.25rem', overflow: 'hidden', border: post.isBoosted || post.isAd ? '1px solid var(--primary-glow)' : '' }}>
       {(post.isBoosted || post.isAd) && (
@@ -54,7 +61,11 @@ return (
       )}
       {/* Post Author Header */}
       <div style={{ padding: '1.25rem 1.25rem 0.75rem 1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div 
+          onClick={handleProfileClick}
+          style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}
+          title={`View ${authorName}'s Profile`}
+        >
           <img 
             src={authorAvatar} 
             alt={authorName} 

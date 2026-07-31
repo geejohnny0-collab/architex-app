@@ -137,7 +137,13 @@ export default function App() {
 
   const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
 
+  const [selectedUserId, setSelectedUserId] = useState(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
+
+  const handleViewProfile = (targetUserId) => {
+    setSelectedUserId(targetUserId);
+    setActiveView('profile');
+  };
 
   // ─── Session Verification on Mount ───────────────────────────────────────
   useEffect(() => {
@@ -479,6 +485,7 @@ export default function App() {
               onAddComment={handleAddComment}
               onOpenCreatePost={() => setIsCreatePostOpen(true)}
               onOpenProposalModal={handleOpenProposal}
+              onViewProfile={handleViewProfile}
               user={user}
             />
           )}
@@ -488,11 +495,11 @@ export default function App() {
           )}
 
           {activeView === 'businesses' && (
-            <BusinessesView onNavigate={setActiveView} />
+            <BusinessesView onNavigate={setActiveView} onViewProfile={handleViewProfile} />
           )}
 
           {activeView === 'developers' && (
-            <DevelopersView onNavigate={setActiveView} />
+            <DevelopersView onNavigate={setActiveView} onViewProfile={handleViewProfile} />
           )}
 
           {activeView === 'projects' && (
@@ -566,6 +573,7 @@ export default function App() {
           {activeView === 'profile' && (
             <ProfileView
               user={user}
+              viewedUserId={selectedUserId}
               onNavigate={setActiveView}
               onLikeToggle={handleLikeToggle}
               onSaveToggle={handleSaveToggle}

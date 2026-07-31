@@ -3,23 +3,40 @@ import { User, CheckCircle, MapPin, Globe, Github, Star, Briefcase, Settings, Ed
 import FeedPostCard from '../components/FeedPostCard';
 import api from '../services/apiService';
 
-export default function ProfileView({ user, posts = [], onNavigate, onLikeToggle, onSaveToggle, onAddComment, onOpenProposalModal }) {
+export default function ProfileView({ user: currentUser, viewedUserId, onNavigate, onLikeToggle, onSaveToggle, onAddComment, onOpenProposalModal, onOpenChat }) {
   const [activeTab, setActiveTab] = useState('Posts');
-  const [myPosts, setMyPosts] = useState([]);
+  const [profileUser, setProfileUser] = useState(currentUser);
+  const [userPosts, setUserPosts] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const targetId = viewedUserId || currentUser?.id;
+  const isSelf = !viewedUserId || Number(viewedUserId) === Number(currentUser?.id);
 
   useEffect(() => {
-    if (user?.id) {
-      api.posts.getFeed({ userId: user.id })
-        .then(data => setMyPosts(Array.isArray(data) ? data : []))
-        .catch(() => setMyPosts([]));
+    if (!targetId) return;
+    setLoading(true);
+    if (isSelf) {
+      setProfileUser(currentUser);
+      api.posts.getFeed({ userId: currentUser.id })
+        .then(data => setUserPosts(Array.isArray(data) ? data : []))
+        .catch(() => setUserPosts([]))
+        .finally(() => setLoading(false));
+    } else {
+      Promise.all([
+        api.users.getById(targetId),
+        api.posts.getFeed({ userId: targetId })
+      ]).then(([userData, postsData]) => {
+        if (userData) setProfileUser(userData);
+        setUserPosts(Array.isArray(postsData) ? postsData : []);
+      }).catch(err => console.error('Error loading target user profile:', err))
+        .finally(() => setLoading(false));
     }
-  }, [user?.id]);
+  }, [targetId, isSelf, currentUser]);
 
-  const userPosts = myPosts.length > 0 ? myPosts : posts.filter(p => p.author?.handle === user?.handle || p.authorId === user?.id || p.author?.id === user?.id);
-
-  const skills = Array.isArray(user?.skills) ? user.skills : (user?.skills ? [user.skills] : []);
-  const avatarUrl = user?.avatarUrl || user?.avatar;
-  const coverUrl = user?.coverUrl || user?.cover;
+  const targetUser = profileUser || currentUser;
+  const skills = Array.isArray(targetUser?.skills) ? targetUser.skills : (targetUser?.skills ? [targetUser.skills] : []);
+  const avatarUrl = targetUser?.avatarUrl || targetUser?.avatar;
+  const coverUrl = targetUser?.coverUrl || targetUser?.cover;
   const initials = user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '?';
 
   return (
@@ -85,13 +102,32 @@ export default function ProfileView({ user, posts = [], onNavigate, onLikeToggle
             </label>
 
             <div style={{ display: 'flex', gap: '8px' }}>
-              <button 
-                onClick={() => onNavigate('settings')}
-                className="btn-secondary"
-                style={{ padding: '0.45rem 1rem', fontSize: '0.85rem' }}
-              >
-                <Settings size={15} /> Edit Profile & Settings
-              </button>
+              {isSelf ? (
+                <button 
+                  onClick={() => onNavigate('settings')}
+                  className="btn-secondary"
+                  style={{ padding: '0.45rem 1rem', fontSize: '0.85rem' }}
+                >
+                  <Settings size={15} /> Edit Profile & Settings
+                </button>
+              ) : (
+                <>
+                  <button 
+                    onClick={() => api.users.follow(targetId)}
+                    className="btn-primary"
+                    style={{ padding: '0.45rem 1rem', fontSize: '0.85rem' }}
+                  >
+                    + Follow User
+                  </button>
+                  <button 
+                    onClick={() => onNavigate && onNavigate('messages')}
+                    className="btn-secondary"
+                    style={{ padding: '0.45rem 1rem', fontSize: '0.85rem' }}
+                  >
+                    💬 Send Message
+                  </button>
+                </>
+              )}
             </div>
           </div>
 

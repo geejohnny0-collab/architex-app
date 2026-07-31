@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Code, MapPin, UserPlus, CheckCircle, MessageSquare, Check } from 'lucide-react';
 import api from '../services/apiService';
 
-export default function DevelopersView({ onNavigate }) {
+export default function DevelopersView({ onNavigate, onViewProfile }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [developers, setDevelopers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -73,7 +73,11 @@ export default function DevelopersView({ onNavigate }) {
             return (
               <div key={dev.id} className="glass-panel" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                 <div>
-                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '10px' }}>
+                  <div 
+                    onClick={() => onViewProfile && onViewProfile(dev.id)}
+                    style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '10px', cursor: 'pointer' }}
+                    title={`View ${dev.name}'s Profile`}
+                  >
                     {dev.avatarUrl
                       ? <img src={dev.avatarUrl} alt={dev.name} style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
                       : <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', color: 'var(--primary)', fontSize: '1.1rem', flexShrink: 0 }}>{(dev.name || 'U')[0].toUpperCase()}</div>

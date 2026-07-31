@@ -12,7 +12,9 @@ export default function SettingsView({ currentUser, onLogout, theme, onToggleThe
   const [newSkill, setNewSkill] = useState('');
   const [skills, setSkills] = useState(user?.skills || []);
   
-  const [email, setEmail] = useState('developer@example.com');
+  const [userType, setUserType] = useState(user?.userType || 'developer');
+  
+  const [email, setEmail] = useState(user?.email || '');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
@@ -35,9 +37,9 @@ export default function SettingsView({ currentUser, onLogout, theme, onToggleThe
   const handleProfileSave = async (e) => {
     e.preventDefault();
     try {
-      const res = await api.patch('/api/users/me', { name, handle, bio, avatarUrl, skills });
+      const res = await api.patch('/api/users/me', { name, handle, bio, avatarUrl, skills, userType });
       setUser(res.user);
-      alert('Profile saved successfully!');
+      alert('Profile updated to ' + (userType === 'business' ? 'Company Enterprise' : 'Developer') + ' successfully!');
     } catch (err) {
       console.error(err);
       alert('Failed to save profile');
@@ -116,6 +118,18 @@ export default function SettingsView({ currentUser, onLogout, theme, onToggleThe
                 <div>
                   <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '600', marginBottom: '4px' }}>Display Name</label>
                   <input type="text" value={name} onChange={(e) => setName(e.target.value)} style={{ width: '100%', padding: '0.55rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', background: 'var(--bg-app)', color: 'var(--text-main)' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '600', marginBottom: '4px' }}>Account Classification</label>
+                  <select 
+                    value={userType} 
+                    onChange={(e) => setUserType(e.target.value)}
+                    style={{ width: '100%', padding: '0.55rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', background: 'var(--bg-app)', color: 'var(--text-main)' }}
+                  >
+                    <option value="business">🏢 Company / Business Enterprise (Post Jobs & RFPs)</option>
+                    <option value="developer">💻 Software Developer / Tech Creator</option>
+                    <option value="recruiter">🎯 Recruiter / Talent Specialist</option>
+                  </select>
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '600', marginBottom: '4px' }}>Username / Handle</label>

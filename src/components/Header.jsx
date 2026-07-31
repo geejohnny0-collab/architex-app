@@ -196,7 +196,7 @@ export default function Header({
             }}
           >
             <img 
-              src={user?.avatar || user?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80'} 
+              src={user?.avatarUrl || user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=0a66c2&color=fff&bold=true`} 
               alt={user?.name || 'User Profile'}
               style={{ width: '34px', height: '34px', borderRadius: '50%', objectFit: 'cover' }}
             />

@@ -20,7 +20,7 @@ export default function FeedPostCard({
 
   const authorName = post.author.name || 'User';
   const authorHandle = post.author.handle || '@user';
-  const authorAvatar = post.author.avatarUrl || post.author.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80';
+  const authorAvatar = post.author?.avatarUrl || post.author?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=0a66c2&color=fff&bold=true`;
   const authorType = post.author.userType || post.author.type || 'developer';
   const isBusiness = authorType === 'business';
   const timestamp = post.timestamp || (post.createdAt ? new Date(post.createdAt).toLocaleDateString() : 'Just now');

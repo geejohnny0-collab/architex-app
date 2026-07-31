@@ -21,7 +21,7 @@ export default function HomeView({
       <div className="glass-panel" style={{ padding: '1rem', marginBottom: '1.25rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '0.85rem' }}>
           <img 
-            src={user?.avatar || user?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80'} 
+            src={user?.avatarUrl || user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=0a66c2&color=fff&bold=true`} 
             alt={user?.name || 'User'} 
             style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover' }}
           />

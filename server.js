@@ -461,6 +461,10 @@ app.patch('/api/users/me', requireAuth, async (req, res) => {
       data.name = String(data.name).trim();
     }
 
+    if (data.skills && Array.isArray(data.skills)) {
+      data.skills = JSON.stringify(data.skills);
+    }
+
     const user = await prisma.user.update({
       where: { id: req.userId },
       data,

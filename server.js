@@ -511,11 +511,13 @@ app.post('/api/users/:id/follow', requireAuth,
 
 app.get('/api/posts', requireAuth, async (req, res) => {
   try {
-    const { tab, limit = 20, offset = 0 } = req.query;
+    const { tab, userId, limit = 20, offset = 0 } = req.query;
     let where = {};
     
-    if (!tab || tab.toLowerCase() === 'foryou' || tab.toLowerCase() === 'for you') {
-      where = {};
+    if (userId) {
+      where = { authorId: Number(userId) };
+    } else if (!tab || tab.toLowerCase() === 'foryou' || tab.toLowerCase() === 'for you') {
+      where = { OR: [{ author: { userType: 'business' } }, { authorId: req.userId }] };
     } else if (tab === 'following') {
       const follows = await prisma.follow.findMany({ where: { followerId: req.userId } });
       where.authorId = { in: follows.map(f => f.followingId) };

@@ -1,10 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, CheckCircle, MapPin, Globe, Github, Star, Briefcase, Settings, Edit3, Sparkles } from 'lucide-react';
 import FeedPostCard from '../components/FeedPostCard';
+import api from '../services/apiService';
 
 export default function ProfileView({ user, posts = [], onNavigate, onLikeToggle, onSaveToggle, onAddComment, onOpenProposalModal }) {
   const [activeTab, setActiveTab] = useState('Posts');
-  const userPosts = posts.filter(p => p.author?.handle === user?.handle || p.authorId === user?.id || p.author?.id === user?.id);
+  const [myPosts, setMyPosts] = useState([]);
+
+  useEffect(() => {
+    if (user?.id) {
+      api.posts.getFeed({ userId: user.id })
+        .then(data => setMyPosts(Array.isArray(data) ? data : []))
+        .catch(() => setMyPosts([]));
+    }
+  }, [user?.id]);
+
+  const userPosts = myPosts.length > 0 ? myPosts : posts.filter(p => p.author?.handle === user?.handle || p.authorId === user?.id || p.author?.id === user?.id);
 
   const skills = Array.isArray(user?.skills) ? user.skills : (user?.skills ? [user.skills] : []);
   const avatarUrl = user?.avatarUrl || user?.avatar;

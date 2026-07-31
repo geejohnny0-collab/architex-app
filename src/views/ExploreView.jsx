@@ -3,11 +3,15 @@ import { Compass, Search, Sparkles, Code, Building2, Briefcase, Filter } from 'l
 import api from '../services/apiService';
 import FeedPostCard from '../components/FeedPostCard';
 
-export default function ExploreView({ onNavigate, onViewProfile, onLikeToggle, onSaveToggle, onAddComment, onOpenProposalModal }) {
+export default function ExploreView({ searchQuery: globalQuery = '', onNavigate, onViewProfile, onLikeToggle, onSaveToggle, onAddComment, onOpenProposalModal }) {
   const [activeTab, setActiveTab] = useState('All Results');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(globalQuery);
   const [searchResults, setSearchResults] = useState({ profiles: [], posts: [], tags: [], projects: [], jobs: [] });
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setSearchQuery(globalQuery);
+  }, [globalQuery]);
 
   useEffect(() => {
     if (!searchQuery.trim()) {

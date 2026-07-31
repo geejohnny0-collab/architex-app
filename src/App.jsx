@@ -491,7 +491,7 @@ export default function App() {
           )}
 
           {activeView === 'explore' && (
-            <ExploreView posts={posts} onNavigate={setActiveView} />
+            <ExploreView posts={posts} searchQuery={searchQuery} onNavigate={setActiveView} onViewProfile={handleViewProfile} />
           )}
 
           {activeView === 'businesses' && (

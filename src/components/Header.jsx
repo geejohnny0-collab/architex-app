@@ -51,8 +51,8 @@ export default function Header({
             value={searchQuery}
             onChange={(e) => {
               onSearchChange(e.target.value);
-              if (activeView !== 'home' && activeView !== 'explore' && onNavigate) {
-                onNavigate('home');
+              if (e.target.value.trim() && activeView !== 'explore' && onNavigate) {
+                onNavigate('explore');
               }
             }}
             style={{

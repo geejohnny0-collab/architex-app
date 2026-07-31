@@ -5,7 +5,7 @@
 const TOKEN_KEY = 'authToken';
 const USER_KEY = 'authUser';
 
-const BASE_URL = (import.meta.env?.VITE_API_URL || 'http://localhost:5000') + '/api';
+const BASE_URL = (import.meta.env?.VITE_API_URL ? import.meta.env.VITE_API_URL + '/api' : '/api');
 
 // ─── Token Storage ────────────────────────────────────────────────────────────
 

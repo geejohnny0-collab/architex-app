@@ -526,10 +526,20 @@ app.get('/api/posts', requireAuth, async (req, res) => {
     const { tab, userId, limit = 20, offset = 0 } = req.query;
     let where = {};
     
+    const currentUser = await prisma.user.findUnique({
+      where: { id: req.userId },
+      select: { userType: true }
+    });
+    const userRole = (currentUser?.userType || 'developer').toLowerCase();
+
     if (userId) {
       where = { authorId: Number(userId) };
     } else if (!tab || tab.toLowerCase() === 'foryou' || tab.toLowerCase() === 'for you') {
-      where = {};
+      if (userRole === 'business') {
+        where = { author: { userType: 'business' } };
+      } else {
+        where = { OR: [{ author: { userType: 'business' } }, { authorId: req.userId }] };
+      }
     } else if (tab === 'following') {
       const follows = await prisma.follow.findMany({ where: { followerId: req.userId } });
       const followingIds = follows.map(f => f.followingId);

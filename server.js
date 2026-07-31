@@ -171,16 +171,18 @@ async function createNotification(userId, type, title, body, link = null) {
 
 app.post('/api/auth/signup',
   body('name').trim().notEmpty().withMessage('Name is required').isLength({ max: 100 }),
-  body('email').isEmail().normalizeEmail().withMessage('Valid email required'),
+  body('email').isEmail().trim().toLowerCase().withMessage('Valid email required'),
   body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters'),
   body('handle').trim().customSanitizer(val => typeof val === 'string' && val.startsWith('@') ? val.slice(1) : val).notEmpty().matches(/^[a-zA-Z0-9_]+$/).withMessage('Handle may only contain letters, numbers, underscores').isLength({ min: 2, max: 30 }),
   validate,
   async (req, res) => {
     const { name, email, password, handle, userType, accountType, role, roleTitle, avatarUrl, bio } = req.body;
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanHandle = handle.trim().toLowerCase();
     try {
       const [byEmail, byHandle] = await Promise.all([
-        prisma.user.findUnique({ where: { email } }),
-        prisma.user.findUnique({ where: { handle } }),
+        prisma.user.findFirst({ where: { email: { equals: cleanEmail, mode: 'insensitive' } } }),
+        prisma.user.findFirst({ where: { handle: { equals: cleanHandle, mode: 'insensitive' } } }),
       ]);
       if (byEmail) return res.status(400).json({ error: 'An account with that email already exists.' });
       if (byHandle) return res.status(400).json({ error: 'That handle is already taken.' });
@@ -189,10 +191,10 @@ app.post('/api/auth/signup',
       const finalType = (userType || accountType || 'developer').toLowerCase();
       const user = await prisma.user.create({
         data: {
-          name,
-          email,
+          name: name.trim(),
+          email: cleanEmail,
           passwordHash,
-          handle,
+          handle: cleanHandle,
           userType: finalType,
           role: role || roleTitle || (finalType === 'business' ? 'Company Enterprise' : 'Software Developer'),
           avatarUrl: avatarUrl || null,
@@ -210,13 +212,16 @@ app.post('/api/auth/signup',
 );
 
 app.post('/api/auth/login',
-  body('email').isEmail().normalizeEmail().withMessage('Valid email required'),
+  body('email').isEmail().trim().toLowerCase().withMessage('Valid email required'),
   body('password').notEmpty().withMessage('Password is required'),
   validate,
   async (req, res) => {
     const { email, password } = req.body;
+    const cleanEmail = email.trim().toLowerCase();
     try {
-      const user = await prisma.user.findUnique({ where: { email } });
+      const user = await prisma.user.findFirst({
+        where: { email: { equals: cleanEmail, mode: 'insensitive' } }
+      });
       if (!user || !user.passwordHash) {
         return res.status(400).json({ error: 'Invalid email or password.' });
       }

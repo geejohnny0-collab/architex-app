@@ -126,12 +126,13 @@ const stripe = {
   webhook: (data) => request('/stripe/webhook', { method: 'POST', body: JSON.stringify(data) })
 };
 
-// ─── Credits ──────────────────────────────────────────────────────────────────
 const credits = {
   spend: (data) => request('/credits/spend', { method: 'POST', body: JSON.stringify(data) })
 };
 
 const patch = (path, data) => request(path, { method: 'PATCH', body: JSON.stringify(data) });
+const get = (path) => request(path, { method: 'GET' });
+const search = (query) => request(`/search?q=${encodeURIComponent(query)}`);
 
-export default { auth, users, posts, comments, conversations, notifications, uploads, uploadFile, stripe, credits, patch };
-export { auth, users, posts, comments, conversations, notifications, uploads, stripe, credits, patch };
+export default { auth, users, posts, comments, conversations, notifications, uploads, uploadFile, stripe, credits, patch, request, get, search };
+export { auth, users, posts, comments, conversations, notifications, uploads, stripe, credits, patch, request, get, search };

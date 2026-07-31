@@ -78,6 +78,8 @@ const users = {
   getById: (id) => request(`/users/${id}`),
   updateMe: (data) => request('/users/me', { method: 'PATCH', body: JSON.stringify(data) }),
   follow: (id) => request(`/users/${id}/follow`, { method: 'POST' }),
+  getFollowers: (id) => request(`/users/${id}/followers`),
+  getFollowing: (id) => request(`/users/${id}/following`),
   getPostsById: (id) => request(`/users/${id}/posts`),
   checkOnline: (id) => request(`/users/${id}/online`),
 };

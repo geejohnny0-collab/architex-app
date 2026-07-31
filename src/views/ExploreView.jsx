@@ -19,7 +19,7 @@ export default function ExploreView({ searchQuery: globalQuery = '', onNavigate,
       return;
     }
     setLoading(true);
-    api.request(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
+    api.search(searchQuery.trim())
       .then(data => {
         if (data) setSearchResults(data);
       })

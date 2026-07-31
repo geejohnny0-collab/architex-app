@@ -24,8 +24,8 @@ export default function ProfileView({ user: currentUser, viewedUserId, onNavigat
     Promise.all([
       api.users.getById(targetId),
       api.posts.getFeed({ userId: targetId }),
-      api.request(`/users/${targetId}/followers`).catch(() => []),
-      api.request(`/users/${targetId}/following`).catch(() => [])
+      api.users.getFollowers(targetId).catch(() => []),
+      api.users.getFollowing(targetId).catch(() => [])
     ]).then(([userData, postsData, followersData, followingData]) => {
       if (userData) {
         setProfileUser(userData);

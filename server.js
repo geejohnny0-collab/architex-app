@@ -529,22 +529,20 @@ app.get('/api/posts', requireAuth, async (req, res) => {
     if (userId) {
       where = { authorId: Number(userId) };
     } else if (!tab || tab.toLowerCase() === 'foryou' || tab.toLowerCase() === 'for you') {
-      // FYP feed shows all business posts globally + all developer posts
       where = {};
     } else if (tab === 'following') {
       const follows = await prisma.follow.findMany({ where: { followerId: req.userId } });
       const followingIds = follows.map(f => f.followingId);
-      where = { OR: [{ author: { userType: 'business' } }, { authorId: { in: followingIds } }] };
+      where = { authorId: { in: followingIds } };
     } else if (tab === 'businesses') {
       where = { author: { userType: 'business' } };
     } else if (tab === 'developers') {
       where = { author: { userType: 'developer' } };
     } else if (tab === 'trending') {
-      where = { OR: [{ author: { userType: 'business' } }, { likes: { some: {} } }] };
+      where = { likes: { some: {} } };
     } else if (tab === 'ai') {
       where = {
         OR: [
-          { author: { userType: 'business' } },
           { content: { contains: 'AI', mode: 'insensitive' } },
           { content: { contains: 'SaaS', mode: 'insensitive' } }
         ]

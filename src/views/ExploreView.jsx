@@ -10,22 +10,22 @@ export default function ExploreView({ onNavigate, onLikeToggle, onSaveToggle, on
   const [featuredDevs, setFeaturedDevs] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const tabs = ['For You Feed', 'Creators & Developers', 'Verified Businesses', 'Contracts & RFPs'];
+  const tabs = ['Business Discover', 'Verified Companies', 'Contracts & RFPs'];
 
-  // Load feed posts for For You Feed
+  // Load feed posts for Business Discover
   useEffect(() => {
     setLoading(true);
-    api.posts.getFeed({ search: searchQuery.trim() })
+    api.posts.getFeed({ tab: 'businesses', search: searchQuery.trim() })
       .then(data => setExplorePosts(Array.isArray(data) ? data : []))
       .catch(err => console.error('Explore feed load error:', err))
       .finally(() => setLoading(false));
   }, [searchQuery, activeTab]);
 
-  // Load registered developers
+  // Load registered business enterprises
   useEffect(() => {
-    api.users.search({ search: searchQuery.trim(), limit: 12 })
-      .then(data => setFeaturedDevs(Array.isArray(data) ? data : []))
-      .catch(err => console.error('Explore developers load error:', err));
+    api.users.search({ search: searchQuery.trim(), type: 'business', limit: 12 })
+      .then(data => setFeaturedDevs(Array.isArray(data) ? data : (Array.isArray(data?.users) ? data.users : [])))
+      .catch(err => console.error('Explore businesses load error:', err));
   }, [searchQuery]);
 
   return (

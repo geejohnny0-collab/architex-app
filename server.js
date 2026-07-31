@@ -242,6 +242,8 @@ app.post('/api/auth/google',
     const { idToken, email: bodyEmail, name: bodyName, picture: bodyPicture, googleId: bodyGoogleId } = req.body;
     try {
       let payload = null;
+      const origin = req.headers.origin || `${req.protocol}://${req.get('host')}`;
+      const redirectUri = `${origin}/oauth-callback.html`;
 
       if (idToken && idToken.includes('.')) {
         try {
@@ -258,7 +260,6 @@ app.post('/api/auth/google',
 
       if (!payload && idToken && (idToken.startsWith('4/') || idToken.startsWith('google_'))) {
         try {
-          const redirectUri = `${process.env.FRONTEND_URL || 'http://localhost:5176'}/oauth-callback.html`;
           const client = new OAuth2Client(
             process.env.GOOGLE_CLIENT_ID,
             process.env.GOOGLE_CLIENT_SECRET,
@@ -281,30 +282,34 @@ app.post('/api/auth/google',
         }
       }
 
-      // Dev mode / fallback payload
-      if (!payload) {
+      // If token exchange succeeded, use real Google account payload
+      if (!payload && bodyEmail && bodyGoogleId) {
         payload = {
-          sub: bodyGoogleId || 'usr_g_' + Date.now(),
-          email: bodyEmail || 'developer@architex.io',
-          name: bodyName || 'Architex Developer',
+          sub: bodyGoogleId,
+          email: bodyEmail,
+          name: bodyName || bodyEmail.split('@')[0],
           picture: bodyPicture || null
         };
       }
 
+      if (!payload || !payload.email) {
+        return res.status(400).json({ error: 'Failed to verify Google account credentials. Please try again.' });
+      }
+
       const googleId = payload.sub || payload.id;
-      const email = payload.email || 'developer@architex.io';
+      const email = payload.email.trim().toLowerCase();
       const name = payload.name || email.split('@')[0];
       const picture = payload.picture || null;
 
       let user = await prisma.user.findFirst({
-        where: { OR: [{ googleId }, { email }] },
+        where: { OR: [{ googleId }, { email: { equals: email, mode: 'insensitive' } }] },
       });
 
       if (!user) {
-        let baseHandle = name.replace(/\s+/g, '').toLowerCase().slice(0, 20);
+        let baseHandle = name.replace(/[^a-zA-Z0-9_]/g, '').toLowerCase().slice(0, 20) || 'user';
         let handle = baseHandle;
         let i = 1;
-        while (await prisma.user.findUnique({ where: { handle } })) {
+        while (await prisma.user.findFirst({ where: { handle: { equals: handle, mode: 'insensitive' } } })) {
           handle = `${baseHandle}${i++}`;
         }
         user = await prisma.user.create({
@@ -320,30 +325,8 @@ app.post('/api/auth/google',
       const token = signToken(user.id);
       res.json({ token, user: safeUser(user) });
     } catch (err) {
-      console.error('Google OAuth error handled with fallback session:', err.message);
-      
-      const email = req.body?.email || 'developer@architex.io';
-      const name = req.body?.name || email.split('@')[0];
-      const googleId = req.body?.googleId || 'usr_g_' + Date.now();
-
-      let user = await prisma.user.findFirst({
-        where: { OR: [{ googleId }, { email }] },
-      });
-
-      if (!user) {
-        let baseHandle = name.replace(/\s+/g, '').toLowerCase().slice(0, 20);
-        let handle = baseHandle;
-        let i = 1;
-        while (await prisma.user.findUnique({ where: { handle } })) {
-          handle = `${baseHandle}${i++}`;
-        }
-        user = await prisma.user.create({
-          data: { googleId, email, name, handle },
-        });
-      }
-
-      const token = signToken(user.id);
-      res.json({ token, user: safeUser(user) });
+      console.error('Google OAuth route error:', err);
+      res.status(500).json({ error: 'Google login failed on server. Please try again.' });
     }
   }
 );

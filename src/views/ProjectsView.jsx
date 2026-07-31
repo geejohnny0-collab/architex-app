@@ -8,54 +8,7 @@ import {
 
 export default function ProjectsView({ onSendApplicationMessage }) {
   // Expanded Projects Database
-  const [projects, setProjects] = useState([
-    {
-      id: 'p1',
-      title: 'AI Multi-Agent RAG Pipeline & Vector Search System',
-      client: 'Veloce AI Labs',
-      logo: 'https://images.unsplash.com/photo-1549923746-c502d488b3ea?auto=format&fit=crop&w=150&q=80',
-      contractType: 'Fixed Price',
-      budget: '$28,000 Fixed',
-      duration: '4 Weeks Delivery',
-      proposalsCount: 6,
-      status: 'Hiring',
-      verifiedEscrow: true,
-      clientRole: 'Dr. Marcus Vance (VP of Engineering)',
-      tags: ['PyTorch', 'Vector DBs', 'RAG Pipelines', 'Python', 'FastAPI'],
-      description: 'Building an enterprise multi-agent retrieval system supporting 10k QPS with Qdrant vector database, custom embeddings, and optimized latency.'
-    },
-    {
-      id: 'p2',
-      title: 'Enterprise Next.js 14 Server Components SaaS Portal',
-      company: 'SaaSify Global',
-      client: 'SaaSify Global',
-      logo: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=150&q=80',
-      contractType: 'Hourly Retainer',
-      budget: '$130 / hr Retainer',
-      duration: '3 Month Contract',
-      proposalsCount: 9,
-      status: 'Hiring',
-      verifiedEscrow: true,
-      clientRole: 'David K. Sterling (Director of Tech)',
-      tags: ['React 14', 'TypeScript', 'Tailwind', 'PostgreSQL', 'Prisma'],
-      description: 'Migrating legacy client dashboard to zero-bundle Next.js 14 server components with optimistic state mutations and instant edge caching.'
-    },
-    {
-      id: 'p3',
-      title: 'Cross-Platform React Native & Native Swift Bridge',
-      client: 'Pulse HealthTech',
-      logo: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=150&q=80',
-      contractType: 'Fixed Price',
-      budget: '$18,500 Fixed',
-      duration: '5 Weeks Delivery',
-      proposalsCount: 4,
-      status: 'Hiring',
-      verifiedEscrow: true,
-      clientRole: 'Alex Rivera (Staff Mobile Lead)',
-      tags: ['React Native', 'Swift', 'GraphQL', 'Offline Sync', 'iOS/Android'],
-      description: 'Refactoring mobile telemedicine app for offline synchronization, WebRTC video calling bridge, and biometrics authentication.'
-    }
-  ]);
+  const [projects, setProjects] = useState([]);
 
   const [activeTab, setActiveTab] = useState('ALL_PROJECTS'); // 'ALL_PROJECTS' | 'MY_BIDS'
   const [filterType, setFilterType] = useState('ALL');

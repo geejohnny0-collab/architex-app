@@ -3,7 +3,7 @@
 // All requests are made through this module so auth headers, base URL,
 // and error handling are consistent across every component.
 
-const BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000') + '/api';
+const BASE_URL = (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL + '/api' : '/api');
 
 function getToken() {
   return localStorage.getItem('authToken');

@@ -368,8 +368,12 @@ app.get('/api/users', requireAuth, async (req, res) => {
   const { search, type, limit = 20, offset = 0 } = req.query;
   try {
     const where = {
-      NOT: { id: req.userId },
-      ...(type && { userType: type }),
+      NOT: [
+        { id: req.userId },
+        { email: { contains: '@example.com' } },
+        { email: { contains: 'developer@architex.io' } }
+      ],
+      ...(type && { userType: type.toLowerCase() }),
       ...(search && {
         OR: [
           { name: { contains: search, mode: 'insensitive' } },

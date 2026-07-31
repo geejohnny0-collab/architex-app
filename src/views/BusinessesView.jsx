@@ -9,8 +9,11 @@ export default function BusinessesView({ onNavigate }) {
 
   useEffect(() => {
     setLoading(true);
-    api.users.search({ search: searchTerm.trim(), limit: 20 })
-      .then(data => setBusinesses(Array.isArray(data) ? data : []))
+    api.users.search({ search: searchTerm.trim(), type: 'business', limit: 20 })
+      .then(data => {
+        const list = Array.isArray(data) ? data : (Array.isArray(data?.users) ? data.users : []);
+        setBusinesses(list);
+      })
       .catch(err => {
         console.error('Failed to load businesses:', err);
         setBusinesses([]);

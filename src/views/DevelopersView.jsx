@@ -10,7 +10,7 @@ export default function DevelopersView({ onNavigate }) {
 
   useEffect(() => {
     setLoading(true);
-    api.users.search({ search: searchTerm.trim(), limit: 20 })
+    api.users.search({ search: searchTerm.trim(), type: 'developer', limit: 20 })
       .then(data => {
         const list = Array.isArray(data) ? data : (Array.isArray(data?.users) ? data.users : []);
         setDevelopers(list);

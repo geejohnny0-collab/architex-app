@@ -466,13 +466,13 @@ app.patch('/api/users/me', requireAuth, async (req, res) => {
     }
 
     const user = await prisma.user.update({
-      where: { id: req.userId },
+      where: { id: Number(req.userId) },
       data,
     });
     res.json({ user: safeUser(user) });
   } catch (err) {
     console.error('Update profile error:', err);
-    res.status(500).json({ error: 'Failed to update profile.' });
+    res.status(500).json({ error: err.message || 'Failed to update profile.' });
   }
 });
 

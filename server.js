@@ -503,6 +503,8 @@ app.get('/api/users/:id', requireAuth,
       console.error('Get user error:', err);
       res.status(500).json({ error: 'Failed to fetch user.' });
     }
+  }
+);
 app.get('/api/users/:id/followers', requireAuth, async (req, res) => {
   try {
     const follows = await prisma.follow.findMany({

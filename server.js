@@ -435,8 +435,29 @@ app.get('/api/users/:id', requireAuth,
       console.error('Get user error:', err);
       res.status(500).json({ error: 'Failed to fetch user.' });
     }
+app.get('/api/users/:id/followers', requireAuth, async (req, res) => {
+  try {
+    const follows = await prisma.follow.findMany({
+      where: { followingId: Number(req.params.id) },
+      include: { follower: { select: { id: true, name: true, handle: true, avatarUrl: true, role: true, userType: true, verified: true } } }
+    });
+    res.json(follows.map(f => f.follower));
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch followers' });
   }
-);
+});
+
+app.get('/api/users/:id/following', requireAuth, async (req, res) => {
+  try {
+    const follows = await prisma.follow.findMany({
+      where: { followerId: Number(req.params.id) },
+      include: { following: { select: { id: true, name: true, handle: true, avatarUrl: true, role: true, userType: true, verified: true } } }
+    });
+    res.json(follows.map(f => f.following));
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch following' });
+  }
+});
 
 app.patch('/api/users/me', requireAuth, async (req, res) => {
   const allowed = ['name', 'handle', 'bio', 'role', 'location', 'website', 'github',

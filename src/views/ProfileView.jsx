@@ -7,6 +7,11 @@ export default function ProfileView({ user: currentUser, viewedUserId, onNavigat
   const [activeTab, setActiveTab] = useState('Posts');
   const [profileUser, setProfileUser] = useState(currentUser);
   const [userPosts, setUserPosts] = useState([]);
+  const [followersList, setFollowersList] = useState([]);
+  const [followingList, setFollowingList] = useState([]);
+  const [isFollowingState, setIsFollowingState] = useState(false);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
   const [loading, setLoading] = useState(false);
 
   const targetId = viewedUserId || currentUser?.id;
@@ -15,23 +20,35 @@ export default function ProfileView({ user: currentUser, viewedUserId, onNavigat
   useEffect(() => {
     if (!targetId) return;
     setLoading(true);
-    if (isSelf) {
-      setProfileUser(currentUser);
-      api.posts.getFeed({ userId: currentUser.id })
-        .then(data => setUserPosts(Array.isArray(data) ? data : []))
-        .catch(() => setUserPosts([]))
-        .finally(() => setLoading(false));
-    } else {
-      Promise.all([
-        api.users.getById(targetId),
-        api.posts.getFeed({ userId: targetId })
-      ]).then(([userData, postsData]) => {
-        if (userData) setProfileUser(userData);
-        setUserPosts(Array.isArray(postsData) ? postsData : []);
-      }).catch(err => console.error('Error loading target user profile:', err))
-        .finally(() => setLoading(false));
-    }
+    
+    Promise.all([
+      api.users.getById(targetId),
+      api.posts.getFeed({ userId: targetId }),
+      api.request(`/users/${targetId}/followers`).catch(() => []),
+      api.request(`/users/${targetId}/following`).catch(() => [])
+    ]).then(([userData, postsData, followersData, followingData]) => {
+      if (userData) {
+        setProfileUser(userData);
+        setIsFollowingState(!!userData.isFollowing);
+        setFollowersCount(userData.followersCount || 0);
+        setFollowingCount(userData.followingCount || 0);
+      }
+      setUserPosts(Array.isArray(postsData) ? postsData : []);
+      setFollowersList(Array.isArray(followersData) ? followersData : []);
+      setFollowingList(Array.isArray(followingData) ? followingData : []);
+    }).catch(err => console.error('Error loading target user profile:', err))
+      .finally(() => setLoading(false));
   }, [targetId, isSelf, currentUser]);
+
+  const handleFollowToggle = async () => {
+    try {
+      const res = await api.users.follow(targetId);
+      setIsFollowingState(res.following);
+      setFollowersCount(prev => res.following ? prev + 1 : Math.max(0, prev - 1));
+    } catch (err) {
+      console.error('Follow toggle error:', err);
+    }
+  };
 
   const targetUser = profileUser || currentUser;
   const skills = Array.isArray(targetUser?.skills) ? targetUser.skills : (targetUser?.skills ? [targetUser.skills] : []);
@@ -113,11 +130,11 @@ export default function ProfileView({ user: currentUser, viewedUserId, onNavigat
               ) : (
                 <>
                   <button 
-                    onClick={() => api.users.follow(targetId)}
-                    className="btn-primary"
+                    onClick={handleFollowToggle}
+                    className={isFollowingState ? 'btn-secondary' : 'btn-primary'}
                     style={{ padding: '0.45rem 1rem', fontSize: '0.85rem' }}
                   >
-                    + Follow User
+                    {isFollowingState ? '✓ Following' : '+ Follow User'}
                   </button>
                   <button 
                     onClick={() => onNavigate && onNavigate('messages')}
@@ -134,13 +151,22 @@ export default function ProfileView({ user: currentUser, viewedUserId, onNavigat
           {/* User Details */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <h1 style={{ fontSize: '1.4rem', fontWeight: '800', margin: 0, color: 'var(--text-main)' }}>{user?.name || 'Architect User'}</h1>
-              {user?.verified && <CheckCircle size={18} style={{ color: 'var(--primary)' }} />}
-              <span className="badge badge-primary"><Sparkles size={11} /> {user?.userType === 'business' ? 'Verified Business' : 'Pro Architect'}</span>
+              <h1 style={{ fontSize: '1.4rem', fontWeight: '800', margin: 0, color: 'var(--text-main)' }}>{targetUser?.name || 'Architect User'}</h1>
+              {targetUser?.verified && <CheckCircle size={18} style={{ color: 'var(--primary)' }} />}
+              <span className="badge badge-primary"><Sparkles size={11} /> {targetUser?.userType === 'business' ? 'Verified Business' : 'Pro Architect'}</span>
             </div>
 
             <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '2px 0 8px 0' }}>
-              @{user?.handle || 'user'}{user?.role ? ` • ${user.role}` : ''}
+              @{targetUser?.handle || 'user'}{targetUser?.role ? ` • ${targetUser.role}` : ''}
+            </div>
+
+            <div style={{ display: 'flex', gap: '16px', fontSize: '0.88rem', color: 'var(--text-muted)', margin: '8px 0 12px 0' }}>
+              <span style={{ cursor: 'pointer' }} onClick={() => setActiveTab('Followers')}>
+                <strong style={{ color: 'var(--text-main)' }}>{followersCount}</strong> Followers
+              </span>
+              <span style={{ cursor: 'pointer' }} onClick={() => setActiveTab('Following')}>
+                <strong style={{ color: 'var(--text-main)' }}>{followingCount}</strong> Following
+              </span>
             </div>
 
             {user?.bio && (
@@ -231,15 +257,15 @@ export default function ProfileView({ user: currentUser, viewedUserId, onNavigat
         </div>
       </div>
 
-      {/* Tabs for Profile Posts vs Reviews */}
+      {/* Tabs for Profile Posts vs Followers vs Following */}
       <div className="tabs-bar">
-        {['Posts', 'Reviews & Testimonials', 'Completed Projects'].map((tab) => (
+        {['Posts', 'Followers', 'Following', 'Reviews & Testimonials'].map((tab) => (
           <button 
             key={tab}
             className={`tab-btn ${activeTab === tab ? 'active' : ''}`}
             onClick={() => setActiveTab(tab)}
           >
-            {tab}
+            {tab === 'Followers' ? `Followers (${followersCount})` : tab === 'Following' ? `Following (${followingCount})` : tab}
           </button>
         ))}
       </div>
@@ -256,13 +282,53 @@ export default function ProfileView({ user: currentUser, viewedUserId, onNavigat
               <FeedPostCard
                 key={p.id}
                 post={p}
-                currentUser={user}
+                currentUser={currentUser}
                 onLikeToggle={onLikeToggle}
                 onSaveToggle={onSaveToggle}
                 onAddComment={onAddComment}
                 onOpenProposalModal={onOpenProposalModal}
               />
             ))
+          )
+        )}
+
+        {activeTab === 'Followers' && (
+          followersList.length === 0 ? (
+            <div className="glass-panel" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+              No followers yet.
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
+              {followersList.map(u => (
+                <div key={u.id} className="glass-panel" style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <img src={u.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name || 'User')}&background=0a66c2&color=fff&bold=true`} alt={u.name} style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover' }} />
+                  <div>
+                    <div style={{ fontWeight: '700', fontSize: '0.92rem', color: 'var(--text-main)' }}>{u.name}</div>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>@{u.handle}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
+        )}
+
+        {activeTab === 'Following' && (
+          followingList.length === 0 ? (
+            <div className="glass-panel" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+              Not following anyone yet.
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
+              {followingList.map(u => (
+                <div key={u.id} className="glass-panel" style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <img src={u.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name || 'User')}&background=0a66c2&color=fff&bold=true`} alt={u.name} style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover' }} />
+                  <div>
+                    <div style={{ fontWeight: '700', fontSize: '0.92rem', color: 'var(--text-main)' }}>{u.name}</div>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>@{u.handle}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
           )
         )}
 

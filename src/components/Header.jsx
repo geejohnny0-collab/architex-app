@@ -49,7 +49,12 @@ export default function Header({
             type="text" 
             placeholder="Search businesses, developers, projects..."
             value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
+            onChange={(e) => {
+              onSearchChange(e.target.value);
+              if (activeView !== 'home' && activeView !== 'explore' && onNavigate) {
+                onNavigate('home');
+              }
+            }}
             style={{
               width: '100%',
               padding: '0.55rem 1rem 0.55rem 2.6rem',

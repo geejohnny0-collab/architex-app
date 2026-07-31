@@ -523,7 +523,7 @@ app.post('/api/users/:id/follow', requireAuth,
 
 app.get('/api/posts', requireAuth, async (req, res) => {
   try {
-    const { tab, userId, limit = 20, offset = 0 } = req.query;
+    const { tab, userId, search, limit = 20, offset = 0 } = req.query;
     let where = {};
     
     const currentUser = await prisma.user.findUnique({
@@ -532,7 +532,16 @@ app.get('/api/posts', requireAuth, async (req, res) => {
     });
     const userRole = (currentUser?.userType || 'developer').toLowerCase();
 
-    if (userId) {
+    if (search && search.trim()) {
+      const q = search.trim();
+      where.OR = [
+        { content: { contains: q, mode: 'insensitive' } },
+        { category: { contains: q, mode: 'insensitive' } },
+        { codeSnippet: { contains: q, mode: 'insensitive' } },
+        { author: { name: { contains: q, mode: 'insensitive' } } },
+        { author: { handle: { contains: q, mode: 'insensitive' } } },
+      ];
+    } else if (userId) {
       where = { authorId: Number(userId) };
     } else if (!tab || tab.toLowerCase() === 'foryou' || tab.toLowerCase() === 'for you') {
       if (userRole === 'business') {

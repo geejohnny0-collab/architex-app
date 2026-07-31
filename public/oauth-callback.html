@@ -66,7 +66,9 @@
           if (data.token && data.user) {
             localStorage.setItem('authToken', data.token);
             localStorage.setItem('authUser', JSON.stringify(data.user));
-            localStorage.setItem('needs_onboarding', 'true');
+            if (data.isNewUser) {
+              localStorage.setItem('needs_onboarding', 'true');
+            }
 
             document.getElementById('status-title').innerText = "Authorization Successful!";
             document.getElementById('status-title').className = "success";

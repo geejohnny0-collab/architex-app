@@ -301,11 +301,13 @@ app.post('/api/auth/google',
       const name = payload.name || email.split('@')[0];
       const picture = payload.picture || null;
 
+      let isNewUser = false;
       let user = await prisma.user.findFirst({
         where: { OR: [{ googleId }, { email: { equals: email, mode: 'insensitive' } }] },
       });
 
       if (!user) {
+        isNewUser = true;
         let baseHandle = name.replace(/[^a-zA-Z0-9_]/g, '').toLowerCase().slice(0, 20) || 'user';
         let handle = baseHandle;
         let i = 1;
@@ -323,7 +325,7 @@ app.post('/api/auth/google',
       }
 
       const token = signToken(user.id);
-      res.json({ token, user: safeUser(user) });
+      res.json({ token, user: safeUser(user), isNewUser });
     } catch (err) {
       console.error('Google OAuth route error:', err);
       res.status(500).json({ error: 'Google login failed on server. Please try again.' });

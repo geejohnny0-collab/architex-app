@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import authService from '../services/authService';
+import api from '../services/apiService';
 import { 
   Sparkles, User, Building2, ShieldCheck, Mail, Lock, ArrowRight, 
   CheckCircle2, Code, Github, Chrome, Shield, Cpu, Zap, Globe, Award, Briefcase, Users

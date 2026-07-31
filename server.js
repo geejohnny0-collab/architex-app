@@ -624,15 +624,26 @@ app.get('/api/posts', requireAuth, async (req, res) => {
 });
 
 app.post('/api/posts', requireAuth,
-  body('content').trim().notEmpty().withMessage('Post content required').isLength({ max: 5000 }),
-  body('category').optional().isIn(['general', 'hiring', 'code', 'showcase']),
-  validate,
   async (req, res) => {
-    const { content, category = 'general', imageUrl, codeSnippet, hasProposal, projectBudget } = req.body;
+    const { content, category = 'Developers', mediaUrl, imageUrl, mediaType, codeSnippet, hasProposal, projectBudget } = req.body;
+    const finalMedia = mediaUrl || imageUrl || null;
+    const finalContent = (content || '').trim();
+
+    if (!finalContent && !finalMedia && !codeSnippet) {
+      return res.status(400).json({ error: 'Post must contain text, a photo/video, or a code snippet.' });
+    }
+
     try {
       const post = await prisma.post.create({
-        data: { content, category, imageUrl, codeSnippet, hasProposal: !!hasProposal,
-                projectBudget, authorId: req.userId },
+        data: { 
+          content: finalContent || (finalMedia ? 'Attached media' : 'Code snippet'),
+          category: category || 'Developers',
+          imageUrl: finalMedia,
+          codeSnippet,
+          hasProposal: !!hasProposal,
+          projectBudget,
+          authorId: req.userId
+        },
         include: {
           author: { select: { id: true, name: true, handle: true, avatarUrl: true, verified: true, userType: true, role: true } },
           _count: { select: { comments: true, likes: true } },

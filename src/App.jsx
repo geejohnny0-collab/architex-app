@@ -323,10 +323,11 @@ export default function App() {
   const handleCreatePostSubmit = async (newPostData) => {
     try {
       const post = await api.posts.create({
-        content: newPostData.content,
-        category: newPostData.category || 'general',
+        content: newPostData.content || '',
+        category: newPostData.category || 'Developers',
+        mediaUrl: newPostData.mediaUrl || newPostData.imageUrl || null,
+        mediaType: newPostData.mediaType || 'image',
         codeSnippet: newPostData.codeSnippet || null,
-        imageUrl: newPostData.imageUrl || null,
         hasProposal: newPostData.hasProposalCTA || false,
         projectBudget: newPostData.projectBudget || null,
       });

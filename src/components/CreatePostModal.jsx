@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Image, Code, DollarSign, Tag, Sparkles } from 'lucide-react';
+import api from '../services/apiService';
 
 export default function CreatePostModal({ isOpen, onClose, onSubmitPost }) {
   const [content, setContent] = useState('');
@@ -8,21 +9,28 @@ export default function CreatePostModal({ isOpen, onClose, onSubmitPost }) {
   const [budget, setBudget] = useState('$5,000 - $10,000');
   const [codeSnippet, setCodeSnippet] = useState('');
   const [showCodeInput, setShowCodeInput] = useState(false);
+  const [mediaUrl, setMediaUrl] = useState('');
+  const [mediaType, setMediaType] = useState('image');
+  const [uploadingMedia, setUploadingMedia] = useState(false);
 
   if (!isOpen) return null;
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!content.trim()) return;
+    if (!content.trim() && !mediaUrl) return;
 
     onSubmitPost({
       content,
       category,
+      mediaUrl: mediaUrl || null,
+      mediaType: mediaUrl ? mediaType : null,
       hasProposalCTA: hasProjectHiring,
       projectBudget: hasProjectHiring ? budget : null,
       codeSnippet: showCodeInput && codeSnippet.trim() ? codeSnippet : null
     });
 
+    setMediaUrl('');
+    setContent('');
     onClose();
   };
 
@@ -82,6 +90,77 @@ export default function CreatePostModal({ isOpen, onClose, onSubmitPost }) {
                 resize: 'vertical'
               }}
             />
+
+            {/* Media Upload (Photos & Videos) */}
+            {mediaUrl ? (
+              <div style={{ position: 'relative', borderRadius: 'var(--radius-md)', overflow: 'hidden', border: '1px solid var(--border-color)', background: '#000', maxHeight: '240px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {mediaType === 'video' ? (
+                  <video src={mediaUrl} controls style={{ width: '100%', maxHeight: '240px', objectFit: 'contain' }} />
+                ) : (
+                  <img src={mediaUrl} alt="Upload preview" style={{ width: '100%', maxHeight: '240px', objectFit: 'cover' }} />
+                )}
+                <button
+                  type="button"
+                  onClick={() => { setMediaUrl(''); setMediaType('image'); }}
+                  style={{
+                    position: 'absolute',
+                    top: '8px',
+                    right: '8px',
+                    background: 'rgba(0,0,0,0.75)',
+                    color: '#fff',
+                    borderRadius: '50%',
+                    padding: '4px',
+                    border: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            ) : (
+              <label style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                padding: '0.75rem',
+                borderRadius: 'var(--radius-sm)',
+                border: '1.5px dashed var(--primary)',
+                background: 'rgba(10, 102, 194, 0.08)',
+                color: 'var(--primary)',
+                fontWeight: '700',
+                fontSize: '0.88rem',
+                cursor: 'pointer'
+              }}>
+                <Image size={18} /> {uploadingMedia ? 'Uploading to Cloudinary...' : '📷 Add Photo or Video'}
+                <input 
+                  type="file" 
+                  accept="image/*,video/*" 
+                  disabled={uploadingMedia}
+                  onChange={async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    setUploadingMedia(true);
+                    try {
+                      const type = file.type.startsWith('video') ? 'video' : 'image';
+                      setMediaType(type);
+                      const res = await api.uploadFile(file, 'post');
+                      if (res?.url) {
+                        setMediaUrl(res.url);
+                      }
+                    } catch (err) {
+                      console.error('Media upload failed:', err);
+                      const reader = new FileReader();
+                      reader.onload = (ev) => setMediaUrl(ev.target.result);
+                      reader.readAsDataURL(file);
+                    } finally {
+                      setUploadingMedia(false);
+                    }
+                  }}
+                  style={{ display: 'none' }}
+                />
+              </label>
+            )}
 
             {/* Code Snippet Field Toggle */}
             {showCodeInput ? (

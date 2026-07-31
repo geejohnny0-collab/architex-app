@@ -9,6 +9,7 @@ export default function SettingsView({ currentUser, onLogout, theme, onToggleThe
   const [handle, setHandle] = useState(user?.handle || '');
   const [bio, setBio] = useState(user?.bio || '');
   const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl || '');
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [newSkill, setNewSkill] = useState('');
   const [skills, setSkills] = useState(user?.skills || []);
   

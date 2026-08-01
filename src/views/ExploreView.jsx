@@ -19,12 +19,41 @@ export default function ExploreView({ searchQuery: globalQuery = '', onNavigate,
       return;
     }
     setLoading(true);
-    api.search(searchQuery.trim())
-      .then(data => {
-        if (data) setSearchResults(data);
-      })
-      .catch(err => console.error('Unified search error:', err))
-      .finally(() => setLoading(false));
+    const q = searchQuery.trim();
+    Promise.all([
+      api.search(q).catch(() => ({ profiles: [], posts: [], tags: [], projects: [], jobs: [] })),
+      api.users.search({ search: q }).catch(() => ({ users: [] }))
+    ]).then(([searchData, usersData]) => {
+      const mainProfiles = searchData?.profiles || [];
+      const userList = usersData?.users || (Array.isArray(usersData) ? usersData : []);
+      
+      const profileMap = new Map();
+      mainProfiles.forEach(p => profileMap.set(p.id, p));
+      userList.forEach(u => {
+        if (!profileMap.has(u.id)) {
+          profileMap.set(u.id, {
+            id: u.id,
+            name: u.name,
+            handle: u.handle,
+            email: u.email,
+            avatarUrl: u.avatarUrl || u.avatar,
+            userType: u.userType || u.type,
+            role: u.role,
+            verified: u.verified
+          });
+        }
+      });
+
+      setSearchResults({
+        profiles: Array.from(profileMap.values()),
+        posts: searchData?.posts || [],
+        tags: searchData?.tags || [],
+        projects: searchData?.projects || [],
+        jobs: searchData?.jobs || []
+      });
+    })
+    .catch(err => console.error('Explore search error:', err))
+    .finally(() => setLoading(false));
   }, [searchQuery]);
 
   return (

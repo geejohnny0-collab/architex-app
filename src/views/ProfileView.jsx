@@ -54,7 +54,7 @@ export default function ProfileView({ user: currentUser, viewedUserId, onNavigat
   const skills = Array.isArray(targetUser?.skills) ? targetUser.skills : (targetUser?.skills ? [targetUser.skills] : []);
   const avatarUrl = targetUser?.avatarUrl || targetUser?.avatar;
   const coverUrl = targetUser?.coverUrl || targetUser?.cover;
-  const initials = user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '?';
+  const initials = targetUser?.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '?';
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
@@ -70,8 +70,8 @@ export default function ProfileView({ user: currentUser, viewedUserId, onNavigat
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '-45px', marginBottom: '1rem', flexWrap: 'wrap', gap: '10px' }}>
             <label style={{ position: 'relative', cursor: 'pointer', display: 'inline-block' }} title="Change Profile Picture">
               <img 
-                src={avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=0a66c2&color=fff&bold=true`} 
-                alt={user?.name} 
+                src={avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(targetUser?.name || 'User')}&background=0a66c2&color=fff&bold=true`} 
+                alt={targetUser?.name || 'User'} 
                 style={{
                   width: '90px',
                   height: '90px',

@@ -2,11 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Code, MapPin, UserPlus, CheckCircle, MessageSquare, Check } from 'lucide-react';
 import api from '../services/apiService';
 
-export default function DevelopersView({ onNavigate, onViewProfile }) {
-  const [searchTerm, setSearchTerm] = useState('');
+export default function DevelopersView({ searchQuery: globalQuery = '', onNavigate, onViewProfile }) {
+  const [searchTerm, setSearchTerm] = useState(globalQuery);
   const [developers, setDevelopers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [followingIds, setFollowingIds] = useState(new Set());
+
+  useEffect(() => {
+    setSearchTerm(globalQuery);
+  }, [globalQuery]);
 
   useEffect(() => {
     setLoading(true);

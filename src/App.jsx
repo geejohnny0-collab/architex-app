@@ -495,11 +495,11 @@ export default function App() {
           )}
 
           {activeView === 'businesses' && (
-            <BusinessesView onNavigate={setActiveView} onViewProfile={handleViewProfile} />
+            <BusinessesView searchQuery={searchQuery} onNavigate={setActiveView} onViewProfile={handleViewProfile} />
           )}
 
           {activeView === 'developers' && (
-            <DevelopersView onNavigate={setActiveView} onViewProfile={handleViewProfile} />
+            <DevelopersView searchQuery={searchQuery} onNavigate={setActiveView} onViewProfile={handleViewProfile} />
           )}
 
           {activeView === 'projects' && (

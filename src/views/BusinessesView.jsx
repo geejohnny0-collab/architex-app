@@ -2,10 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Building2, MapPin, Users, Briefcase, CheckCircle, MessageSquare } from 'lucide-react';
 import api from '../services/apiService';
 
-export default function BusinessesView({ onNavigate, onViewProfile }) {
-  const [searchTerm, setSearchTerm] = useState('');
+export default function BusinessesView({ searchQuery: globalQuery = '', onNavigate, onViewProfile }) {
+  const [searchTerm, setSearchTerm] = useState(globalQuery);
   const [businesses, setBusinesses] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setSearchTerm(globalQuery);
+  }, [globalQuery]);
 
   useEffect(() => {
     setLoading(true);

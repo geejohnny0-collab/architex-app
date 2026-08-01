@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Heart, MessageSquare, Share2, Bookmark, Send, 
-  CheckCircle, MoreHorizontal, Copy, Check, Sparkles 
+  CheckCircle, MoreHorizontal, Copy, Check, Sparkles, Zap 
 } from 'lucide-react';
 
 export default function FeedPostCard({ 
@@ -250,20 +250,41 @@ return (
           </button>
         </div>
 
-        <button 
-          onClick={() => onSaveToggle && onSaveToggle(post.id)}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            color: post.saved ? 'var(--primary)' : 'var(--text-muted)',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer'
-          }}
-        >
-          <Bookmark size={18} fill={post.saved ? 'var(--primary)' : 'none'} />
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <button 
+            onClick={() => onOpenProposalModal ? onOpenProposalModal(post) : alert('To promote this post to the top of feed, purchase ad credits or upgrade your account!')}
+            title="Promote post as Sponsored Ad"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              color: post.isPromoted ? '#f59e0b' : 'var(--text-muted)',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '0.78rem',
+              fontWeight: '700'
+            }}
+          >
+            <Zap size={16} fill={post.isPromoted ? '#f59e0b' : 'none'} style={{ color: '#f59e0b' }} />
+            <span>{post.isPromoted ? 'Promoted' : 'Promote Ad'}</span>
+          </button>
+
+          <button 
+            onClick={() => onSaveToggle && onSaveToggle(post.id)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              color: post.saved ? 'var(--primary)' : 'var(--text-muted)',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            <Bookmark size={18} fill={post.saved ? 'var(--primary)' : 'none'} />
+          </button>
+        </div>
       </div>
 
       {/* Expandable Comments Drawer */}

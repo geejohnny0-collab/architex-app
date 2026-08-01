@@ -31,23 +31,23 @@ const AD_SPONSORS = [
   }
 ];
 
-export default function InFeedVideoAd({ adSlot, adClient = "ca-pub-6979107957328158", adIndex = 0 }) {
+export default function InFeedVideoAd({ adSlot = "3467556965", adClient = "ca-pub-6979107957328158", adLayoutKey = "-6t+ed+2i-1n-4w", adIndex = 0 }) {
   const sponsor = AD_SPONSORS[adIndex % AD_SPONSORS.length];
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
   const videoRef = useRef(null);
   const adContainerRef = useRef(null);
 
-  // Initialize Google AdSense if client and slot are provided
+  // Initialize Google AdSense in-feed unit
   useEffect(() => {
-    if (adClient && adSlot && window.adsbygoogle) {
+    if (window.adsbygoogle) {
       try {
         (window.adsbygoogle = window.adsbygoogle || []).push({});
       } catch (e) {
         console.warn('AdSense push notice:', e);
       }
     }
-  }, [adClient, adSlot]);
+  }, []);
 
   // Auto-play / pause based on viewport visibility
   useEffect(() => {
@@ -112,7 +112,7 @@ export default function InFeedVideoAd({ adSlot, adClient = "ca-pub-6979107957328
             data-ad-client={adClient}
             data-ad-slot={adSlot}
             data-ad-format="fluid"
-            data-ad-layout-key="-fb+5w+4e-db+86"
+            data-ad-layout-key={adLayoutKey}
           />
         </div>
       ) : null}

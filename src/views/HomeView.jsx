@@ -103,8 +103,8 @@ export default function HomeView({
                 onAddComment={onAddComment}
                 onOpenProposalModal={onOpenProposalModal}
               />
-              {(idx + 1) % 2 === 0 && (
-                <InFeedVideoAd adIndex={Math.floor(idx / 2)} />
+              {(idx + 1) % 5 === 0 && (
+                <InFeedVideoAd adIndex={Math.floor(idx / 5)} />
               )}
             </React.Fragment>
           ))

@@ -526,6 +526,7 @@ export default function App() {
               onConversationsChange={setConversations}
               onUnreadChange={setUnreadMessages}
               onViewProfile={handleViewProfile}
+              onOpenCreditsModal={() => setIsCreditsModalOpen(true)}
             />
           )}
 

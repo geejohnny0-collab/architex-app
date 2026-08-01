@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { MessageSquare, Send, Search, CheckCheck, Plus, UserPlus, X, Inbox, UserCheck, ShieldAlert, Sparkles } from 'lucide-react';
 import api from '../services/apiService';
 
-export default function MessagesView({ currentUser, conversations = [], onConversationsChange, onUnreadChange, onViewProfile }) {
+export default function MessagesView({ currentUser, conversations = [], onConversationsChange, onUnreadChange, onViewProfile, onOpenCreditsModal }) {
   const [activeConvId, setActiveConvId] = useState(null);
   const [messageText, setMessageText] = useState('');
   const [messages, setMessages] = useState([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [tabMode, setTabMode] = useState('PRIMARY'); // 'PRIMARY' | 'REQUESTS'
+  const [threadCategory, setThreadCategory] = useState('ALL'); // 'ALL' | 'DEVELOPERS' | 'BUSINESSES'
 
   // New Message User Modal State
   const [isNewMessageModalOpen, setIsNewMessageModalOpen] = useState(false);
@@ -28,7 +29,7 @@ export default function MessagesView({ currentUser, conversations = [], onConver
     if (!isNewMessageModalOpen) return;
     setSearchingUsers(true);
     api.users.search({ search: userSearchTerm.trim(), limit: 10 })
-      .then(data => setFoundUsers(Array.isArray(data) ? data : []))
+      .then(data => setFoundUsers(Array.isArray(data) ? data : (Array.isArray(data?.users) ? data.users : [])))
       .catch(err => console.error('User search error:', err))
       .finally(() => setSearchingUsers(false));
   }, [userSearchTerm, isNewMessageModalOpen]);
@@ -46,13 +47,23 @@ export default function MessagesView({ currentUser, conversations = [], onConver
       .finally(() => setLoadingMessages(false));
   }, [activeConvId]);
 
+  const activeConv = conversations.find(c => c.id === activeConvId) || conversations[0] || null;
+
   const handleStartConversationWithUser = async (targetUser) => {
+    const isBusinessUser = currentUser?.userType === 'business';
+    const isTargetDev = targetUser.userType === 'dev' || targetUser.userType === 'developer';
+    const userCredits = currentUser?.credits || 0;
+
+    if (isBusinessUser && isTargetDev && userCredits <= 0) {
+      if (onOpenCreditsModal) onOpenCreditsModal();
+      return;
+    }
+
     try {
       const conv = await api.conversations.start(targetUser.id);
       setIsNewMessageModalOpen(false);
       setUserSearchTerm('');
       
-      // Update conversations list
       if (onConversationsChange) {
         onConversationsChange([conv, ...conversations.filter(c => c.id !== conv.id)]);
       }
@@ -63,11 +74,19 @@ export default function MessagesView({ currentUser, conversations = [], onConver
     }
   };
 
-  const activeConv = conversations.find(c => c.id === activeConvId) || conversations[0] || null;
-
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!messageText.trim() || !activeConvId) return;
+
+    const participantType = activeConv?.participant?.userType;
+    const isBusinessUser = currentUser?.userType === 'business';
+    const isTargetDev = participantType === 'dev' || participantType === 'developer';
+    const userCredits = currentUser?.credits || 0;
+
+    if (isBusinessUser && isTargetDev && userCredits <= 0) {
+      if (onOpenCreditsModal) onOpenCreditsModal();
+      return;
+    }
 
     const content = messageText.trim();
     setMessageText('');
@@ -86,7 +105,14 @@ export default function MessagesView({ currentUser, conversations = [], onConver
 
   const currentList = tabMode === 'PRIMARY' ? primaryConvs : requestConvs;
 
-  const filteredConversations = currentList.filter(c => {
+  const categoryFiltered = currentList.filter(c => {
+    const pType = c.participant?.userType;
+    if (threadCategory === 'DEVELOPERS') return pType === 'dev' || pType === 'developer';
+    if (threadCategory === 'BUSINESSES') return pType === 'business';
+    return true;
+  });
+
+  const filteredConversations = categoryFiltered.filter(c => {
     if (!searchQuery.trim()) return true;
     const name = c.participant?.name || '';
     const handle = c.participant?.handle || '';
@@ -144,6 +170,39 @@ export default function MessagesView({ currentUser, conversations = [], onConver
             }}
           >
             Requests ({requestConvs.length})
+          </button>
+        </div>
+        {/* Developers vs Businesses Category Filter */}
+        <div style={{ display: 'flex', gap: '4px', padding: '0.4rem 0.75rem', background: 'var(--bg-surface)', borderBottom: '1px solid var(--border-color)' }}>
+          <button
+            onClick={() => setThreadCategory('ALL')}
+            style={{
+              flex: 1, padding: '4px 6px', fontSize: '0.72rem', fontWeight: '700', borderRadius: '4px', border: 'none', cursor: 'pointer',
+              background: threadCategory === 'ALL' ? 'var(--primary)' : 'transparent',
+              color: threadCategory === 'ALL' ? '#fff' : 'var(--text-muted)'
+            }}
+          >
+            All
+          </button>
+          <button
+            onClick={() => setThreadCategory('DEVELOPERS')}
+            style={{
+              flex: 1, padding: '4px 6px', fontSize: '0.72rem', fontWeight: '700', borderRadius: '4px', border: 'none', cursor: 'pointer',
+              background: threadCategory === 'DEVELOPERS' ? 'var(--primary)' : 'transparent',
+              color: threadCategory === 'DEVELOPERS' ? '#fff' : 'var(--text-muted)'
+            }}
+          >
+            💻 Devs
+          </button>
+          <button
+            onClick={() => setThreadCategory('BUSINESSES')}
+            style={{
+              flex: 1, padding: '4px 6px', fontSize: '0.72rem', fontWeight: '700', borderRadius: '4px', border: 'none', cursor: 'pointer',
+              background: threadCategory === 'BUSINESSES' ? 'var(--primary)' : 'transparent',
+              color: threadCategory === 'BUSINESSES' ? '#fff' : 'var(--text-muted)'
+            }}
+          >
+            💼 Businesses
           </button>
         </div>
 

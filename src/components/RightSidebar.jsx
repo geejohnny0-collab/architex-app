@@ -1,9 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { Code, TrendingUp, MessageSquare, Briefcase, UserPlus } from 'lucide-react';
-import api from '../services/apiService';
-
 export default function RightSidebar({ onNavigate, onViewProfile, onOpenProposalModal }) {
   const [suggestedUsers, setSuggestedUsers] = useState([]);
+  const [followedMap, setFollowedMap] = useState({});
+
+  const handleFollowClick = async (devId) => {
+    const isFollowing = !!followedMap[devId];
+    setFollowedMap(prev => ({ ...prev, [devId]: !isFollowing }));
+    try {
+      await api.users.follow(devId);
+    } catch (err) {
+      console.error('Follow failed:', err);
+      setFollowedMap(prev => ({ ...prev, [devId]: isFollowing }));
+    }
+  };
 
   useEffect(() => {
     api.users.search({ limit: 4 })
@@ -57,11 +67,11 @@ export default function RightSidebar({ onNavigate, onViewProfile, onOpenProposal
                     </div>
                   </div>
                   <button 
-                    onClick={() => alert(`Connected with ${name}!`)}
-                    className="btn-outline-primary"
-                    style={{ padding: '3px 10px', fontSize: '0.75rem' }}
+                    onClick={() => handleFollowClick(dev.id)}
+                    className={followedMap[dev.id] ? 'btn-secondary' : 'btn-outline-primary'}
+                    style={{ padding: '3px 10px', fontSize: '0.75rem', fontWeight: '600' }}
                   >
-                    <UserPlus size={13} /> Connect
+                    {followedMap[dev.id] ? '✓ Following' : '+ Follow'}
                   </button>
                 </div>
               );

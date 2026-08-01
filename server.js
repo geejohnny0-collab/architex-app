@@ -63,7 +63,7 @@ app.use(cors({
     if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app') || origin.endsWith('.onrender.com')) {
       return cb(null, true);
     }
-    cb(new Error(`CORS blocked: ${origin}`));
+    return cb(null, true);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -1487,14 +1487,13 @@ app.post('/api/credits/spend', requireAuth, async (req, res) => {
   }
 });
 
-// ─── Production Static File Serving ──────────────────────────────────────────
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, 'dist')));
-  app.get('*', (req, res, next) => {
-    if (req.path.startsWith('/api')) return next();
-    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
-  });
-}
+// ─── Production / Deployment Static File Serving ───────────────────────────────
+const distPath = path.join(__dirname, 'dist');
+app.use(express.static(distPath));
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api')) return next();
+  res.sendFile(path.join(distPath, 'index.html'));
+});
 
 async function startServer() {
   try {

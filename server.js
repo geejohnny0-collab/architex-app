@@ -365,6 +365,14 @@ app.get('/api/auth/me', requireAuth, async (req, res) => {
 // ──────────────────────────────────────────────────────────────────────────────
 
 app.get('/api/users', async (req, res) => {
+  let currentUserId = null;
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    try {
+      const decoded = jwt.verify(authHeader.split(' ')[1], JWT_SECRET);
+      currentUserId = decoded.userId;
+    } catch {}
+  }
   const { search, type, limit = 50, offset = 0 } = req.query;
   try {
     const query = search ? search.trim() : '';
@@ -400,7 +408,7 @@ app.get('/api/users', async (req, res) => {
         select: {
           id: true, name: true, handle: true, email: true, avatarUrl: true, role: true,
           userType: true, location: true, verified: true, bio: true,
-          followers: { where: { followerId: req.userId }, select: { id: true } },
+          ...(currentUserId ? { followers: { where: { followerId: currentUserId }, select: { id: true } } } : {}),
         },
         take: Number(limit),
         skip: Number(offset),

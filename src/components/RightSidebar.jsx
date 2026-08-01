@@ -7,19 +7,25 @@ export default function RightSidebar({ onNavigate, onViewProfile, onOpenProposal
   const [followedMap, setFollowedMap] = useState({});
 
   const handleFollowClick = async (devId) => {
-    const isFollowing = !!followedMap[devId];
-    setFollowedMap(prev => ({ ...prev, [devId]: !isFollowing }));
     try {
-      await api.users.follow(devId);
+      const res = await api.users.follow(devId);
+      setFollowedMap(prev => ({ ...prev, [devId]: !!res?.following }));
     } catch (err) {
       console.error('Follow failed:', err);
-      setFollowedMap(prev => ({ ...prev, [devId]: isFollowing }));
     }
   };
 
   useEffect(() => {
     api.users.search({ limit: 4 })
-      .then(data => setSuggestedUsers(Array.isArray(data) ? data : (Array.isArray(data?.users) ? data.users : [])))
+      .then(data => {
+        const list = Array.isArray(data) ? data : (Array.isArray(data?.users) ? data.users : []);
+        setSuggestedUsers(list);
+        const map = {};
+        list.forEach(u => {
+          if (u.isFollowing) map[u.id] = true;
+        });
+        setFollowedMap(map);
+      })
       .catch(err => console.error('Failed to load suggested users:', err));
   }, []);
 

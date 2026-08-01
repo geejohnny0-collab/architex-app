@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Search, Plus, Sun, Moon, MessageSquare, Bell, User, 
   Settings, LogOut, CheckCircle, ShieldCheck, ChevronDown, Sparkles, Zap

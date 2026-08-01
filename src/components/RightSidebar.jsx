@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Code, TrendingUp, MessageSquare, Briefcase, UserPlus } from 'lucide-react';
 import api from '../services/apiService';
 
-export default function RightSidebar({ onNavigate, onOpenProposalModal }) {
+export default function RightSidebar({ onNavigate, onViewProfile, onOpenProposalModal }) {
   const [suggestedUsers, setSuggestedUsers] = useState([]);
 
   useEffect(() => {
-    api.users.search({ limit: 3 })
-      .then(data => setSuggestedUsers(Array.isArray(data) ? data : []))
+    api.users.search({ limit: 4 })
+      .then(data => setSuggestedUsers(Array.isArray(data) ? data : (Array.isArray(data?.users) ? data.users : [])))
       .catch(err => console.error('Failed to load suggested users:', err));
   }, []);
 
@@ -35,13 +35,17 @@ export default function RightSidebar({ onNavigate, onOpenProposalModal }) {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {suggestedUsers.map((dev) => {
-              const avatar = dev.avatarUrl || dev.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=80&q=80';
+              const avatar = dev.avatarUrl || dev.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(dev.name || 'User')}&background=0a66c2&color=fff&bold=true`;
               const name = dev.name || 'Developer';
-              const handle = dev.handle || '@user';
+              const handle = dev.handle ? `@${dev.handle}` : '@user';
 
               return (
                 <div key={dev.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div 
+                    onClick={() => onViewProfile && onViewProfile(dev.id)}
+                    style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
+                    title={`View ${name}'s Profile`}
+                  >
                     <img 
                       src={avatar} 
                       alt={name} 

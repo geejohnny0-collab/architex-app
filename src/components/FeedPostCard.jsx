@@ -316,7 +316,15 @@ return (
                 const cTime = c.time || (c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '');
                 const cText = c.content || c.text || '';
                 return (
-                  <div key={c.id} style={{ display: 'flex', gap: '10px' }}>
+                  <div 
+                    key={c.id} 
+                    onClick={() => {
+                      const cId = c.author?.id || c.authorId;
+                      if (onViewProfile && cId) onViewProfile(cId);
+                    }}
+                    style={{ display: 'flex', gap: '10px', cursor: 'pointer' }}
+                    title={`View ${cAuthor}'s Profile`}
+                  >
                     <img src={cAvatar} alt={cAuthor} style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} />
                     <div style={{ flex: 1, background: 'var(--bg-surface)', padding: '8px 12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color-subtle)' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

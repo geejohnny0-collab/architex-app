@@ -137,12 +137,18 @@ export default function App() {
 
   const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
 
-  const [selectedUserId, setSelectedUserId] = useState(null);
-  const [showOnboarding, setShowOnboarding] = useState(false);
+  const handleNavigate = (view) => {
+    if (view === 'profile') {
+      setSelectedUserId(null);
+    }
+    setActiveView(view);
+  };
 
   const handleViewProfile = (targetUserId) => {
-    setSelectedUserId(targetUserId);
-    setActiveView('profile');
+    if (targetUserId) {
+      setSelectedUserId(targetUserId);
+      setActiveView('profile');
+    }
   };
 
   // ─── Session Verification on Mount ───────────────────────────────────────
@@ -467,7 +473,7 @@ export default function App() {
         {/* Left Sidebar */}
         <Sidebar
           activeView={activeView}
-          onNavigate={setActiveView}
+          onNavigate={handleNavigate}
           unreadNotifications={unreadNotifications}
           unreadMessages={unreadMessages}
           user={user}

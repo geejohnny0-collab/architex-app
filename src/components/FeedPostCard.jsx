@@ -16,12 +16,12 @@ export default function FeedPostCard({
   const [commentInput, setCommentInput] = useState('');
   const [copiedCode, setCopiedCode] = useState(false);
 
-  if (!post || !post.author) return null;
+  if (!post) return null;
 
-  const authorName = post.author.name || 'User';
-  const authorHandle = post.author.handle || '@user';
+  const authorName = post.author?.name || 'Architect User';
+  const authorHandle = post.author?.handle ? `@${post.author.handle}` : '@user';
   const authorAvatar = post.author?.avatarUrl || post.author?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=0a66c2&color=fff&bold=true`;
-  const authorType = post.author.userType || post.author.type || 'developer';
+  const authorType = post.author?.userType || post.author?.type || 'developer';
   const isBusiness = authorType === 'business';
   const timestamp = post.timestamp || (post.createdAt ? new Date(post.createdAt).toLocaleDateString() : 'Just now');
 

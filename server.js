@@ -371,8 +371,15 @@ app.get('/api/users', requireAuth, async (req, res) => {
     const cleanHandle = query.replace(/^@/, '');
     const tokens = query.split(/\s+/).filter(Boolean);
 
+    const typeLower = type ? type.toLowerCase() : null;
+    const typeFilter = typeLower === 'developer' || typeLower === 'dev' 
+      ? { in: ['developer', 'dev'] }
+      : typeLower === 'business'
+      ? { in: ['business', 'company', 'agency'] }
+      : typeLower;
+
     const where = {
-      ...(type && { userType: type.toLowerCase() }),
+      ...(typeFilter && { userType: typeFilter }),
       ...(search && {
         OR: [
           { name: { contains: query, mode: 'insensitive' } },

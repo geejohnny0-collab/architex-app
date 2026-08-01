@@ -37,6 +37,8 @@ export default function DevelopersView({ onNavigate, onViewProfile }) {
     !searchTerm.trim() ||
     (d.name && d.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (d.handle && d.handle.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (d.email && d.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (d.role && d.role.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (Array.isArray(d.skills) && d.skills.some(s => s.toLowerCase().includes(searchTerm.toLowerCase())))
   );
 

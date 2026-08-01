@@ -14,12 +14,35 @@ export default function Header({
   onOpenCreditsModal,
   activeView, 
   onNavigate,
+  onViewProfile,
   searchQuery,
   onSearchChange,
   unreadNotifications,
   unreadMessages
 }) {
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [liveSearchResults, setLiveSearchResults] = useState({ profiles: [], posts: [], projects: [], jobs: [] });
+  const [isSearching, setIsSearching] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  useEffect(() => {
+    if (!searchQuery || !searchQuery.trim()) {
+      setLiveSearchResults({ profiles: [], posts: [], projects: [], jobs: [] });
+      setShowDropdown(false);
+      return;
+    }
+    setIsSearching(true);
+    setShowDropdown(true);
+    const timer = setTimeout(() => {
+      api.search(searchQuery.trim())
+        .then(res => {
+          if (res) setLiveSearchResults(res);
+        })
+        .catch(err => console.error('Header live search error:', err))
+        .finally(() => setIsSearching(false));
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   return (
     <header className="app-header">
@@ -37,8 +60,8 @@ export default function Header({
         </button>
       </div>
 
-      {/* Global Search Bar */}
-      <div className="header-center" style={{ flex: 1, maxWidth: '440px', margin: '0 1rem' }}>
+      {/* Global Search Bar with Live Autocomplete Dropdown */}
+      <div className="header-center" style={{ flex: 1, maxWidth: '480px', margin: '0 1rem', position: 'relative' }}>
         <div style={{
           position: 'relative',
           display: 'flex',
@@ -47,13 +70,11 @@ export default function Header({
           <Search size={18} style={{ position: 'absolute', left: '14px', color: 'var(--text-muted)' }} />
           <input 
             type="text" 
-            placeholder="Search businesses, developers, projects..."
+            placeholder="Search users, handles (@motionmedias), businesses..."
             value={searchQuery}
+            onFocus={() => { if (searchQuery.trim()) setShowDropdown(true); }}
             onChange={(e) => {
               onSearchChange(e.target.value);
-              if (e.target.value.trim() && activeView !== 'explore' && onNavigate) {
-                onNavigate('explore');
-              }
             }}
             style={{
               width: '100%',
@@ -68,13 +89,95 @@ export default function Header({
           />
           {searchQuery && (
             <button 
-              onClick={() => onSearchChange('')}
-              style={{ position: 'absolute', right: '12px', fontSize: '0.75rem', color: 'var(--text-muted)' }}
+              onClick={() => { onSearchChange(''); setShowDropdown(false); }}
+              style={{ position: 'absolute', right: '12px', fontSize: '0.75rem', color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}
             >
               Clear
             </button>
           )}
         </div>
+
+        {/* Live Instant Search Dropdown Overlay */}
+        {showDropdown && searchQuery.trim() && (
+          <div className="glass-panel" style={{
+            position: 'absolute',
+            top: 'calc(100% + 8px)',
+            left: 0,
+            right: 0,
+            zIndex: 9999,
+            padding: '0.75rem',
+            boxShadow: '0 12px 32px rgba(0,0,0,0.35)',
+            maxHeight: '380px',
+            overflowY: 'auto',
+            borderRadius: 'var(--radius-md)'
+          }}>
+            {isSearching ? (
+              <div style={{ padding: '1rem', textAlign: 'center', fontSize: '0.82rem', color: 'var(--text-muted)' }}>Searching database…</div>
+            ) : (
+              <div>
+                {/* User Profiles */}
+                <div style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '6px', letterSpacing: '0.5px' }}>
+                  👥 Members & Businesses ({liveSearchResults.profiles.length})
+                </div>
+
+                {liveSearchResults.profiles.length === 0 ? (
+                  <div style={{ padding: '0.5rem', fontSize: '0.82rem', color: 'var(--text-muted)' }}>No accounts found matching "{searchQuery}"</div>
+                ) : (
+                  liveSearchResults.profiles.map(u => (
+                    <div 
+                      key={u.id}
+                      onClick={() => {
+                        setShowDropdown(false);
+                        if (onViewProfile) onViewProfile(u.id);
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        padding: '0.6rem 0.75rem',
+                        borderRadius: 'var(--radius-sm)',
+                        cursor: 'pointer',
+                        transition: 'background 0.15s ease',
+                        marginBottom: '4px'
+                      }}
+                      className="dropdown-item-hover"
+                    >
+                      <img src={u.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name || 'User')}&background=0a66c2&color=fff&bold=true`} alt={u.name} style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: '700', fontSize: '0.88rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          {u.name}
+                          {u.verified && <CheckCircle size={13} style={{ color: 'var(--primary)' }} />}
+                        </div>
+                        <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>
+                          @{u.handle} {u.role ? `• ${u.role}` : ''} ({u.userType === 'business' ? 'Business' : 'Developer'})
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+
+                <div 
+                  onClick={() => {
+                    setShowDropdown(false);
+                    if (onNavigate) onNavigate('explore');
+                  }}
+                  style={{
+                    borderTop: '1px solid var(--border-color)',
+                    marginTop: '8px',
+                    paddingTop: '8px',
+                    textAlign: 'center',
+                    fontSize: '0.82rem',
+                    fontWeight: '700',
+                    color: 'var(--primary)',
+                    cursor: 'pointer'
+                  }}
+                >
+                  View full results on Explore page →
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Actions & Utilities */}

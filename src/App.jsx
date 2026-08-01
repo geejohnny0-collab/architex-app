@@ -455,6 +455,7 @@ export default function App() {
         onSignOut={handleSignOut}
         activeView={activeView}
         onNavigate={setActiveView}
+        onViewProfile={handleViewProfile}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         unreadNotifications={unreadNotifications}

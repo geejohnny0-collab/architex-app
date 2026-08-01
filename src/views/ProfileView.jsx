@@ -169,9 +169,9 @@ export default function ProfileView({ user: currentUser, viewedUserId, onNavigat
               </span>
             </div>
 
-            {user?.bio && (
+            {targetUser?.bio && (
               <p style={{ fontSize: '0.9rem', color: 'var(--text-main)', maxWidth: '650px', lineHeight: '1.5', marginBottom: '1rem' }}>
-                {user.bio}
+                {targetUser.bio}
               </p>
             )}
 
@@ -196,10 +196,10 @@ export default function ProfileView({ user: currentUser, viewedUserId, onNavigat
                   <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>C2H & W2 Opportunities</span>
                 </div>
                 <div style={{ fontWeight: '800', fontSize: '0.95rem', color: 'var(--text-main)', marginTop: '4px' }}>
-                  Desired Rate: <span style={{ color: 'var(--accent-green)' }}>{user?.desiredRate || '$135 / hr C2H'}</span> • Expected W2: <span style={{ color: 'var(--primary)' }}>{user?.expectedSalary || '$210,000 / yr'}</span>
+                  Desired Rate: <span style={{ color: 'var(--accent-green)' }}>{targetUser?.desiredRate || '$135 / hr C2H'}</span> • Expected W2: <span style={{ color: 'var(--primary)' }}>{targetUser?.expectedSalary || '$210,000 / yr'}</span>
                 </div>
                 <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                  Work Mode: {user?.workMode || '100% Remote'} • Status: Available Immediately
+                  Work Mode: {targetUser?.workMode || '100% Remote'} • Status: Available Immediately
                 </div>
               </div>
 
@@ -213,9 +213,9 @@ export default function ProfileView({ user: currentUser, viewedUserId, onNavigat
             </div>
 
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
-              {user?.location && <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><MapPin size={14} /> {user.location}</div>}
-              {user?.website && <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Globe size={14} /> {user.website}</div>}
-              {user?.github && <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Github size={14} /> {user.github}</div>}
+              {targetUser?.location && <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><MapPin size={14} /> {targetUser.location}</div>}
+              {targetUser?.website && <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Globe size={14} /> {targetUser.website}</div>}
+              {targetUser?.github && <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Github size={14} /> {targetUser.github}</div>}
             </div>
 
             {/* Skills */}
@@ -235,21 +235,21 @@ export default function ProfileView({ user: currentUser, viewedUserId, onNavigat
               textAlign: 'center'
             }}>
               <div>
-                <div style={{ fontWeight: '800', fontSize: '1.1rem', color: 'var(--text-main)' }}>{user?.followersCount || user?.stats?.followers || 0}</div>
+                <div style={{ fontWeight: '800', fontSize: '1.1rem', color: 'var(--text-main)' }}>{targetUser?.followersCount || targetUser?.stats?.followers || 0}</div>
                 <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>Followers</div>
               </div>
               <div>
-                <div style={{ fontWeight: '800', fontSize: '1.1rem', color: 'var(--text-main)' }}>{user?.followingCount || user?.stats?.following || 0}</div>
+                <div style={{ fontWeight: '800', fontSize: '1.1rem', color: 'var(--text-main)' }}>{targetUser?.followingCount || targetUser?.stats?.following || 0}</div>
                 <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>Following</div>
               </div>
               <div>
                 <div style={{ fontWeight: '800', fontSize: '1.1rem', color: 'var(--accent-amber)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2px' }}>
-                  <Star size={14} fill="currentColor" /> {user?.stats?.rating || '5.0'}
+                  <Star size={14} fill="currentColor" /> {targetUser?.stats?.rating || '5.0'}
                 </div>
-                <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>Rating ({user?.stats?.completedProjects || 0} jobs)</div>
+                <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>Rating ({targetUser?.stats?.completedProjects || 0} jobs)</div>
               </div>
               <div>
-                <div style={{ fontWeight: '800', fontSize: '1.1rem', color: 'var(--accent-green)' }}>{user?.stats?.earningsTotal || '$0'}</div>
+                <div style={{ fontWeight: '800', fontSize: '1.1rem', color: 'var(--accent-green)' }}>{targetUser?.stats?.earningsTotal || '$0'}</div>
                 <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>Earned</div>
               </div>
             </div>

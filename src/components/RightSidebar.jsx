@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Code, TrendingUp, MessageSquare, Briefcase, UserPlus } from 'lucide-react';
+import api from '../services/apiService';
+
 export default function RightSidebar({ onNavigate, onViewProfile, onOpenProposalModal }) {
   const [suggestedUsers, setSuggestedUsers] = useState([]);
   const [followedMap, setFollowedMap] = useState({});

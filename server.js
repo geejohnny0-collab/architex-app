@@ -368,10 +368,6 @@ app.get('/api/users', requireAuth, async (req, res) => {
   const { search, type, limit = 20, offset = 0 } = req.query;
   try {
     const where = {
-      NOT: [
-        { email: { contains: '@example.com' } },
-        { email: { contains: 'developer@architex.io' } }
-      ],
       ...(type && { userType: type.toLowerCase() }),
       ...(search && {
         OR: [
@@ -422,19 +418,16 @@ app.get('/api/search', requireAuth, async (req, res) => {
     const [profiles, posts, projects, jobs] = await Promise.all([
       prisma.user.findMany({
         where: {
-          NOT: [
-            { email: { contains: '@example.com' } },
-            { email: { contains: 'developer@architex.io' } }
-          ],
           OR: [
             { name: { contains: query, mode: 'insensitive' } },
             { handle: { contains: cleanHandle, mode: 'insensitive' } },
+            { email: { contains: query, mode: 'insensitive' } },
             { role: { contains: query, mode: 'insensitive' } },
             { bio: { contains: query, mode: 'insensitive' } }
           ]
         },
-        select: { id: true, name: true, handle: true, avatarUrl: true, userType: true, role: true, verified: true },
-        take: 10
+        select: { id: true, name: true, handle: true, email: true, avatarUrl: true, userType: true, role: true, verified: true },
+        take: 20
       }),
       prisma.post.findMany({
         where: {

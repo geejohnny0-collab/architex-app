@@ -98,7 +98,7 @@ export default function ExploreView({ searchQuery: globalQuery = '', onNavigate,
                 👥 Profiles & Businesses ({searchResults.profiles.length})
               </h3>
               {searchResults.profiles.length === 0 ? (
-                <div style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}>No profiles found. (Note: Developer profiles require typing their full name or handle to be discovered).</div>
+                <div style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}>No profiles found matching search criteria.</div>
               ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1rem' }}>
                   {searchResults.profiles.map(u => (

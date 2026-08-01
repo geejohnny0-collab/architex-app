@@ -365,16 +365,25 @@ app.get('/api/auth/me', requireAuth, async (req, res) => {
 // ──────────────────────────────────────────────────────────────────────────────
 
 app.get('/api/users', requireAuth, async (req, res) => {
-  const { search, type, limit = 20, offset = 0 } = req.query;
+  const { search, type, limit = 50, offset = 0 } = req.query;
   try {
+    const query = search ? search.trim() : '';
+    const cleanHandle = query.replace(/^@/, '');
+    const tokens = query.split(/\s+/).filter(Boolean);
+
     const where = {
       ...(type && { userType: type.toLowerCase() }),
       ...(search && {
         OR: [
-          { name: { contains: search.trim(), mode: 'insensitive' } },
-          { handle: { contains: search.trim().replace(/^@/, ''), mode: 'insensitive' } },
-          { role: { contains: search.trim(), mode: 'insensitive' } },
-          { bio: { contains: search.trim(), mode: 'insensitive' } }
+          { name: { contains: query, mode: 'insensitive' } },
+          { handle: { contains: cleanHandle, mode: 'insensitive' } },
+          { email: { contains: query, mode: 'insensitive' } },
+          { role: { contains: query, mode: 'insensitive' } },
+          { bio: { contains: query, mode: 'insensitive' } },
+          ...tokens.map(t => ({ name: { contains: t, mode: 'insensitive' } })),
+          ...tokens.map(t => ({ handle: { contains: t.replace(/^@/, ''), mode: 'insensitive' } })),
+          ...tokens.map(t => ({ role: { contains: t, mode: 'insensitive' } })),
+          ...tokens.map(t => ({ bio: { contains: t, mode: 'insensitive' } }))
         ],
       }),
     };
@@ -382,7 +391,7 @@ app.get('/api/users', requireAuth, async (req, res) => {
       prisma.user.findMany({
         where,
         select: {
-          id: true, name: true, handle: true, avatarUrl: true, role: true,
+          id: true, name: true, handle: true, email: true, avatarUrl: true, role: true,
           userType: true, location: true, verified: true, bio: true,
           followers: { where: { followerId: req.userId }, select: { id: true } },
         },
@@ -413,21 +422,26 @@ app.get('/api/search', requireAuth, async (req, res) => {
   }
   const query = q.trim();
   const cleanHandle = query.replace(/^@/, '');
+  const tokens = query.split(/\s+/).filter(Boolean);
+
+  const userConditions = [
+    { name: { contains: query, mode: 'insensitive' } },
+    { handle: { contains: cleanHandle, mode: 'insensitive' } },
+    { email: { contains: query, mode: 'insensitive' } },
+    { role: { contains: query, mode: 'insensitive' } },
+    { bio: { contains: query, mode: 'insensitive' } },
+    ...tokens.map(t => ({ name: { contains: t, mode: 'insensitive' } })),
+    ...tokens.map(t => ({ handle: { contains: t.replace(/^@/, ''), mode: 'insensitive' } })),
+    ...tokens.map(t => ({ role: { contains: t, mode: 'insensitive' } })),
+    ...tokens.map(t => ({ bio: { contains: t, mode: 'insensitive' } }))
+  ];
 
   try {
     const [profiles, posts, projects, jobs] = await Promise.all([
       prisma.user.findMany({
-        where: {
-          OR: [
-            { name: { contains: query, mode: 'insensitive' } },
-            { handle: { contains: cleanHandle, mode: 'insensitive' } },
-            { email: { contains: query, mode: 'insensitive' } },
-            { role: { contains: query, mode: 'insensitive' } },
-            { bio: { contains: query, mode: 'insensitive' } }
-          ]
-        },
+        where: { OR: userConditions },
         select: { id: true, name: true, handle: true, email: true, avatarUrl: true, userType: true, role: true, verified: true },
-        take: 20
+        take: 30
       }),
       prisma.post.findMany({
         where: {

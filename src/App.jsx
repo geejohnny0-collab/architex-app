@@ -522,6 +522,7 @@ export default function App() {
               conversations={conversations}
               onConversationsChange={setConversations}
               onUnreadChange={setUnreadMessages}
+              onViewProfile={handleViewProfile}
             />
           )}
 
@@ -530,6 +531,7 @@ export default function App() {
               notifications={notifications}
               onMarkAllRead={handleMarkAllNotificationsRead}
               onClearAll={handleClearNotifications}
+              onViewProfile={handleViewProfile}
               onMarkRead={async (id) => {
                 await api.notifications.markRead(id);
                 setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));

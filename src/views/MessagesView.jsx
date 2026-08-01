@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MessageSquare, Send, Search, CheckCheck, Plus, UserPlus, X, Inbox, UserCheck, ShieldAlert, Sparkles } from 'lucide-react';
 import api from '../services/apiService';
 
-export default function MessagesView({ currentUser, conversations = [], onConversationsChange, onUnreadChange }) {
+export default function MessagesView({ currentUser, conversations = [], onConversationsChange, onUnreadChange, onViewProfile }) {
   const [activeConvId, setActiveConvId] = useState(null);
   const [messageText, setMessageText] = useState('');
   const [messages, setMessages] = useState([]);
@@ -230,20 +230,36 @@ export default function MessagesView({ currentUser, conversations = [], onConver
         {activeConv ? (
           <>
             {/* Active Thread Header */}
-            <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--border-color)', background: 'var(--bg-surface)', display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <img 
-                src={activeConv.participant?.avatarUrl || activeConv.participant?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80'} 
-                alt={activeConv.participant?.name} 
-                style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} 
-              />
-              <div>
-                <div style={{ fontWeight: '800', fontSize: '0.95rem', color: 'var(--text-main)' }}>
-                  {activeConv.participant?.name || 'Direct Conversation'}
-                </div>
-                <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>
-                  {activeConv.participant?.handle || '@user'}
+            <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--border-color)', background: 'var(--bg-surface)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div 
+                onClick={() => onViewProfile && activeConv.participant?.id && onViewProfile(activeConv.participant.id)}
+                style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}
+                title={`View ${activeConv.participant?.name}'s Profile`}
+              >
+                <img 
+                  src={activeConv.participant?.avatarUrl || activeConv.participant?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(activeConv.participant?.name || 'User')}&background=0a66c2&color=fff&bold=true`} 
+                  alt={activeConv.participant?.name} 
+                  style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} 
+                />
+                <div>
+                  <div style={{ fontWeight: '800', fontSize: '0.95rem', color: 'var(--text-main)' }}>
+                    {activeConv.participant?.name || 'Direct Conversation'}
+                  </div>
+                  <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>
+                    {activeConv.participant?.handle ? `@${activeConv.participant.handle}` : '@user'}
+                  </div>
                 </div>
               </div>
+
+              {activeConv.participant?.id && onViewProfile && (
+                <button 
+                  onClick={() => onViewProfile(activeConv.participant.id)}
+                  className="btn-secondary"
+                  style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem' }}
+                >
+                  View Profile
+                </button>
+              )}
             </div>
 
             {/* Message Thread History */}

@@ -3,7 +3,7 @@ import { User, CheckCircle, MapPin, Globe, Github, Star, Briefcase, Settings, Ed
 import FeedPostCard from '../components/FeedPostCard';
 import api from '../services/apiService';
 
-export default function ProfileView({ user: currentUser, viewedUserId, onNavigate, onLikeToggle, onSaveToggle, onAddComment, onOpenProposalModal, onOpenChat }) {
+export default function ProfileView({ user: currentUser, viewedUserId, onNavigate, onViewProfile, onLikeToggle, onSaveToggle, onAddComment, onOpenProposalModal, onOpenChat }) {
   const [activeTab, setActiveTab] = useState('Posts');
   const [profileUser, setProfileUser] = useState(currentUser);
   const [userPosts, setUserPosts] = useState([]);
@@ -283,6 +283,7 @@ export default function ProfileView({ user: currentUser, viewedUserId, onNavigat
                 key={p.id}
                 post={p}
                 currentUser={currentUser}
+                onViewProfile={onViewProfile}
                 onLikeToggle={onLikeToggle}
                 onSaveToggle={onSaveToggle}
                 onAddComment={onAddComment}
@@ -300,7 +301,13 @@ export default function ProfileView({ user: currentUser, viewedUserId, onNavigat
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
               {followersList.map(u => (
-                <div key={u.id} className="glass-panel" style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div 
+                  key={u.id} 
+                  onClick={() => onViewProfile && onViewProfile(u.id)}
+                  className="glass-panel" 
+                  style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}
+                  title={`View ${u.name}'s Profile`}
+                >
                   <img src={u.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name || 'User')}&background=0a66c2&color=fff&bold=true`} alt={u.name} style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover' }} />
                   <div>
                     <div style={{ fontWeight: '700', fontSize: '0.92rem', color: 'var(--text-main)' }}>{u.name}</div>
@@ -320,7 +327,13 @@ export default function ProfileView({ user: currentUser, viewedUserId, onNavigat
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
               {followingList.map(u => (
-                <div key={u.id} className="glass-panel" style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div 
+                  key={u.id} 
+                  onClick={() => onViewProfile && onViewProfile(u.id)}
+                  className="glass-panel" 
+                  style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}
+                  title={`View ${u.name}'s Profile`}
+                >
                   <img src={u.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name || 'User')}&background=0a66c2&color=fff&bold=true`} alt={u.name} style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover' }} />
                   <div>
                     <div style={{ fontWeight: '700', fontSize: '0.92rem', color: 'var(--text-main)' }}>{u.name}</div>

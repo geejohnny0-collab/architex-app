@@ -137,6 +137,9 @@ export default function App() {
 
   const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
 
+  const [selectedUserId, setSelectedUserId] = useState(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
   const handleNavigate = (view) => {
     if (view === 'profile') {
       setSelectedUserId(null);

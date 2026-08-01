@@ -612,6 +612,8 @@ export default function App() {
         onNavigate={setActiveView}
         onOpenCreatePost={() => setIsCreatePostOpen(true)}
         unreadMessages={unreadMessages}
+        user={user}
+        onSignOut={handleSignOut}
       />
 
       {/* Modals */}

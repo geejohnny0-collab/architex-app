@@ -75,6 +75,9 @@ export default function Header({
             onFocus={() => { if (searchQuery.trim()) setShowDropdown(true); }}
             onChange={(e) => {
               onSearchChange(e.target.value);
+              if (e.target.value.trim() && activeView !== 'explore' && onNavigate) {
+                onNavigate('explore');
+              }
             }}
             style={{
               width: '100%',

@@ -1,4 +1,5 @@
 import React from 'react';
+import InFeedVideoAd from '../components/InFeedVideoAd';
 import FeedPostCard from '../components/FeedPostCard';
 import { Sparkles, Image, Code, Plus } from 'lucide-react';
 
@@ -92,16 +93,20 @@ export default function HomeView({
             </button>
           </div>
         ) : (
-          posts.map((post) => (
-            <FeedPostCard 
-              key={post.id} 
-              post={post} currentUser={user}
-              onViewProfile={onViewProfile}
-              onLikeToggle={onLikeToggle}
-              onSaveToggle={onSaveToggle}
-              onAddComment={onAddComment}
-              onOpenProposalModal={onOpenProposalModal}
-            />
+          posts.map((post, idx) => (
+            <React.Fragment key={post.id}>
+              <FeedPostCard 
+                post={post} currentUser={user}
+                onViewProfile={onViewProfile}
+                onLikeToggle={onLikeToggle}
+                onSaveToggle={onSaveToggle}
+                onAddComment={onAddComment}
+                onOpenProposalModal={onOpenProposalModal}
+              />
+              {(idx + 1) % 2 === 0 && (
+                <InFeedVideoAd adIndex={Math.floor(idx / 2)} />
+              )}
+            </React.Fragment>
           ))
         )}
       </div>

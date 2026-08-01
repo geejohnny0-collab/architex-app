@@ -6,7 +6,7 @@
 const BASE_URL = (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL + '/api' : '/api');
 
 function getToken() {
-  return localStorage.getItem('authToken');
+  return localStorage.getItem('authToken') || localStorage.getItem('architex_token') || localStorage.getItem('token');
 }
 
 /**

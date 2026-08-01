@@ -364,7 +364,7 @@ app.get('/api/auth/me', requireAuth, async (req, res) => {
 // USER ROUTES
 // ──────────────────────────────────────────────────────────────────────────────
 
-app.get('/api/users', requireAuth, async (req, res) => {
+app.get('/api/users', async (req, res) => {
   const { search, type, limit = 50, offset = 0 } = req.query;
   try {
     const query = search ? search.trim() : '';
@@ -422,7 +422,7 @@ app.get('/api/users', requireAuth, async (req, res) => {
   }
 });
 
-app.get('/api/search', requireAuth, async (req, res) => {
+app.get('/api/search', async (req, res) => {
   const { q } = req.query;
   if (!q || !q.trim()) {
     return res.json({ profiles: [], posts: [], tags: [], projects: [], jobs: [] });

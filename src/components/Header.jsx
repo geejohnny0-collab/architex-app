@@ -184,11 +184,11 @@ export default function Header({
       </div>
 
       {/* Actions & Utilities */}
-      <div className="header-right" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <div className="header-right" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         {/* Credits Balance Button */}
         <button 
           onClick={onOpenCreditsModal}
-          className="btn-secondary"
+          className="btn-secondary desktop-only"
           style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: '700', border: '1px solid var(--primary-glow)', background: 'var(--primary-light)', color: 'var(--primary)' }}
         >
           <Zap size={16} fill="#f59e0b" color="#f59e0b" />
@@ -196,15 +196,16 @@ export default function Header({
         </button>
 
         {/* Create Post Button */}
-        <button className="btn-primary" onClick={onOpenCreatePost}>
+        <button className="btn-primary desktop-only" onClick={onOpenCreatePost}>
           <Plus size={18} />
-          <span className="desktop-only">Create Post</span>
+          <span>Create Post</span>
         </button>
 
         {/* Theme Toggle Button */}
         <button 
           onClick={onToggleTheme}
           title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
+          className="desktop-only"
           style={{
             width: '40px',
             height: '40px',
@@ -224,6 +225,7 @@ export default function Header({
         <button 
           onClick={() => onNavigate('messages')}
           title="Messages"
+          className="desktop-only"
           style={{
             position: 'relative',
             width: '40px',

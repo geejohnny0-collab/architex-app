@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Building2, MapPin, Users, Briefcase, CheckCircle, MessageSquare } from 'lucide-react';
 import api from '../services/apiService';
 
-export default function BusinessesView({ onNavigate }) {
+export default function BusinessesView({ onNavigate, onViewProfile }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [businesses, setBusinesses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -24,7 +24,9 @@ export default function BusinessesView({ onNavigate }) {
   const filtered = businesses.filter(b => 
     !searchTerm.trim() || 
     (b.name && b.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (b.category && b.category.toLowerCase().includes(searchTerm.toLowerCase()))
+    (b.handle && b.handle.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (b.email && b.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (b.role && b.role.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   return (
@@ -76,7 +78,11 @@ export default function BusinessesView({ onNavigate }) {
             return (
               <div key={biz.id} className="glass-panel" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                 <div>
-                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '10px' }}>
+                  <div 
+                    onClick={() => onViewProfile && onViewProfile(biz.id)}
+                    style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '10px', cursor: 'pointer' }}
+                    title={`View ${name}'s Profile`}
+                  >
                     <img src={logo} alt={name} style={{ width: '48px', height: '48px', borderRadius: '12px', objectFit: 'cover' }} />
                     <div>
                       <div style={{ fontWeight: '700', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--text-main)' }}>

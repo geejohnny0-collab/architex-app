@@ -13,9 +13,23 @@ export default function ProfileView({ user: currentUser, viewedUserId, onNavigat
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [modalType, setModalType] = useState(null); // 'followers' | 'following' | null
+  const [modalList, setModalList] = useState([]);
 
   const targetId = viewedUserId || currentUser?.id;
   const isSelf = !viewedUserId || Number(viewedUserId) === Number(currentUser?.id);
+
+  const openUserListModal = async (type) => {
+    setModalType(type);
+    try {
+      const data = type === 'followers' 
+        ? await api.users.getFollowers(targetId) 
+        : await api.users.getFollowing(targetId);
+      setModalList(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error(`Failed to fetch ${type}:`, err);
+    }
+  };
 
   useEffect(() => {
     if (!targetId) return;
@@ -177,10 +191,10 @@ export default function ProfileView({ user: currentUser, viewedUserId, onNavigat
             </div>
 
             <div style={{ display: 'flex', gap: '16px', fontSize: '0.88rem', color: 'var(--text-muted)', margin: '8px 0 12px 0' }}>
-              <span style={{ cursor: 'pointer' }} onClick={() => setActiveTab('Followers')}>
+              <span style={{ cursor: 'pointer' }} onClick={() => openUserListModal('followers')}>
                 <strong style={{ color: 'var(--text-main)' }}>{followersCount}</strong> Followers
               </span>
-              <span style={{ cursor: 'pointer' }} onClick={() => setActiveTab('Following')}>
+              <span style={{ cursor: 'pointer' }} onClick={() => openUserListModal('following')}>
                 <strong style={{ color: 'var(--text-main)' }}>{followingCount}</strong> Following
               </span>
             </div>
@@ -387,6 +401,72 @@ export default function ProfileView({ user: currentUser, viewedUserId, onNavigat
           </div>
         )}
       </div>
+
+      {/* Interactive Followers / Following List Modal */}
+      {modalType && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 1000,
+          background: 'rgba(0, 0, 0, 0.75)', backdropFilter: 'blur(6px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem'
+        }}>
+          <div className="glass-panel" style={{
+            maxWidth: '440px', width: '100%', padding: '1.5rem',
+            borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)',
+            display: 'flex', flexDirection: 'column', gap: '1rem'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '800', textTransform: 'capitalize', color: 'var(--text-main)' }}>
+                {modalType}
+              </h3>
+              <button 
+                onClick={() => setModalType(null)} 
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '1.2rem', cursor: 'pointer', padding: '4px' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ maxHeight: '380px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {modalList.map((u) => (
+                <div 
+                  key={u.id}
+                  onClick={() => {
+                    setModalType(null);
+                    if (onViewProfile) onViewProfile(u.id);
+                  }}
+                  className="glass-panel"
+                  style={{
+                    padding: '0.75rem 1rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    cursor: 'pointer',
+                    borderRadius: 'var(--radius-md)'
+                  }}
+                >
+                  <img 
+                    src={u.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name || 'User')}&background=0a66c2&color=fff&bold=true`} 
+                    alt={u.name} 
+                    style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover' }} 
+                  />
+                  <div>
+                    <div style={{ fontWeight: '700', fontSize: '0.92rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      {u.name}
+                      {u.verified && <CheckCircle size={14} style={{ color: 'var(--primary)' }} />}
+                    </div>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>@{u.handle || u.username}</div>
+                  </div>
+                </div>
+              ))}
+              {modalList.length === 0 && (
+                <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem 1rem', fontSize: '0.88rem' }}>
+                  No {modalType} found.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

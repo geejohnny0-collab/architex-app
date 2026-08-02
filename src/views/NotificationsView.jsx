@@ -51,7 +51,7 @@ export default function NotificationsView({ notifications = [], onMarkAllRead, o
             const timeStr = n.createdAt
               ? new Date(n.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
               : 'Just now';
-            const targetUserId = n.senderId || n.userId || n.actorId;
+            const targetUserId = n.senderId;
 
             return (
               <div

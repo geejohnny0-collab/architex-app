@@ -41,7 +41,8 @@ model User {
   likes              Like[]
   sentMessages       Message[]      @relation("SentMessages")
   receivedMessages   Message[]      @relation("ReceivedMessages")
-  notifications      Notification[]
+  notifications      Notification[] @relation("NotificationRecipient")
+  sentNotifications  Notification[] @relation("NotificationSender")
   following          Follow[]       @relation("UserFollowing")
   followers          Follow[]       @relation("UserFollowers")
   conversationsAsA   Conversation[] @relation("ConversationUserA")
@@ -184,8 +185,10 @@ model Notification {
   link      String?  // optional deep-link
   createdAt DateTime @default(now())
   userId    Int      // recipient
+  senderId  Int?     // who triggered the notification
 
-  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User  @relation("NotificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
+  sender    User? @relation("NotificationSender", fields: [senderId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([read])

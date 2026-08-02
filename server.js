@@ -153,10 +153,10 @@ function uploadToCloudinary(buffer, options = {}) {
 }
 
 // ─── Helper: Create notification ─────────────────────────────────────────────
-async function createNotification(userId, type, title, body, link = null) {
+async function createNotification(userId, type, title, body, link = null, senderId = null) {
   try {
     const notif = await prisma.notification.create({
-      data: { userId, type, title, body, link },
+      data: { userId, type, title, body, link, senderId },
     });
     io.to(`user:${userId}`).emit('notification:new', notif);
     return notif;
@@ -626,7 +626,8 @@ app.post('/api/users/:id/follow', requireAuth,
       await createNotification(
         targetId, 'follow',
         `${follower.name} followed you`,
-        `@${follower.handle} is now following you.`
+        `@${follower.handle} is now following you.`,
+        null, req.userId
       );
 
       res.json({ following: true });
@@ -877,7 +878,7 @@ app.post('/api/posts/:id/like', requireAuth,
 
       if (post.authorId !== req.userId) {
         const liker = await prisma.user.findUnique({ where: { id: req.userId }, select: { name: true } });
-        await createNotification(post.authorId, 'like', `${liker.name} liked your post`, 'Someone liked your post.');
+        await createNotification(post.authorId, 'like', `${liker.name} liked your post`, 'Someone liked your post.', null, req.userId);
       }
 
       res.json({ liked: true, likesCount: count });
@@ -936,7 +937,7 @@ app.post('/api/posts/:postId/comments', requireAuth,
 
       if (post.authorId !== req.userId) {
         const commenter = await prisma.user.findUnique({ where: { id: req.userId }, select: { name: true } });
-        await createNotification(post.authorId, 'comment', `${commenter.name} commented on your post`, content.slice(0, 100));
+        await createNotification(post.authorId, 'comment', `${commenter.name} commented on your post`, content.slice(0, 100), null, req.userId);
       }
 
       res.status(201).json(comment);
@@ -1084,7 +1085,7 @@ app.post('/api/conversations/:id/messages', requireAuth,
       io.to(`user:${receiverId}`).emit('message:new', { conversationId: convId, message });
 
       const sender = await prisma.user.findUnique({ where: { id: req.userId }, select: { name: true } });
-      await createNotification(receiverId, 'message', `${sender.name} sent you a message`, content.slice(0, 100));
+      await createNotification(receiverId, 'message', `${sender.name} sent you a message`, content.slice(0, 100), null, req.userId);
 
       res.status(201).json(message);
     } catch (err) {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Bell, Heart, Send, Sparkles, MessageSquare, Check, Trash2, UserPlus } from 'lucide-react';
 
-export default function NotificationsView({ notifications = [], onMarkAllRead, onMarkRead, onClearAll }) {
+export default function NotificationsView({ notifications = [], onMarkAllRead, onMarkRead, onClearAll, onViewProfile }) {
   function getIcon(type) {
     const t = (type || '').toLowerCase();
     if (t === 'like') return <Heart size={18} style={{ color: '#ef4444' }} />;
@@ -51,11 +51,15 @@ export default function NotificationsView({ notifications = [], onMarkAllRead, o
             const timeStr = n.createdAt
               ? new Date(n.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
               : 'Just now';
+            const targetUserId = n.senderId || n.userId || n.actorId;
 
             return (
               <div
                 key={n.id}
-                onClick={() => isUnread && onMarkRead && onMarkRead(n.id)}
+                onClick={() => {
+                  if (isUnread && onMarkRead) onMarkRead(n.id);
+                  if (onViewProfile && targetUserId) onViewProfile(targetUserId);
+                }}
                 className="glass-panel"
                 style={{
                   padding: '1rem 1.25rem',
@@ -64,7 +68,7 @@ export default function NotificationsView({ notifications = [], onMarkAllRead, o
                   justifyContent: 'space-between',
                   background: isUnread ? 'var(--primary-light)' : 'var(--bg-surface)',
                   borderLeft: isUnread ? '4px solid var(--primary)' : '1px solid var(--border-color)',
-                  cursor: isUnread ? 'pointer' : 'default',
+                  cursor: 'pointer',
                   transition: 'background 0.2s'
                 }}
               >

@@ -18,7 +18,7 @@ export default function HomeView({
   const tabs = ['For You', 'Following', 'Businesses', 'Developers', 'Trending', 'AI', 'Local'];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', paddingBottom: '140px' }}>
       {/* Quick Post Box */}
       <div className="glass-panel" style={{ padding: '1rem', marginBottom: '1.25rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '0.85rem' }}>

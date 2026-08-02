@@ -16,6 +16,35 @@ export default function FeedPostCard({
   const [showComments, setShowComments] = useState(false);
   const [commentInput, setCommentInput] = useState('');
   const [copiedCode, setCopiedCode] = useState(false);
+  const [showPromoteModal, setShowPromoteModal] = useState(false);
+  const [promoteLoading, setPromoteLoading] = useState(false);
+
+  const handlePromote = async (tier) => {
+    try {
+      setPromoteLoading(true);
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/posts/${post.id}/create-promotion-session`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({ tier })
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert('Promotion session initiated!');
+        setShowPromoteModal(false);
+      }
+    } catch (err) {
+      console.error('Promotion error:', err);
+      alert('Could not initiate payment session.');
+    } finally {
+      setPromoteLoading(false);
+    }
+  };
 
   if (!post) return null;
 
@@ -260,13 +289,13 @@ return (
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <button 
-            onClick={() => onOpenProposalModal ? onOpenProposalModal(post) : alert('To promote this post to the top of feed, purchase ad credits or upgrade your account!')}
+            onClick={() => setShowPromoteModal(true)}
             title="Promote post as Sponsored Ad"
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: '4px',
-              color: post.isPromoted ? '#f59e0b' : 'var(--text-muted)',
+              color: (post.isPromoted || post.isAd) ? '#f59e0b' : 'var(--text-muted)',
               background: 'none',
               border: 'none',
               cursor: 'pointer',
@@ -274,8 +303,8 @@ return (
               fontWeight: '700'
             }}
           >
-            <Zap size={16} fill={post.isPromoted ? '#f59e0b' : 'none'} style={{ color: '#f59e0b' }} />
-            <span>{post.isPromoted ? 'Promoted' : 'Promote Ad'}</span>
+            <Zap size={16} fill={(post.isPromoted || post.isAd) ? '#f59e0b' : 'none'} style={{ color: '#f59e0b' }} />
+            <span>{(post.isPromoted || post.isAd) ? 'Promoted' : 'Promote Ad'}</span>
           </button>
 
           <button 
@@ -298,44 +327,39 @@ return (
       {/* Expandable Comments Drawer */}
       {showComments && (
         <div style={{
-          padding: '1rem 1.25rem',
           borderTop: '1px solid var(--border-color)',
+          padding: '1rem 1.25rem',
           background: 'var(--bg-surface-hover)'
         }}>
-          {/* Add Comment Input */}
-          {isBusiness && currentUser && !currentUser.isPro && currentUser.userType !== 'business' ? (
-            <div style={{ padding: '0.85rem', background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, rgba(37, 99, 235, 0.08) 100%)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--primary)', marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ fontSize: '0.85rem', color: 'var(--text-main)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Sparkles size={16} style={{ color: 'var(--primary)' }} /> Pro Plan required to comment on Business posts.
-              </div>
-            </div>
-          ) : (
-            <form onSubmit={handleCommentSubmit} style={{ display: 'flex', gap: '8px', marginBottom: '1rem' }}>
-              <input 
-                type="text" 
-                placeholder="Write a comment..." 
-                value={commentInput}
-                onChange={(e) => setCommentInput(e.target.value)}
-                style={{
-                  flex: 1,
-                  padding: '0.5rem 0.85rem',
-                  borderRadius: 'var(--radius-full)',
-                  border: '1px solid var(--border-color)',
-                  background: 'var(--bg-app)',
-                  color: 'var(--text-main)',
-                  fontSize: '0.85rem'
-                }}
-              />
-              <button type="submit" className="btn-primary" style={{ padding: '0.5rem 1rem', borderRadius: 'var(--radius-full)' }}>
-                Comment
-              </button>
-            </form>
-          )}
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '1rem' }}>
+            <input 
+              type="text" 
+              placeholder="Write a comment..." 
+              value={commentInput}
+              onChange={(e) => setCommentInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && submitComment()}
+              style={{
+                flex: 1,
+                padding: '0.55rem 0.85rem',
+                borderRadius: 'var(--radius-full)',
+                border: '1px solid var(--border-color)',
+                background: 'var(--bg-surface)',
+                color: 'var(--text-main)',
+                fontSize: '0.85rem'
+              }}
+            />
+            <button 
+              onClick={submitComment}
+              className="btn-primary"
+              style={{ padding: '0.55rem 1rem', fontSize: '0.82rem', borderRadius: 'var(--radius-full)' }}
+            >
+              <Send size={14} />
+            </button>
+          </div>
 
-          {/* Comment List */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {commentsList.length === 0 ? (
-              <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', textAlign: 'center', padding: '8px' }}>
+              <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', textAlign: 'center', padding: '0.5rem 0' }}>
                 No comments yet. Be the first to comment!
               </div>
             ) : (
@@ -366,6 +390,85 @@ return (
                 );
               })
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Package Selection Modal */}
+      {showPromoteModal && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 1000,
+          background: 'rgba(0, 0, 0, 0.75)', backdropFilter: 'blur(6px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem'
+        }}>
+          <div className="glass-panel" style={{
+            maxWidth: '440px', width: '100%', padding: '1.75rem',
+            borderRadius: 'var(--radius-lg)', border: '1px solid var(--primary-glow)',
+            display: 'flex', flexDirection: 'column', gap: '1.25rem'
+          }}>
+            <div>
+              <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Zap size={22} style={{ color: '#f59e0b' }} /> Promote Post as Sponsored Ad
+              </h3>
+              <p style={{ margin: '6px 0 0 0', fontSize: '0.86rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+                Choose your campaign package to boost visibility and sponsor this post across the feed:
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <button 
+                disabled={promoteLoading} 
+                onClick={() => handlePromote('3-day')}
+                style={{
+                  padding: '0.85rem 1rem', borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--border-color)', background: 'var(--bg-surface-hover)',
+                  color: 'var(--text-main)', fontWeight: '700', fontSize: '0.92rem',
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer'
+                }}
+              >
+                <span>⚡ 3-Day Feed Boost</span>
+                <span style={{ color: 'var(--primary)', fontWeight: '800' }}>$10</span>
+              </button>
+
+              <button 
+                disabled={promoteLoading} 
+                onClick={() => handlePromote('7-day')}
+                style={{
+                  padding: '0.85rem 1rem', borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--primary)', background: 'var(--primary-light)',
+                  color: 'var(--text-main)', fontWeight: '700', fontSize: '0.92rem',
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer'
+                }}
+              >
+                <span>🌟 7-Day Featured Ad</span>
+                <span style={{ color: 'var(--primary)', fontWeight: '800' }}>$25</span>
+              </button>
+
+              <button 
+                disabled={promoteLoading} 
+                onClick={() => handlePromote('14-day')}
+                style={{
+                  padding: '0.85rem 1rem', borderRadius: 'var(--radius-md)',
+                  border: '1px solid #f59e0b', background: 'rgba(245, 158, 11, 0.1)',
+                  color: 'var(--text-main)', fontWeight: '700', fontSize: '0.92rem',
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer'
+                }}
+              >
+                <span>👑 14-Day Top Spot Ad</span>
+                <span style={{ color: '#f59e0b', fontWeight: '800' }}>$50</span>
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '4px' }}>
+              <button 
+                disabled={promoteLoading}
+                onClick={() => setShowPromoteModal(false)}
+                className="btn-secondary"
+                style={{ fontSize: '0.85rem', padding: '0.5rem 1rem' }}
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}

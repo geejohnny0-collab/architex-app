@@ -852,6 +852,75 @@ app.delete('/api/posts/:id', requireAuth,
   }
 );
 
+app.post('/api/posts/:id/create-promotion-session', requireAuth, async (req, res) => {
+  const postId = Number(req.params.id);
+  const { tier = '3-day' } = req.body;
+  
+  try {
+    const post = await prisma.post.findUnique({ where: { id: postId } });
+    if (!post) return res.status(404).json({ error: 'Post not found' });
+
+    let amount = 1000;
+    let packageName = '3-Day Feed Boost';
+    if (tier === '7-day') {
+      amount = 2500;
+      packageName = '7-Day Featured Ad';
+    } else if (tier === '14-day') {
+      amount = 5000;
+      packageName = '14-Day Top Spot Ad';
+    }
+
+    if (process.env.STRIPE_SECRET_KEY) {
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: [{
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: `Architex Sponsored Ad (${packageName})`,
+              description: `Promote post #${postId} to top priority in Home Feed for all users`,
+            },
+            unit_amount: amount,
+          },
+          quantity: 1,
+        }],
+        mode: 'payment',
+        success_url: `${process.env.CLIENT_URL || 'https://architex-app.onrender.com'}?promoted=true&postId=${postId}`,
+        cancel_url: `${process.env.CLIENT_URL || 'https://architex-app.onrender.com'}?promoted=cancel`,
+        metadata: { postId: String(postId), tier, userId: String(req.userId) },
+      });
+      // Also mark as promoted for instant feedback
+      await prisma.post.update({
+        where: { id: postId },
+        data: { isPromoted: true, isAd: true }
+      });
+      res.json({ url: session.url });
+    } else {
+      await prisma.post.update({
+        where: { id: postId },
+        data: { isPromoted: true, isAd: true }
+      });
+      res.json({ url: `${process.env.CLIENT_URL || 'https://architex-app.onrender.com'}?promoted=true&postId=${postId}`, autoPromoted: true });
+    }
+  } catch (err) {
+    console.error('Promotion session error:', err);
+    res.status(500).json({ error: 'Failed to create promotion checkout session.' });
+  }
+});
+
+app.post('/api/posts/:id/confirm-promotion', requireAuth, async (req, res) => {
+  const postId = Number(req.params.id);
+  try {
+    const updated = await prisma.post.update({
+      where: { id: postId },
+      data: { isPromoted: true, isAd: true }
+    });
+    res.json({ success: true, post: updated });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to confirm promotion.' });
+  }
+});
+
 app.post('/api/posts/:id/like', requireAuth,
   param('id').isInt(), validate,
   async (req, res) => {

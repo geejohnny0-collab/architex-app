@@ -209,14 +209,22 @@ app.post('/api/auth/signup',
       const motionMediasId = 4;
       if (user.id !== motionMediasId) {
         try {
-          await prisma.follow.create({
-            data: {
+          await prisma.follow.upsert({
+            where: {
+              followerId_followingId: {
+                followerId: user.id,
+                followingId: motionMediasId
+              }
+            },
+            update: {},
+            create: {
               followerId: user.id,
               followingId: motionMediasId
             }
           });
+          console.log(`[Auto-Follow] User #${user.id} (${user.name}) is now automatically following Motion Medias (ID 4).`);
         } catch (err) {
-          console.error('Auto-follow initialization error:', err);
+          console.error('[Auto-Follow Error] Failed to create follow link for user #' + user.id + ':', err);
         }
       }
 
@@ -1907,10 +1915,36 @@ app.get('*', (req, res, next) => {
   res.sendFile(path.join(distPath, 'index.html'));
 });
 
+async function syncExistingUsersToMotionMedias() {
+  const motionMediasId = 4;
+  try {
+    const allUsers = await prisma.user.findMany({ where: { NOT: { id: motionMediasId } } });
+    for (const user of allUsers) {
+      await prisma.follow.upsert({
+        where: {
+          followerId_followingId: {
+            followerId: user.id,
+            followingId: motionMediasId
+          }
+        },
+        update: {},
+        create: {
+          followerId: user.id,
+          followingId: motionMediasId
+        }
+      });
+    }
+    console.log('--- Retroactive follow sync complete for all existing users ---');
+  } catch (err) {
+    console.error('Retroactive follow sync error:', err.message);
+  }
+}
+
 async function startServer() {
   try {
     await prisma.$connect();
     console.log('✅ Database connected');
+    await syncExistingUsersToMotionMedias();
   } catch (err) {
     console.error('❌ Failed to connect to database:', err.message);
     // Don't exit – let Render retry the health check

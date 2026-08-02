@@ -15,6 +15,7 @@ export default function Header({
   activeView, 
   onNavigate,
   onViewProfile,
+  onViewMyProfile,
   searchQuery,
   onSearchChange,
   unreadNotifications,
@@ -342,7 +343,11 @@ export default function Header({
               </div>
 
               <button 
-                onClick={() => { onNavigate('profile'); setProfileDropdownOpen(false); }}
+                onClick={() => { 
+                  if (onViewMyProfile) onViewMyProfile();
+                  else onNavigate('profile'); 
+                  setProfileDropdownOpen(false); 
+                }}
                 style={{ width: '100%', padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.875rem', color: 'var(--text-main)', textAlign: 'left' }}
               >
                 <User size={16} /> View Profile

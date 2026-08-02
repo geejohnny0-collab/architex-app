@@ -4,6 +4,7 @@ import { Home, Compass, Plus, MessageSquare, User, Settings, LogOut, Briefcase, 
 export default function MobileBottomNav({ 
   activeView, 
   onNavigate, 
+  onViewMyProfile,
   onOpenCreatePost,
   unreadMessages = 0,
   user,
@@ -21,7 +22,11 @@ export default function MobileBottomNav({
 
   const handleMenuNavigate = (view) => {
     setIsMenuOpen(false);
-    onNavigate(view);
+    if (view === 'profile' && onViewMyProfile) {
+      onViewMyProfile();
+    } else {
+      onNavigate(view);
+    }
   };
 
   return (

@@ -8,6 +8,7 @@ import {
 export default function Sidebar({ 
   activeView, 
   onNavigate, 
+  onViewMyProfile,
   unreadNotifications, 
   unreadMessages,
   user 
@@ -77,7 +78,11 @@ export default function Sidebar({
 
       {/* Profile Card & Pro Subscription */}
       <div className="glass-panel" style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div 
+          onClick={() => onViewMyProfile ? onViewMyProfile() : onNavigate('profile')}
+          style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
+          title="View My Profile"
+        >
           <img 
             src={user?.avatar || user?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80'} 
             alt={user?.name || 'User'}
@@ -108,7 +113,7 @@ export default function Sidebar({
         </div>
 
         <button 
-          onClick={() => onNavigate('profile')} 
+          onClick={() => onViewMyProfile ? onViewMyProfile() : onNavigate('profile')} 
           className="btn-secondary" 
           style={{ width: '100%', fontSize: '0.82rem', padding: '0.45rem' }}
         >

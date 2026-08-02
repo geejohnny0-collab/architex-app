@@ -140,6 +140,11 @@ export default function App() {
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
 
+  const handleViewMyProfile = () => {
+    setSelectedUserId(null);
+    setActiveView('profile');
+  };
+
   const handleNavigate = (view) => {
     if (view === 'profile') {
       setSelectedUserId(null);
@@ -469,6 +474,7 @@ export default function App() {
         activeView={activeView}
         onNavigate={setActiveView}
         onViewProfile={handleViewProfile}
+        onViewMyProfile={handleViewMyProfile}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         unreadNotifications={unreadNotifications}
@@ -481,6 +487,7 @@ export default function App() {
         <Sidebar
           activeView={activeView}
           onNavigate={handleNavigate}
+          onViewMyProfile={handleViewMyProfile}
           unreadNotifications={unreadNotifications}
           unreadMessages={unreadMessages}
           user={user}
@@ -616,6 +623,7 @@ export default function App() {
       <MobileBottomNav
         activeView={activeView}
         onNavigate={handleNavigate}
+        onViewMyProfile={handleViewMyProfile}
         onOpenCreatePost={() => setIsCreatePostOpen(true)}
         unreadMessages={unreadMessages}
         user={user}

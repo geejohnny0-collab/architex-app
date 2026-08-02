@@ -19,6 +19,9 @@ export default function ProfileView({ user: currentUser, viewedUserId, onNavigat
 
   useEffect(() => {
     if (!targetId) return;
+    if (isSelf && currentUser) {
+      setProfileUser(currentUser);
+    }
     setLoading(true);
     
     Promise.all([

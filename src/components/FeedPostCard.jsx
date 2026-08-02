@@ -75,18 +75,19 @@ return (
           <img 
             src={authorAvatar} 
             alt={authorName} 
-            style={{ width: '46px', height: '46px', borderRadius: '50%', objectFit: 'cover' }}
+            onClick={handleProfileClick}
+            style={{ width: '46px', height: '46px', borderRadius: '50%', objectFit: 'cover', cursor: 'pointer' }}
           />
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ fontWeight: '700', fontSize: '0.95rem', color: 'var(--text-main)' }}>{authorName}</span>
-              {post.author.verified && <CheckCircle size={15} style={{ color: 'var(--primary)' }} />}
+              <span onClick={handleProfileClick} style={{ fontWeight: '700', fontSize: '0.95rem', color: 'var(--text-main)', cursor: 'pointer' }}>{authorName}</span>
+              {post.author?.verified && <CheckCircle size={15} style={{ color: 'var(--primary)' }} />}
               <span className={`badge ${isBusiness ? 'badge-purple' : 'badge-primary'}`} style={{ fontSize: '0.7rem' }}>
                 {isBusiness ? 'Business' : 'Developer'}
               </span>
             </div>
             <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'flex', gap: '6px', alignItems: 'center' }}>
-              <span>{authorHandle}</span>
+              <span onClick={handleProfileClick} style={{ cursor: 'pointer' }}>{authorHandle}</span>
               <span>•</span>
               <span>{timestamp}</span>
             </div>

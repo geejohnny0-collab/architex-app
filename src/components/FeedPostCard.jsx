@@ -10,6 +10,7 @@ export default function FeedPostCard({
   onSaveToggle, 
   onAddComment, 
   onOpenProposalModal,
+  onViewProfile,
   currentUser
 }) {
   const [showComments, setShowComments] = useState(false);

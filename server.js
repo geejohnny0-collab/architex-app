@@ -1106,10 +1106,26 @@ app.get('/api/notifications', requireAuth, async (req, res) => {
       orderBy: { createdAt: 'desc' },
       take: 50,
     });
+
+    // For old notifications with no senderId, extract sender name from title and resolve their ID
+    const enriched = await Promise.all(notifications.map(async (n) => {
+      if (n.senderId) return n;
+      const match = n.title.match(/^(.+?)\s+(liked|commented|followed|sent)/);
+      if (match) {
+        const senderName = match[1];
+        const found = await prisma.user.findFirst({
+          where: { name: senderName },
+          select: { id: true }
+        });
+        if (found) return { ...n, senderId: found.id };
+      }
+      return n;
+    }));
+
     const unreadCount = await prisma.notification.count({
       where: { userId: req.userId, read: false },
     });
-    res.json({ notifications, unreadCount });
+    res.json({ notifications: enriched, unreadCount });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch notifications.' });
   }

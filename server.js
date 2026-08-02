@@ -205,26 +205,27 @@ app.post('/api/auth/signup',
         },
       });
 
-      // Automatically follow Motion Medias (User ID 4) globally
-      const motionMediasId = 4;
-      if (user.id !== motionMediasId) {
-        try {
-          await prisma.follow.upsert({
-            where: {
-              followerId_followingId: {
+      // Automatically follow Motion Medias (User IDs 4 & 5) globally
+      const adminIds = [4, 5];
+      for (const targetId of adminIds) {
+        if (user.id !== targetId) {
+          try {
+            await prisma.follow.upsert({
+              where: {
+                followerId_followingId: {
+                  followerId: user.id,
+                  followingId: targetId
+                }
+              },
+              update: {},
+              create: {
                 followerId: user.id,
-                followingId: motionMediasId
+                followingId: targetId
               }
-            },
-            update: {},
-            create: {
-              followerId: user.id,
-              followingId: motionMediasId
-            }
-          });
-          console.log(`[Auto-Follow] User #${user.id} (${user.name}) is now automatically following Motion Medias (ID 4).`);
-        } catch (err) {
-          console.error('[Auto-Follow Error] Failed to create follow link for user #' + user.id + ':', err);
+            });
+          } catch (err) {
+            console.error(`[Auto-Follow Error] Failed to create follow link for user #${user.id} -> #${targetId}:`, err);
+          }
         }
       }
 
@@ -1916,25 +1917,27 @@ app.get('*', (req, res, next) => {
 });
 
 async function syncExistingUsersToMotionMedias() {
-  const motionMediasId = 4;
+  const adminIds = [4, 5];
   try {
-    const allUsers = await prisma.user.findMany({ where: { NOT: { id: motionMediasId } } });
-    for (const user of allUsers) {
-      await prisma.follow.upsert({
-        where: {
-          followerId_followingId: {
+    for (const targetId of adminIds) {
+      const allUsers = await prisma.user.findMany({ where: { NOT: { id: targetId } } });
+      for (const user of allUsers) {
+        await prisma.follow.upsert({
+          where: {
+            followerId_followingId: {
+              followerId: user.id,
+              followingId: targetId
+            }
+          },
+          update: {},
+          create: {
             followerId: user.id,
-            followingId: motionMediasId
+            followingId: targetId
           }
-        },
-        update: {},
-        create: {
-          followerId: user.id,
-          followingId: motionMediasId
-        }
-      });
+        });
+      }
     }
-    console.log('--- Retroactive follow sync complete for all existing users ---');
+    console.log('--- Retroactive follow sync complete for Motion Medias (User IDs 4 & 5) ---');
   } catch (err) {
     console.error('Retroactive follow sync error:', err.message);
   }

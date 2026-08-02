@@ -134,7 +134,7 @@ export default function ProfileView({ user: currentUser, viewedUserId, onNavigat
                 </button>
               ) : (
                 <>
-                  {targetUser?.id === 4 || targetUser?.handle === 'motionmedias' ? (
+                  {targetUser?.id === 4 || targetUser?.id === 5 || targetUser?.handle === 'motionmedias' || targetUser?.handle === 'motionmedia' ? (
                     <button 
                       disabled
                       className="btn-secondary"

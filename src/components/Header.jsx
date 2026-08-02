@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Search, Plus, Sun, Moon, MessageSquare, Bell, User, 
-  Settings, LogOut, CheckCircle, ShieldCheck, ChevronDown, Sparkles, Zap
+  Settings, LogOut, CheckCircle, ShieldCheck, ChevronDown, Sparkles, Zap,
+  Menu, X, Home, Compass, Building2, Code, Briefcase, Bookmark, Layers, Group, TrendingUp, Award
 } from 'lucide-react';
 import ArchitexLogo from './ArchitexLogo';
 
@@ -24,7 +25,23 @@ export default function Header({
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [liveSearchResults, setLiveSearchResults] = useState({ profiles: [], posts: [], projects: [], jobs: [] });
   const [isSearching, setIsSearching] = useState(false);
-  const [showDropdown, setShowDropdown] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const mobileNavItems = [
+    { id: 'home', label: 'Home', icon: Home },
+    { id: 'explore', label: 'Explore', icon: Compass },
+    { id: 'messages', label: 'Messages', icon: MessageSquare, badge: unreadMessages },
+    { id: 'notifications', label: 'Notifications', icon: Bell, badge: unreadNotifications },
+    { id: 'businesses', label: 'Businesses', icon: Building2 },
+    { id: 'developers', label: 'Developers', icon: Code },
+    { id: 'projects', label: 'Projects', icon: Briefcase },
+    { id: 'saved', label: 'Bookmarks', icon: Bookmark },
+    { id: 'jobs', label: 'Jobs', icon: Layers },
+    { id: 'groups', label: 'Groups', icon: Group },
+    { id: 'analytics', label: 'Enterprise Recruiter', icon: TrendingUp },
+    { id: 'certification', label: 'Get Certified ($99)', icon: Award },
+    { id: 'settings', label: 'Settings & Preferences', icon: Settings },
+  ];
 
   useEffect(() => {
     if (!searchQuery || !searchQuery.trim()) {
@@ -47,8 +64,27 @@ export default function Header({
 
   return (
     <header className="app-header">
-      {/* Brand Logo & Name */}
+      {/* Brand Logo & Mobile Hamburger Menu Button */}
       <div className="header-left" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <button 
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="mobile-only"
+          title="Open Navigation Menu"
+          style={{
+            background: 'var(--bg-surface-hover)',
+            border: '1px solid var(--border-color)',
+            color: 'var(--text-main)',
+            borderRadius: 'var(--radius-sm)',
+            padding: '6px 10px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer'
+          }}
+        >
+          {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+        </button>
+
         <button 
           onClick={() => onNavigate('home')}
           style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
@@ -372,6 +408,125 @@ export default function Header({
           )}
         </div>
       </div>
+
+      {/* Responsive Slide-Out Mobile Navigation Drawer */}
+      {mobileMenuOpen && (
+        <div style={{
+          position: 'fixed', inset: 0, top: '64px', zIndex: 99999,
+          background: 'rgba(0, 0, 0, 0.75)', backdropFilter: 'blur(8px)',
+          display: 'flex', flexDirection: 'column'
+        }} className="mobile-only">
+          <div className="glass-panel" style={{
+            flex: 1, overflowY: 'auto', padding: '1.25rem',
+            borderRight: '1px solid var(--border-color)',
+            background: 'var(--bg-surface)',
+            display: 'flex', flexDirection: 'column', gap: '1.25rem'
+          }}>
+            {/* User Info Header */}
+            <div 
+              onClick={() => {
+                setMobileMenuOpen(false);
+                if (onViewMyProfile) onViewMyProfile();
+                else onNavigate('profile');
+              }}
+              style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingBottom: '12px', borderBottom: '1px solid var(--border-color)', cursor: 'pointer' }}
+            >
+              <img 
+                src={user?.avatarUrl || user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=0a66c2&color=fff&bold=true`} 
+                alt={user?.name || 'User'} 
+                style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover' }} 
+              />
+              <div>
+                <div style={{ fontWeight: '800', fontSize: '1rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  {user?.name || 'Architect User'}
+                  {user?.verified && <CheckCircle size={15} style={{ color: 'var(--primary)' }} />}
+                </div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>@{user?.handle || 'user'} • View Profile</div>
+              </div>
+            </div>
+
+            {/* Quick Action Utilities */}
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button 
+                onClick={() => { setMobileMenuOpen(false); onOpenCreatePost(); }}
+                className="btn-primary"
+                style={{ flex: 1, padding: '0.6rem', fontSize: '0.85rem' }}
+              >
+                <Plus size={16} /> Create Post
+              </button>
+              <button 
+                onClick={() => { setMobileMenuOpen(false); onOpenCreditsModal(); }}
+                className="btn-secondary"
+                style={{ padding: '0.6rem 0.85rem', fontSize: '0.85rem', color: '#f59e0b', fontWeight: '700' }}
+              >
+                <Zap size={16} fill="#f59e0b" color="#f59e0b" /> {user?.credits || 0}
+              </button>
+            </div>
+
+            {/* Complete Navigation List */}
+            <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              {mobileNavItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = activeView === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      onNavigate(item.id);
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '0.75rem 1rem',
+                      borderRadius: 'var(--radius-md)',
+                      fontSize: '0.95rem',
+                      fontWeight: isActive ? '800' : '600',
+                      color: isActive ? 'var(--primary)' : 'var(--text-main)',
+                      background: isActive ? 'var(--primary-light)' : 'transparent',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                      <Icon size={20} style={{ color: isActive ? 'var(--primary)' : 'var(--text-muted)' }} />
+                      <span>{item.label}</span>
+                    </div>
+                    {item.badge > 0 && (
+                      <span style={{
+                        background: '#ef4444',
+                        color: 'white',
+                        fontSize: '0.75rem',
+                        fontWeight: '700',
+                        borderRadius: '999px',
+                        padding: '2px 8px'
+                      }}>
+                        {item.badge}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
+
+            <div style={{ marginTop: 'auto', paddingTop: '12px', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <button 
+                onClick={onToggleTheme}
+                style={{ background: 'none', border: 'none', color: 'var(--text-main)', fontSize: '0.85rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
+              >
+                {theme === 'dark' ? <Sun size={18} style={{ color: '#f59e0b' }} /> : <Moon size={18} style={{ color: '#3b82f6' }} />}
+                <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+              </button>
+              <button 
+                onClick={() => { setMobileMenuOpen(false); if (onSignOut) onSignOut(); }}
+                style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.85rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
+              >
+                <LogOut size={16} /> Log Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 }

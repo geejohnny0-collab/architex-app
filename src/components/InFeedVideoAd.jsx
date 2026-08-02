@@ -24,11 +24,11 @@ export default function InFeedVideoAd() {
     <div className="ad-container" style={{ width: '100%', minHeight: '160px', margin: '16px 0', overflow: 'hidden' }}>
       <ins
         className="adsbygoogle"
-        style={{ display: 'block', textAlign: 'center', width: '100%', minHeight: '160px' }}
+        style={{ display: 'block' }}
+        data-ad-format="fluid"
+        data-ad-layout-key="-fb+5w+4e-db+86"
         data-ad-client="ca-pub-6979107957328158"
         data-ad-slot="3467556965"
-        data-ad-format="auto"
-        data-full-width-responsive="true"
       ></ins>
     </div>
   );

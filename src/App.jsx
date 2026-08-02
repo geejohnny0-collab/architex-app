@@ -588,6 +588,7 @@ export default function App() {
               user={user}
               viewedUserId={selectedUserId}
               onNavigate={setActiveView}
+              onViewProfile={handleViewProfile}
               onLikeToggle={handleLikeToggle}
               onSaveToggle={handleSaveToggle}
               onAddComment={handleAddComment}
@@ -601,6 +602,7 @@ export default function App() {
           <RightSidebar
             posts={posts}
             onNavigate={setActiveView}
+            onViewProfile={handleViewProfile}
             onOpenProposalModal={handleOpenProposal}
           />
         )}

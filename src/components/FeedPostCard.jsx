@@ -441,7 +441,7 @@ return (
                 }}
               >
                 <span>🌟 7-Day Featured Ad</span>
-                <span style={{ color: 'var(--primary)', fontWeight: '800' }}>$25</span>
+                <span style={{ color: 'var(--primary)', fontWeight: '800' }}>$19.99</span>
               </button>
 
               <button 
@@ -455,7 +455,7 @@ return (
                 }}
               >
                 <span>👑 14-Day Top Spot Ad</span>
-                <span style={{ color: '#f59e0b', fontWeight: '800' }}>$50</span>
+                <span style={{ color: '#f59e0b', fontWeight: '800' }}>$39.99</span>
               </button>
             </div>
 

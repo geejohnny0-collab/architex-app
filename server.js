@@ -858,9 +858,9 @@ app.post('/api/posts/:id/create-promotion-session', async (req, res) => {
     const postId = req.params.id;
     
     const tiers = {
-      '3-day': { amount: 1000, name: '3-Day Feed Boost', days: 3 },
-      '7-day': { amount: 2500, name: '7-Day Featured Ad', days: 7 },
-      '14-day': { amount: 5000, name: '14-Day Top Spot Ad', days: 14 }
+      '3-day': { amount: 1000, name: '3-Day Feed Boost ($10.00)', days: 3 },
+      '7-day': { amount: 1999, name: '7-Day Featured Ad ($19.99)', days: 7 },
+      '14-day': { amount: 3999, name: '14-Day Top Spot Ad ($39.99)', days: 14 }
     };
 
     const selectedTier = tiers[tier];
@@ -1613,12 +1613,12 @@ app.post('/api/stripe/checkout', requireAuth, async (req, res) => {
 
     if (type === 'credits_1000') {
       amount = 10000; // $100.00
-      description = '1,000 Architex Credits';
+      description = '1,200 Architex Credits (+200 Bonus!)';
     } else if (type === 'certification') {
       amount = 9900; // $99.00
       description = 'Architex Certified Expert Assessment';
     } else if (type === 'pro_monthly') {
-      amount = 2900; // $29.00
+      amount = 2499; // $24.99
       description = 'Architex Pro Subscription (1 Month)';
     } else if (type === 'business_pro_monthly') {
       amount = 19900; // $199.00
@@ -1742,7 +1742,7 @@ app.post('/api/stripe/webhook', express.json(), async (req, res) => {
       if (tx.description.includes('Credits')) {
         await prisma.user.update({
           where: { id: tx.userId },
-          data: { credits: { increment: 1000 } }
+          data: { credits: { increment: 1200 } }
         });
       } else if (tx.description.includes('Certified')) {
         await prisma.user.update({
@@ -1821,8 +1821,8 @@ app.post('/api/credits/spend', requireAuth, async (req, res) => {
     const user = await prisma.user.findUnique({ where: { id: req.userId } });
 
     let cost = 0;
-    if (action === 'boost_job') cost = 500;
-    else if (action === 'buy_ad') cost = 1000;
+    if (action === 'boost_job') cost = 350;
+    else if (action === 'buy_ad') cost = 750;
     else return res.status(400).json({ error: 'Invalid action' });
 
     if (user.credits < cost) {

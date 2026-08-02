@@ -501,35 +501,40 @@ app.get('/api/search', async (req, res) => {
   }
 });
 
-app.get('/api/users/:id', requireAuth,
-  param('id').isInt().withMessage('Invalid user ID'),
-  validate,
-  async (req, res) => {
+app.get('/api/users/:id', async (req, res) => {
+  let currentUserId = null;
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
     try {
-      const user = await prisma.user.findUnique({
-        where: { id: Number(req.params.id) },
-        include: {
-          followers: { select: { followerId: true } },
-          following: { select: { followingId: true } },
-          _count: { select: { posts: true, followers: true, following: true } },
-        },
-      });
-      if (!user) return res.status(404).json({ error: 'User not found.' });
-      const { passwordHash, googleId, ...safe } = user;
-      res.json({
-        ...safe,
-        followersCount: user._count.followers,
-        followingCount: user._count.following,
-        postsCount: user._count.posts,
-        isFollowing: user.followers.some(f => f.followerId === req.userId),
-      });
-    } catch (err) {
-      console.error('Get user error:', err);
-      res.status(500).json({ error: 'Failed to fetch user.' });
-    }
+      const decoded = jwt.verify(authHeader.split(' ')[1], JWT_SECRET);
+      currentUserId = decoded.id || decoded.userId;
+    } catch {}
   }
-);
-app.get('/api/users/:id/followers', requireAuth, async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: Number(req.params.id) },
+      include: {
+        followers: { select: { followerId: true } },
+        following: { select: { followingId: true } },
+        _count: { select: { posts: true, followers: true, following: true } },
+      },
+    });
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+    const { passwordHash, googleId, ...safe } = user;
+    res.json({
+      ...safe,
+      followersCount: user._count.followers,
+      followingCount: user._count.following,
+      postsCount: user._count.posts,
+      isFollowing: currentUserId ? user.followers.some(f => f.followerId === currentUserId) : false,
+    });
+  } catch (err) {
+    console.error('Get user error:', err);
+    res.status(500).json({ error: 'Failed to fetch user.' });
+  }
+});
+
+app.get('/api/users/:id/followers', async (req, res) => {
   try {
     const follows = await prisma.follow.findMany({
       where: { followingId: Number(req.params.id) },
@@ -541,7 +546,7 @@ app.get('/api/users/:id/followers', requireAuth, async (req, res) => {
   }
 });
 
-app.get('/api/users/:id/following', requireAuth, async (req, res) => {
+app.get('/api/users/:id/following', async (req, res) => {
   try {
     const follows = await prisma.follow.findMany({
       where: { followerId: Number(req.params.id) },

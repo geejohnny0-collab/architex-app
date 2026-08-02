@@ -1,18 +1,21 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 export default function InFeedVideoAd() {
+  const pushedRef = useRef(false);
+
   useEffect(() => {
-    // Delay execution slightly to ensure the DOM element is fully painted 
-    // before Google's ad crawler attempts to measure container width.
+    if (pushedRef.current) return;
+
     const timer = setTimeout(() => {
       try {
-        if (window.adsbygoogle) {
+        if (window.adsbygoogle && !pushedRef.current) {
           (window.adsbygoogle = window.adsbygoogle || []).push({});
+          pushedRef.current = true;
         }
       } catch (e) {
         console.error('AdSense error:', e);
       }
-    }, 250);
+    }, 300);
 
     return () => clearTimeout(timer);
   }, []);
@@ -21,7 +24,7 @@ export default function InFeedVideoAd() {
     <div className="ad-container" style={{ width: '100%', minHeight: '160px', margin: '16px 0', overflow: 'hidden' }}>
       <ins
         className="adsbygoogle"
-        style={{ display: 'block', textAlign: 'center' }}
+        style={{ display: 'block', textAlign: 'center', width: '100%', minHeight: '160px' }}
         data-ad-client="ca-pub-6979107957328158"
         data-ad-slot="3467556965"
         data-ad-format="auto"

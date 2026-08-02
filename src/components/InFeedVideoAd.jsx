@@ -1,42 +1,32 @@
 import React, { useEffect } from 'react';
 
-export default function InFeedVideoAd({ 
-  adSlot = "3467556965", 
-  adClient = "ca-pub-6979107957328158", 
-  adLayoutKey = "-6t+ed+2i-1n-4w" 
-}) {
+export default function InFeedVideoAd() {
   useEffect(() => {
-    try {
-      if (window.adsbygoogle) {
-        (window.adsbygoogle = window.adsbygoogle || []).push({});
+    // Delay execution slightly to ensure the DOM element is fully painted 
+    // before Google's ad crawler attempts to measure container width.
+    const timer = setTimeout(() => {
+      try {
+        if (window.adsbygoogle) {
+          (window.adsbygoogle = window.adsbygoogle || []).push({});
+        }
+      } catch (e) {
+        console.error('AdSense error:', e);
       }
-    } catch (e) {
-      console.warn('AdSense push notice:', e);
-    }
+    }, 250);
+
+    return () => clearTimeout(timer);
   }, []);
 
   return (
-    <div 
-      className="glass-panel" 
-      style={{ 
-        marginBottom: '1.25rem', 
-        overflow: 'hidden', 
-        border: '1px solid var(--border-color)',
-        background: 'var(--bg-surface)',
-        padding: '0.75rem 1rem'
-      }}
-    >
-      <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>
-        SPONSORED AD
-      </div>
-      <ins 
+    <div className="ad-container" style={{ width: '100%', minHeight: '160px', margin: '16px 0', overflow: 'hidden' }}>
+      <ins
         className="adsbygoogle"
-        style={{ display: 'block', minHeight: '120px' }}
-        data-ad-client={adClient}
-        data-ad-slot={adSlot}
-        data-ad-format="fluid"
-        data-ad-layout-key={adLayoutKey}
-      />
+        style={{ display: 'block', textAlign: 'center' }}
+        data-ad-client="ca-pub-6979107957328158"
+        data-ad-slot="3467556965"
+        data-ad-format="auto"
+        data-full-width-responsive="true"
+      ></ins>
     </div>
   );
 }

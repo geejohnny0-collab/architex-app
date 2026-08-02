@@ -30,12 +30,14 @@ export default function ProfileView({ user: currentUser, viewedUserId, onNavigat
       if (userData) {
         setProfileUser(userData);
         setIsFollowingState(!!userData.isFollowing);
-        setFollowersCount(userData.followersCount || 0);
-        setFollowingCount(userData.followingCount || 0);
       }
+      const fList = Array.isArray(followersData) ? followersData : [];
+      const ingList = Array.isArray(followingData) ? followingData : [];
+      setFollowersList(fList);
+      setFollowingList(ingList);
+      setFollowersCount(typeof userData?.followersCount === 'number' ? userData.followersCount : fList.length);
+      setFollowingCount(typeof userData?.followingCount === 'number' ? userData.followingCount : ingList.length);
       setUserPosts(Array.isArray(postsData) ? postsData : []);
-      setFollowersList(Array.isArray(followersData) ? followersData : []);
-      setFollowingList(Array.isArray(followingData) ? followingData : []);
     }).catch(err => console.error('Error loading target user profile:', err))
       .finally(() => setLoading(false));
   }, [targetId, isSelf, currentUser]);

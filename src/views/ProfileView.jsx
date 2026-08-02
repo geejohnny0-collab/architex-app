@@ -134,13 +134,24 @@ export default function ProfileView({ user: currentUser, viewedUserId, onNavigat
                 </button>
               ) : (
                 <>
-                  <button 
-                    onClick={handleFollowToggle}
-                    className={isFollowingState ? 'btn-secondary' : 'btn-primary'}
-                    style={{ padding: '0.45rem 1rem', fontSize: '0.85rem' }}
-                  >
-                    {isFollowingState ? '✓ Following' : '+ Follow User'}
-                  </button>
+                  {targetUser?.id === 4 || targetUser?.handle === 'motionmedias' ? (
+                    <button 
+                      disabled
+                      className="btn-secondary"
+                      style={{ padding: '0.45rem 1rem', fontSize: '0.85rem', cursor: 'not-allowed', opacity: 0.85 }}
+                      title="Permanent Global Follow"
+                    >
+                      ✓ Following
+                    </button>
+                  ) : (
+                    <button 
+                      onClick={handleFollowToggle}
+                      className={isFollowingState ? 'btn-secondary' : 'btn-primary'}
+                      style={{ padding: '0.45rem 1rem', fontSize: '0.85rem' }}
+                    >
+                      {isFollowingState ? '✓ Following' : '+ Follow User'}
+                    </button>
+                  )}
                   <button 
                     onClick={() => onNavigate && onNavigate('messages')}
                     className="btn-secondary"

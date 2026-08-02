@@ -205,6 +205,21 @@ app.post('/api/auth/signup',
         },
       });
 
+      // Automatically follow Motion Medias (User ID 4) globally
+      const motionMediasId = 4;
+      if (user.id !== motionMediasId) {
+        try {
+          await prisma.follow.create({
+            data: {
+              followerId: user.id,
+              followingId: motionMediasId
+            }
+          });
+        } catch (err) {
+          console.error('Auto-follow initialization error:', err);
+        }
+      }
+
       const token = signToken(user.id);
       res.status(201).json({ token, user: safeUser(user) });
     } catch (err) {
@@ -320,6 +335,18 @@ app.post('/api/auth/google',
         user = await prisma.user.create({
           data: { googleId, email, name, handle, avatarUrl: picture },
         });
+
+        // Automatically follow Motion Medias (User ID 4) globally for Google OAuth signups
+        const motionMediasId = 4;
+        if (user.id !== motionMediasId) {
+          try {
+            await prisma.follow.create({
+              data: { followerId: user.id, followingId: motionMediasId }
+            });
+          } catch (err) {
+            console.error('Google OAuth auto-follow error:', err);
+          }
+        }
       } else if (!user.googleId) {
         user = await prisma.user.update({
           where: { id: user.id },
@@ -611,7 +638,11 @@ app.post('/api/users/:id/follow', requireAuth,
         where: { followerId_followingId: { followerId: req.userId, followingId: targetId } },
       });
 
+      const ADMIN_USER_ID = 4;
       if (existing) {
+        if (targetId === ADMIN_USER_ID) {
+          return res.json({ following: true, locked: true });
+        }
         await prisma.follow.delete({ where: { id: existing.id } });
         return res.json({ following: false });
       }

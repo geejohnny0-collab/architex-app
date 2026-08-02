@@ -870,7 +870,9 @@ app.post('/api/posts/:id/create-promotion-session', requireAuth, async (req, res
       packageName = '14-Day Top Spot Ad';
     }
 
-    if (process.env.STRIPE_SECRET_KEY) {
+    const origin = req.headers.origin || process.env.CLIENT_URL || 'https://architex-app.onrender.com';
+
+    if (process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY.startsWith('sk_')) {
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
         line_items: [{
@@ -885,22 +887,14 @@ app.post('/api/posts/:id/create-promotion-session', requireAuth, async (req, res
           quantity: 1,
         }],
         mode: 'payment',
-        success_url: `${process.env.CLIENT_URL || 'https://architex-app.onrender.com'}?promoted=true&postId=${postId}`,
-        cancel_url: `${process.env.CLIENT_URL || 'https://architex-app.onrender.com'}?promoted=cancel`,
-        metadata: { postId: String(postId), tier, userId: String(req.userId) },
+        success_url: `${origin}/?promoted=success&postId=${postId}&session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${origin}/?promoted=cancel`,
+        metadata: { postId: String(postId), tier, userId: String(req.userId), type: 'post_promotion' },
       });
-      // Also mark as promoted for instant feedback
-      await prisma.post.update({
-        where: { id: postId },
-        data: { isPromoted: true, isAd: true }
-      });
+
       res.json({ url: session.url });
     } else {
-      await prisma.post.update({
-        where: { id: postId },
-        data: { isPromoted: true, isAd: true }
-      });
-      res.json({ url: `${process.env.CLIENT_URL || 'https://architex-app.onrender.com'}?promoted=true&postId=${postId}`, autoPromoted: true });
+      res.status(400).json({ error: 'Stripe Secret Key not configured' });
     }
   } catch (err) {
     console.error('Promotion session error:', err);
@@ -910,7 +904,14 @@ app.post('/api/posts/:id/create-promotion-session', requireAuth, async (req, res
 
 app.post('/api/posts/:id/confirm-promotion', requireAuth, async (req, res) => {
   const postId = Number(req.params.id);
+  const { sessionId } = req.body;
   try {
+    if (process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY.startsWith('sk_') && sessionId) {
+      const session = await stripe.checkout.sessions.retrieve(sessionId);
+      if (session.payment_status !== 'paid') {
+        return res.status(400).json({ error: 'Payment not completed' });
+      }
+    }
     const updated = await prisma.post.update({
       where: { id: postId },
       data: { isPromoted: true, isAd: true }

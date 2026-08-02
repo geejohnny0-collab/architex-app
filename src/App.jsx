@@ -186,6 +186,32 @@ export default function App() {
       }
     }
     initSession();
+
+    // Check Stripe Promotion Payment Return URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const promotedStatus = urlParams.get('promoted');
+    const postId = urlParams.get('postId');
+    const sessionId = urlParams.get('session_id');
+
+    if (promotedStatus === 'success' && postId) {
+      window.history.replaceState({}, document.title, window.location.pathname);
+      const token = localStorage.getItem('token');
+      fetch(`/api/posts/${postId}/confirm-promotion`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({ sessionId })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert('🎉 Payment Successful! Your post is now live as a Sponsored Ad!');
+        }
+      })
+      .catch(err => console.error('Error confirming promotion:', err));
+    }
   }, []);
 
   // ─── Socket.io Connection ─────────────────────────────────────────────────

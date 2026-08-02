@@ -44,8 +44,9 @@ export default function FeedPostCard({
     setCommentInput('');
   };
 
-  const handleProfileClick = () => {
-    const targetId = post.author?.id || post.authorId;
+  const handleProfileClick = (e) => {
+    if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+    const targetId = post.author?.id || post.authorId || post.userId;
     if (onViewProfile && targetId) {
       onViewProfile(targetId);
     }

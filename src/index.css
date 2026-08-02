@@ -392,3 +392,10 @@ a {
   gap: 12px;
   background: var(--bg-surface-hover);
 }
+
+/* Mobile Layout Guardrails & Bottom Navigation Clearance */
+@media (max-width: 768px) {
+  .app-body, main, .feed-container, .profile-container {
+    padding-bottom: 96px !important;
+  }
+}

@@ -615,7 +615,7 @@ export default function App() {
       {/* Mobile Bottom Nav */}
       <MobileBottomNav
         activeView={activeView}
-        onNavigate={setActiveView}
+        onNavigate={handleNavigate}
         onOpenCreatePost={() => setIsCreatePostOpen(true)}
         unreadMessages={unreadMessages}
         user={user}

@@ -69,9 +69,9 @@ class ErrorBoundary extends React.Component {
               window.location.reload();
             }}
             className="btn-primary"
-            style={{ padding: '0.65rem 1.5rem', borderRadius: 'var(--radius-full)' }}
+            style={{ padding: '0.6rem 1.5rem', fontSize: '0.9rem' }}
           >
-            Reload Application
+            🔄 Reload Application
           </button>
         </div>
       );

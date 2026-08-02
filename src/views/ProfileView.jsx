@@ -324,24 +324,24 @@ export default function ProfileView({ user: currentUser, viewedUserId, onNavigat
         )}
 
         {activeTab === 'Followers' && (
-          followersList.length === 0 ? (
+          followersList.filter(u => u && u.id).length === 0 ? (
             <div className="glass-panel" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
               No followers yet.
             </div>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
-              {followersList.map(u => (
+              {followersList.filter(u => u && u.id).map(u => (
                 <div 
                   key={u.id} 
                   onClick={() => onViewProfile && onViewProfile(u.id)}
                   className="glass-panel" 
                   style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}
-                  title={`View ${u.name}'s Profile`}
+                  title={`View ${u?.name || 'User'}'s Profile`}
                 >
-                  <img src={u.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name || 'User')}&background=0a66c2&color=fff&bold=true`} alt={u.name} style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover' }} />
+                  <img src={u?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(u?.name || 'User')}&background=0a66c2&color=fff&bold=true`} alt={u?.name || 'User'} style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover' }} />
                   <div>
-                    <div style={{ fontWeight: '700', fontSize: '0.92rem', color: 'var(--text-main)' }}>{u.name}</div>
-                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>@{u.handle}</div>
+                    <div style={{ fontWeight: '700', fontSize: '0.92rem', color: 'var(--text-main)' }}>{u?.name || 'User'}</div>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>@{u?.handle || u?.username || 'user'}</div>
                   </div>
                 </div>
               ))}
@@ -350,24 +350,24 @@ export default function ProfileView({ user: currentUser, viewedUserId, onNavigat
         )}
 
         {activeTab === 'Following' && (
-          followingList.length === 0 ? (
+          followingList.filter(u => u && u.id).length === 0 ? (
             <div className="glass-panel" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
               Not following anyone yet.
             </div>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
-              {followingList.map(u => (
+              {followingList.filter(u => u && u.id).map(u => (
                 <div 
                   key={u.id} 
                   onClick={() => onViewProfile && onViewProfile(u.id)}
                   className="glass-panel" 
                   style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}
-                  title={`View ${u.name}'s Profile`}
+                  title={`View ${u?.name || 'User'}'s Profile`}
                 >
-                  <img src={u.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name || 'User')}&background=0a66c2&color=fff&bold=true`} alt={u.name} style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover' }} />
+                  <img src={u?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(u?.name || 'User')}&background=0a66c2&color=fff&bold=true`} alt={u?.name || 'User'} style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover' }} />
                   <div>
-                    <div style={{ fontWeight: '700', fontSize: '0.92rem', color: 'var(--text-main)' }}>{u.name}</div>
-                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>@{u.handle}</div>
+                    <div style={{ fontWeight: '700', fontSize: '0.92rem', color: 'var(--text-main)' }}>{u?.name || 'User'}</div>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>@{u?.handle || u?.username || 'user'}</div>
                   </div>
                 </div>
               ))}
@@ -427,7 +427,7 @@ export default function ProfileView({ user: currentUser, viewedUserId, onNavigat
             </div>
 
             <div style={{ maxHeight: '380px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {modalList.map((u) => (
+              {modalList.filter(u => u && u.id).map((u) => (
                 <div 
                   key={u.id}
                   onClick={() => {
@@ -445,20 +445,20 @@ export default function ProfileView({ user: currentUser, viewedUserId, onNavigat
                   }}
                 >
                   <img 
-                    src={u.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name || 'User')}&background=0a66c2&color=fff&bold=true`} 
-                    alt={u.name} 
+                    src={u?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(u?.name || 'User')}&background=0a66c2&color=fff&bold=true`} 
+                    alt={u?.name || 'User'} 
                     style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover' }} 
                   />
                   <div>
                     <div style={{ fontWeight: '700', fontSize: '0.92rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      {u.name}
-                      {u.verified && <CheckCircle size={14} style={{ color: 'var(--primary)' }} />}
+                      {u?.name || 'User'}
+                      {u?.verified && <CheckCircle size={14} style={{ color: 'var(--primary)' }} />}
                     </div>
-                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>@{u.handle || u.username}</div>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>@{u?.handle || u?.username || 'user'}</div>
                   </div>
                 </div>
               ))}
-              {modalList.length === 0 && (
+              {modalList.filter(u => u && u.id).length === 0 && (
                 <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem 1rem', fontSize: '0.88rem' }}>
                   No {modalType} found.
                 </div>

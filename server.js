@@ -1687,46 +1687,131 @@ app.post('/api/stripe/checkout', requireAuth, async (req, res) => {
 
 app.post('/api/stripe/webhook', express.json(), async (req, res) => {
   try {
+    let session = req.body;
     let sessionId = req.body?.sessionId;
+    let metadata = {};
 
     // Handle official Stripe Webhook payload format
     if (req.body?.type === 'checkout.session.completed') {
-      sessionId = req.body?.data?.object?.id;
+      session = req.body?.data?.object;
+      sessionId = session?.id;
+      metadata = session?.metadata || {};
+    }
+
+    // Handle Metadata-based Global State Updates (Escrow Funding & Post Promotion)
+    if (metadata.projectId) {
+      const projectId = Number(metadata.projectId);
+      await prisma.project.update({
+        where: { id: projectId },
+        data: { status: 'In Progress' }
+      });
+      console.log(`[Stripe Webhook] Escrow funded! Project #${projectId} updated to 'In Progress' globally.`);
+
+      if (metadata.freelancerId) {
+        const freelancerId = Number(metadata.freelancerId);
+        await createNotification(
+          freelancerId,
+          'proposal_accepted',
+          '🎉 Escrow Funded & Bid Accepted!',
+          `Client has funded escrow for project #${projectId}. You can start work immediately!`,
+          `/projects?id=${projectId}`
+        );
+      }
+    }
+
+    if (metadata.postId) {
+      const postId = Number(metadata.postId);
+      await prisma.post.update({
+        where: { id: postId },
+        data: { isPromoted: true, isAd: true }
+      });
+      console.log(`[Stripe Webhook] Post promotion paid! Post #${postId} is live as Sponsored Ad.`);
     }
 
     if (!sessionId) {
-      return res.status(400).json({ error: 'No session_id provided' });
+      return res.json({ received: true });
     }
 
     const tx = await prisma.transaction.findUnique({ where: { stripeSessionId: sessionId } });
-    if (!tx || tx.status === 'completed') return res.json({ received: true });
+    if (tx && tx.status !== 'completed') {
+      await prisma.transaction.update({
+        where: { id: tx.id },
+        data: { status: 'completed' }
+      });
 
-    await prisma.transaction.update({
-      where: { id: tx.id },
-      data: { status: 'completed' }
-    });
-
-    if (tx.description.includes('Credits')) {
-      await prisma.user.update({
-        where: { id: tx.userId },
-        data: { credits: { increment: 1000 } }
-      });
-    } else if (tx.description.includes('Certified')) {
-      await prisma.user.update({
-        where: { id: tx.userId },
-        data: { isCertified: true }
-      });
-    } else if (tx.description.includes('Pro Subscription')) {
-      await prisma.user.update({
-        where: { id: tx.userId },
-        data: { isPro: true }
-      });
+      if (tx.description.includes('Credits')) {
+        await prisma.user.update({
+          where: { id: tx.userId },
+          data: { credits: { increment: 1000 } }
+        });
+      } else if (tx.description.includes('Certified')) {
+        await prisma.user.update({
+          where: { id: tx.userId },
+          data: { isCertified: true }
+        });
+      } else if (tx.description.includes('Pro Subscription')) {
+        await prisma.user.update({
+          where: { id: tx.userId },
+          data: { isPro: true }
+        });
+      }
     }
 
     res.json({ received: true });
   } catch (err) {
     console.error('Stripe webhook processing error:', err);
     res.status(500).json({ error: 'Webhook error' });
+  }
+});
+
+// 6. Escrow Release & Project Completion
+app.post('/api/projects/:id/release-escrow', requireAuth, async (req, res) => {
+  try {
+    const projectId = Number(req.params.id);
+
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+      include: {
+        bids: { where: { status: 'Accepted' }, include: { freelancer: true } }
+      }
+    });
+
+    if (!project) return res.status(404).json({ error: 'Project not found.' });
+
+    if (project.clientId !== req.userId) {
+      return res.status(403).json({ error: 'Only the project owner can release escrow funds.' });
+    }
+
+    const acceptedBid = project.bids[0];
+    if (!acceptedBid) {
+      return res.status(400).json({ error: 'No accepted bid found for this project.' });
+    }
+
+    // Update Project status to Completed
+    const completedProject = await prisma.project.update({
+      where: { id: projectId },
+      data: { status: 'Completed' }
+    });
+
+    // Notify Freelancer of Escrow Release
+    await createNotification(
+      acceptedBid.freelancerId,
+      'proposal_accepted',
+      '💰 Escrow Released & Payment Delivered!',
+      `Client has approved work for "${project.title}" and released $${acceptedBid.proposedAmount.toLocaleString()} from escrow!`,
+      `/projects?id=${projectId}`
+    );
+
+    res.json({
+      success: true,
+      message: 'Escrow released successfully! Project marked as Completed.',
+      project: completedProject,
+      payoutAmount: acceptedBid.proposedAmount,
+      freelancer: acceptedBid.freelancer.name
+    });
+  } catch (error) {
+    console.error('Escrow release error:', error);
+    res.status(500).json({ error: 'Failed to release escrow funds.' });
   }
 });
 

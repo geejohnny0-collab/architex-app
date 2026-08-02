@@ -25,7 +25,9 @@ export default function HomeView({
           <img 
             src={user?.avatarUrl || user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=0a66c2&color=fff&bold=true`} 
             alt={user?.name || 'User'} 
-            style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover' }}
+            onClick={() => onViewProfile && onViewProfile(user?.id)}
+            style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover', cursor: 'pointer' }}
+            title="View My Profile"
           />
           <button 
             onClick={onOpenCreatePost}

@@ -148,9 +148,13 @@ export default function App() {
   };
 
   const handleViewProfile = (targetUserId) => {
-    if (targetUserId) {
-      setSelectedUserId(targetUserId);
-      setActiveView('profile');
+    const idToView = targetUserId || user?.id;
+    if (idToView) {
+      setSelectedUserId(null);
+      setTimeout(() => {
+        setSelectedUserId(idToView);
+        setActiveView('profile');
+      }, 0);
     }
   };
 

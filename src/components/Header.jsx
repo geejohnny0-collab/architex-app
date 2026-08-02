@@ -397,6 +397,47 @@ export default function Header({
                 <Settings size={16} /> Settings & Preferences
               </button>
 
+              {/* Full Navigation List for Mobile Viewports inside Profile Dropdown */}
+              <div className="mobile-only" style={{ borderTop: '1px solid var(--border-color)', margin: '4px 0', paddingTop: '4px', maxHeight: '320px', overflowY: 'auto' }}>
+                <div style={{ padding: '6px 16px', fontSize: '0.72rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Navigation Menu
+                </div>
+                {mobileNavItems.map(item => {
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        onNavigate(item.id);
+                        setProfileDropdownOpen(false);
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '8px 16px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        fontSize: '0.85rem',
+                        color: activeView === item.id ? 'var(--primary)' : 'var(--text-main)',
+                        fontWeight: activeView === item.id ? '700' : '500',
+                        background: activeView === item.id ? 'var(--primary-light)' : 'transparent',
+                        textAlign: 'left'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <Icon size={16} style={{ color: activeView === item.id ? 'var(--primary)' : 'var(--text-muted)' }} />
+                        <span>{item.label}</span>
+                      </div>
+                      {item.badge > 0 && (
+                        <span style={{ background: '#ef4444', color: 'white', fontSize: '0.68rem', fontWeight: '700', borderRadius: '999px', padding: '1px 6px' }}>
+                          {item.badge}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
               <div style={{ borderTop: '1px solid var(--border-color)', margin: '4px 0' }} />
 
               <button 

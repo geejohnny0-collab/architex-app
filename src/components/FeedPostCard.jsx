@@ -46,9 +46,14 @@ export default function FeedPostCard({
 
   const handleProfileClick = (e) => {
     if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
-    const targetId = post.author?.id || post.authorId || post.userId;
-    if (onViewProfile && targetId) {
-      onViewProfile(targetId);
+    let targetId = post.author?.id || post.authorId || post.userId;
+    
+    if (!targetId && currentUser && (post.author?.handle === currentUser?.handle || post.author?.email === currentUser?.email || authorName === currentUser?.name)) {
+      targetId = currentUser.id;
+    }
+    
+    if (onViewProfile) {
+      onViewProfile(targetId || currentUser?.id);
     }
   };
 

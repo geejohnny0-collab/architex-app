@@ -40,7 +40,7 @@ export default function ProfileView({ user: currentUser, viewedUserId, onNavigat
       setUserPosts(Array.isArray(postsData) ? postsData : []);
     }).catch(err => console.error('Error loading target user profile:', err))
       .finally(() => setLoading(false));
-  }, [targetId, isSelf, currentUser]);
+  }, [targetId]);
 
   const handleFollowToggle = async () => {
     try {

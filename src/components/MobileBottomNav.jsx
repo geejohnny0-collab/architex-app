@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
-import { Home, Compass, Plus, MessageSquare, User, Settings, LogOut, Briefcase, BarChart2, Menu, X, Shield, Sparkles } from 'lucide-react';
+import { 
+  Home, Compass, Plus, MessageSquare, User, Settings, LogOut, Briefcase, 
+  BarChart2, Menu, X, Shield, Sparkles, Bell, Building2, Code, Bookmark, 
+  Layers, Group, TrendingUp, Award 
+} from 'lucide-react';
 
 export default function MobileBottomNav({ 
   activeView, 
@@ -18,6 +22,22 @@ export default function MobileBottomNav({
     { id: 'create', label: 'Post', icon: Plus, isAction: true },
     { id: 'messages', label: 'Messages', icon: MessageSquare, badge: unreadMessages },
     { id: 'menu', label: 'Menu', icon: Menu, isMenuToggle: true }
+  ];
+
+  const fullNavItems = [
+    { id: 'home', label: 'Home', icon: Home },
+    { id: 'explore', label: 'Explore', icon: Compass },
+    { id: 'messages', label: 'Messages', icon: MessageSquare },
+    { id: 'notifications', label: 'Notifications', icon: Bell },
+    { id: 'businesses', label: 'Businesses', icon: Building2 },
+    { id: 'developers', label: 'Developers', icon: Code },
+    { id: 'projects', label: 'Projects', icon: Briefcase },
+    { id: 'saved', label: 'Bookmarks', icon: Bookmark },
+    { id: 'jobs', label: 'Jobs Marketplace', icon: Layers },
+    { id: 'groups', label: 'Groups', icon: Group },
+    { id: 'analytics', label: 'Enterprise Recruiter', icon: TrendingUp },
+    { id: 'certification', label: 'Get Certified ($99)', icon: Award },
+    { id: 'settings', label: 'Settings & Account', icon: Settings },
   ];
 
   const handleMenuNavigate = (view) => {
@@ -210,38 +230,44 @@ export default function MobileBottomNav({
             </div>
 
             {/* Menu Options List */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', maxHeight: '55vh', overflowY: 'auto' }}>
               <button 
                 onClick={() => handleMenuNavigate('profile')}
-                style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '0.85rem 1rem', borderRadius: 'var(--radius-md)', background: 'var(--bg-surface-hover)', border: 'none', color: 'var(--text-main)', fontWeight: '700', fontSize: '0.92rem', cursor: 'pointer' }}
+                style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', background: 'var(--primary-light)', border: 'none', color: 'var(--primary)', fontWeight: '700', fontSize: '0.92rem', cursor: 'pointer' }}
               >
-                <User size={18} style={{ color: 'var(--primary)' }} />
+                <User size={18} />
                 <span>View My Profile</span>
               </button>
 
-              <button 
-                onClick={() => handleMenuNavigate('settings')}
-                style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '0.85rem 1rem', borderRadius: 'var(--radius-md)', background: 'var(--bg-surface-hover)', border: 'none', color: 'var(--text-main)', fontWeight: '700', fontSize: '0.92rem', cursor: 'pointer' }}
-              >
-                <Settings size={18} style={{ color: '#3b82f6' }} />
-                <span>Settings & Account</span>
-              </button>
+              <div style={{ margin: '0.3rem 0', height: '1px', background: 'var(--border-color)' }} />
 
-              <button 
-                onClick={() => handleMenuNavigate('jobs')}
-                style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '0.85rem 1rem', borderRadius: 'var(--radius-md)', background: 'var(--bg-surface-hover)', border: 'none', color: 'var(--text-main)', fontWeight: '700', fontSize: '0.92rem', cursor: 'pointer' }}
-              >
-                <Briefcase size={18} style={{ color: '#10b981' }} />
-                <span>Jobs & Contracts Marketplace</span>
-              </button>
-
-              <button 
-                onClick={() => handleMenuNavigate('analytics')}
-                style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '0.85rem 1rem', borderRadius: 'var(--radius-md)', background: 'var(--bg-surface-hover)', border: 'none', color: 'var(--text-main)', fontWeight: '700', fontSize: '0.92rem', cursor: 'pointer' }}
-              >
-                <BarChart2 size={18} style={{ color: '#8b5cf6' }} />
-                <span>Analytics & Revenue</span>
-              </button>
+              {fullNavItems.map(item => {
+                const Icon = item.icon;
+                const isActive = activeView === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => handleMenuNavigate(item.id)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      width: '100%',
+                      padding: '0.7rem 1rem',
+                      borderRadius: 'var(--radius-md)',
+                      background: isActive ? 'var(--primary-light)' : 'var(--bg-surface-hover)',
+                      border: 'none',
+                      color: isActive ? 'var(--primary)' : 'var(--text-main)',
+                      fontWeight: isActive ? '800' : '600',
+                      fontSize: '0.9rem',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <Icon size={18} style={{ color: isActive ? 'var(--primary)' : 'var(--text-muted)' }} />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
 
               <div style={{ margin: '0.5rem 0', height: '1px', background: 'var(--border-color)' }} />
 

@@ -5,6 +5,7 @@ import {
   Menu, X, Home, Compass, Building2, Code, Briefcase, Bookmark, Layers, Group, TrendingUp, Award
 } from 'lucide-react';
 import ArchitexLogo from './ArchitexLogo';
+import api from '../services/apiService';
 
 export default function Header({ 
   user,

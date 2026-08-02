@@ -914,6 +914,210 @@ app.post('/api/posts/:id/confirm-promotion', async (req, res) => {
   }
 });
 
+// ─── Projects & RFP Marketplace Endpoints ────────────────────────────────────
+
+// 1. Post a New Project RFP
+app.post('/api/projects', requireAuth, async (req, res) => {
+  try {
+    const { title, description, techStack, contractType, budget } = req.body;
+    const newProject = await prisma.project.create({
+      data: {
+        clientId: req.userId,
+        title,
+        description,
+        techStack: Array.isArray(techStack) ? JSON.stringify(techStack) : (techStack || '[]'),
+        contractType: contractType || 'Fixed Price',
+        budget: Number(budget) || 0,
+        status: 'Open'
+      },
+      include: {
+        client: {
+          select: { id: true, name: true, handle: true, avatarUrl: true, userType: true }
+        }
+      }
+    });
+    res.status(201).json(newProject);
+  } catch (error) {
+    console.error('Create project error:', error);
+    res.status(500).json({ error: 'Failed to create project RFP.' });
+  }
+});
+
+// 2. Fetch Marketplace Feed with Search & Filters
+app.get('/api/projects', async (req, res) => {
+  try {
+    const { contractType, search } = req.query;
+    let whereClause = { status: 'Open' };
+
+    if (contractType && contractType !== 'All Projects') {
+      whereClause.contractType = contractType;
+    }
+
+    if (search) {
+      whereClause.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+        { techStack: { contains: search, mode: 'insensitive' } }
+      ];
+    }
+
+    const projects = await prisma.project.findMany({
+      where: whereClause,
+      include: {
+        client: {
+          select: { id: true, name: true, handle: true, avatarUrl: true, userType: true }
+        },
+        bids: {
+          select: { id: true, proposedAmount: true, status: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    res.json(projects);
+  } catch (error) {
+    console.error('Fetch projects error:', error);
+    res.status(500).json({ error: 'Failed to fetch projects marketplace.' });
+  }
+});
+
+// 3. Submit a Bid on an Open Project
+app.post('/api/projects/:id/bids', requireAuth, async (req, res) => {
+  try {
+    const projectId = Number(req.params.id);
+    const { proposedAmount, coverLetter } = req.body;
+
+    const project = await prisma.project.findUnique({ where: { id: projectId } });
+    if (!project || project.status !== 'Open') {
+      return res.status(400).json({ error: 'This project is no longer accepting bids.' });
+    }
+
+    if (project.clientId === req.userId) {
+      return res.status(403).json({ error: 'You cannot bid on your own project.' });
+    }
+
+    const existingBid = await prisma.bid.findUnique({
+      where: {
+        projectId_freelancerId: {
+          projectId,
+          freelancerId: req.userId
+        }
+      }
+    });
+
+    if (existingBid) {
+      return res.status(400).json({ error: 'You have already submitted a bid for this project.' });
+    }
+
+    const newBid = await prisma.bid.create({
+      data: {
+        projectId,
+        freelancerId: req.userId,
+        proposedAmount: Number(proposedAmount),
+        coverLetter,
+        status: 'Pending'
+      },
+      include: {
+        freelancer: {
+          select: { id: true, name: true, handle: true, avatarUrl: true }
+        }
+      }
+    });
+
+    res.status(201).json(newBid);
+  } catch (error) {
+    console.error('Submit bid error:', error);
+    res.status(500).json({ error: 'Failed to submit bid.' });
+  }
+});
+
+// 4. Fetch User Bids for "My Submitted Bids"
+app.get('/api/projects/my-bids', requireAuth, async (req, res) => {
+  try {
+    const bids = await prisma.bid.findMany({
+      where: { freelancerId: req.userId },
+      include: {
+        project: {
+          include: {
+            client: {
+              select: { id: true, name: true, handle: true, avatarUrl: true }
+            }
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json(bids);
+  } catch (error) {
+    console.error('Fetch my bids error:', error);
+    res.status(500).json({ error: 'Failed to retrieve user bids.' });
+  }
+});
+
+// 5. Bid Acceptance & Stripe Escrow Hold
+app.patch('/api/projects/:projectId/bids/:bidId/accept', requireAuth, async (req, res) => {
+  try {
+    const projectId = Number(req.params.projectId);
+    const bidId = Number(req.params.bidId);
+
+    const project = await prisma.project.findUnique({ where: { id: projectId } });
+    if (!project) return res.status(404).json({ error: 'Project not found.' });
+
+    if (project.clientId !== req.userId) {
+      return res.status(403).json({ error: 'Unauthorized action.' });
+    }
+
+    const targetBid = await prisma.bid.findUnique({ where: { id: bidId } });
+    if (!targetBid) return res.status(404).json({ error: 'Bid not found.' });
+
+    // Mark target bid as Accepted
+    await prisma.bid.update({
+      where: { id: bidId },
+      data: { status: 'Accepted' }
+    });
+
+    // Reject all other bids for this project
+    await prisma.bid.updateMany({
+      where: {
+        projectId,
+        id: { not: bidId }
+      },
+      data: { status: 'Rejected' }
+    });
+
+    // Mark project as In Progress
+    const updatedProject = await prisma.project.update({
+      where: { id: projectId },
+      data: { status: 'In Progress' }
+    });
+
+    const host = req.get('host');
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+    const baseUrl = `${protocol}://${host}`;
+
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [{
+        price_data: {
+          currency: 'usd',
+          product_data: { name: `Escrow Hold: ${project.title}` },
+          unit_amount: Math.round(targetBid.proposedAmount * 100),
+        },
+        quantity: 1,
+      }],
+      mode: 'payment',
+      success_url: `${baseUrl}/?escrow=success&projectId=${projectId}`,
+      cancel_url: `${baseUrl}/?escrow=cancelled`,
+      metadata: { projectId: String(projectId), bidId: String(bidId), freelancerId: String(targetBid.freelancerId) }
+    });
+
+    res.json({ success: true, project: updatedProject, checkoutUrl: session.url, url: session.url });
+  } catch (error) {
+    console.error('Bid acceptance error:', error);
+    res.status(500).json({ error: 'Failed to accept bid and initialize escrow.' });
+  }
+});
+
 app.post('/api/posts/:id/like', requireAuth,
   param('id').isInt(), validate,
   async (req, res) => {

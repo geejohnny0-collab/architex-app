@@ -25,6 +25,7 @@ export default function Header({
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [liveSearchResults, setLiveSearchResults] = useState({ profiles: [], posts: [], projects: [], jobs: [] });
   const [isSearching, setIsSearching] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const mobileNavItems = [

@@ -852,66 +852,58 @@ app.delete('/api/posts/:id', requireAuth,
   }
 );
 
-app.post('/api/posts/:id/create-promotion-session', requireAuth, async (req, res) => {
-  const postId = Number(req.params.id);
-  const { tier = '3-day' } = req.body;
-  
+app.post('/api/posts/:id/create-promotion-session', async (req, res) => {
   try {
-    const post = await prisma.post.findUnique({ where: { id: postId } });
-    if (!post) return res.status(404).json({ error: 'Post not found' });
+    const { tier } = req.body;
+    const postId = req.params.id;
+    
+    const tiers = {
+      '3-day': { amount: 1000, name: '3-Day Feed Boost', days: 3 },
+      '7-day': { amount: 2500, name: '7-Day Featured Ad', days: 7 },
+      '14-day': { amount: 5000, name: '14-Day Top Spot Ad', days: 14 }
+    };
 
-    let amount = 1000;
-    let packageName = '3-Day Feed Boost';
-    if (tier === '7-day') {
-      amount = 2500;
-      packageName = '7-Day Featured Ad';
-    } else if (tier === '14-day') {
-      amount = 5000;
-      packageName = '14-Day Top Spot Ad';
+    const selectedTier = tiers[tier];
+    if (!selectedTier) {
+      return res.status(400).json({ error: 'Invalid promotion package' });
     }
 
-    const origin = req.headers.origin || process.env.CLIENT_URL || 'https://architex-app.onrender.com';
+    const host = req.get('host');
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+    const baseUrl = `${protocol}://${host}`;
 
-    if (process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY.startsWith('sk_')) {
-      const session = await stripe.checkout.sessions.create({
-        payment_method_types: ['card'],
-        line_items: [{
-          price_data: {
-            currency: 'usd',
-            product_data: {
-              name: `Architex Sponsored Ad (${packageName})`,
-              description: `Promote post #${postId} to top priority in Home Feed for all users`,
-            },
-            unit_amount: amount,
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [{
+        price_data: {
+          currency: 'usd',
+          product_data: {
+            name: `Post Promotion: ${selectedTier.name}`
           },
-          quantity: 1,
-        }],
-        mode: 'payment',
-        success_url: `${origin}/?promoted=success&postId=${postId}&session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${origin}/?promoted=cancel`,
-        metadata: { postId: String(postId), tier, userId: String(req.userId), type: 'post_promotion' },
-      });
+          unit_amount: selectedTier.amount,
+        },
+        quantity: 1,
+      }],
+      mode: 'payment',
+      success_url: `${baseUrl}/?promotion=success&postId=${postId}&tier=${tier}&days=${selectedTier.days}`,
+      cancel_url: `${baseUrl}/?promotion=cancelled`,
+      metadata: {
+        postId: String(postId),
+        tier,
+        durationDays: String(selectedTier.days)
+      }
+    });
 
-      res.json({ url: session.url });
-    } else {
-      res.status(400).json({ error: 'Stripe Secret Key not configured' });
-    }
-  } catch (err) {
-    console.error('Promotion session error:', err);
-    res.status(500).json({ error: 'Failed to create promotion checkout session.' });
+    res.json({ url: session.url });
+  } catch (error) {
+    console.error('Stripe promotion error:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 
-app.post('/api/posts/:id/confirm-promotion', requireAuth, async (req, res) => {
+app.post('/api/posts/:id/confirm-promotion', async (req, res) => {
   const postId = Number(req.params.id);
-  const { sessionId } = req.body;
   try {
-    if (process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY.startsWith('sk_') && sessionId) {
-      const session = await stripe.checkout.sessions.retrieve(sessionId);
-      if (session.payment_status !== 'paid') {
-        return res.status(400).json({ error: 'Payment not completed' });
-      }
-    }
     const updated = await prisma.post.update({
       where: { id: postId },
       data: { isPromoted: true, isAd: true }

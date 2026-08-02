@@ -189,7 +189,7 @@ export default function App() {
 
     // Check Stripe Promotion Payment Return URL
     const urlParams = new URLSearchParams(window.location.search);
-    const promotedStatus = urlParams.get('promoted');
+    const promotedStatus = urlParams.get('promotion') || urlParams.get('promoted');
     const postId = urlParams.get('postId');
     const sessionId = urlParams.get('session_id');
 

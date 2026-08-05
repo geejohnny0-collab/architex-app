@@ -25,10 +25,9 @@ export default function JobsBoard() {
     }
   ]);
 
-  // 2. State to track user's applied jobs and live visual proof logs
+  // 2. State to track user's applied jobs
   const [appliedJobs, setAppliedJobs] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [proofLogs, setProofLogs] = useState([]);
 
   // 3. Handler function executed when user clicks "Apply with Resume"
   const handleApplyWithResume = async (job) => {
@@ -50,15 +49,6 @@ export default function JobsBoard() {
 
       if (data.success) {
         setAppliedJobs((prev) => [...prev, job.id]);
-        setProofLogs((prev) => [
-          {
-            timestamp: new Date().toLocaleTimeString(),
-            jobTitle: job.title,
-            status: 'Success (Backend Saved & Dispatched)',
-            email: 'architexjobs@gmail.com'
-          },
-          ...prev
-        ]);
       }
     } catch (error) {
       console.error('Failed to submit application:', error);
@@ -126,20 +116,6 @@ export default function JobsBoard() {
           );
         })}
       </div>
-
-      {/* Live Proof Log Audit Trail Panel */}
-      {proofLogs.length > 0 && (
-        <div style={{ marginTop: '2.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem' }}>
-          <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--text-main)', marginBottom: '0.85rem' }}>Live Proof Log Audit Trail</h3>
-          <div style={{ background: '#0f172a', color: '#38bdf8', padding: '1.1rem', borderRadius: 'var(--radius-md)', fontFamily: 'monospace', fontSize: '0.85rem', border: '1px solid var(--border-color)' }}>
-            {proofLogs.map((log, index) => (
-              <div key={index} style={{ marginBottom: '0.5rem' }}>
-                [{log.timestamp}] PROOF LOGGED: Applied to "{log.jobTitle}" | Status: {log.status} | Target: {log.email}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

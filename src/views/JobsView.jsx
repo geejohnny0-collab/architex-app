@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import JobsBoard from '../components/JobsBoard';
 import { 
   Layers, MapPin, DollarSign, Briefcase, Send, Search, 
   CheckCircle2, Building2, BadgeCheck, Sparkles, Plus, 
@@ -112,6 +113,7 @@ export default function JobsView() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      <JobsBoard />
 
       {/* HEADER */}
       <div className="glass-panel" style={{ padding: '1.5rem 1.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>

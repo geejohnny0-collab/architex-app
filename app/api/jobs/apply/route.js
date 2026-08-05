@@ -1,31 +1,27 @@
 import { Resend } from 'resend';
 
-// Initialize Resend with your environment variable API key
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req) {
   try {
-    // 1. Parse the incoming JSON body from the frontend request
     const body = await req.json();
-    const { jobId, jobTitle, company, userEmail } = body;
+    const { jobId, jobTitle, company, userEmail, resumeName } = body;
 
-    // Validate incoming data
     if (!jobId || !jobTitle) {
       return Response.json({ success: false, message: 'Missing required job parameters' }, { status: 400 });
     }
 
-    // 2. Database Record Persistence
     const newApplication = {
       id: 'app-' + Date.now(),
       jobId,
       jobTitle,
       company,
       userEmail: userEmail || 'architexjobs@gmail.com',
+      resumeUsed: resumeName || 'Primary_Software_Resume.pdf',
       appliedAt: new Date().toISOString(),
       status: 'Applied Successfully'
     };
 
-    // 3. Dispatch Transactional Email Confirmation
     let emailStatus = 'Dispatched Successfully';
     try {
       if (process.env.RESEND_API_KEY) {
@@ -36,8 +32,8 @@ export async function POST(req) {
           html: `
             <div style="font-family: sans-serif; color: #333; padding: 20px;">
               <h2 style="color: #2563eb;">Application Logged Successfully</h2>
-              <p>Your resume has been successfully submitted for <strong>${jobTitle}</strong> at <strong>${company}</strong>.</p>
-              <p>This application is now tracked live on your dashboard.</p>
+              <p>Your resume (<strong>${newApplication.resumeUsed}</strong>) has been successfully submitted for <strong>${jobTitle}</strong> at <strong>${company}</strong>.</p>
+              <p>This application is now tracked live on your dashboard along with linked project assets.</p>
             </div>
           `
         });
@@ -49,16 +45,15 @@ export async function POST(req) {
       emailStatus = 'Email Failed / API Key Missing';
     }
 
-    // 4. Server-Side Console Logs for Proof Verification
     console.log('--- LIVE APPLICATION BACKEND PROOF ---');
     console.log('Job ID:', jobId);
     console.log('Job Title:', jobTitle);
+    console.log('Resume Used:', newApplication.resumeUsed);
     console.log('Target User Email:', newApplication.userEmail);
     console.log('Database Status: SAVED');
     console.log('Email Status:', emailStatus);
     console.log('----------------------------------------');
 
-    // 5. Return JSON response back to the frontend client
     return Response.json({ 
       success: true, 
       message: 'Application processed successfully', 

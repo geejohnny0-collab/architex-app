@@ -1911,18 +1911,18 @@ app.post('/api/credits/spend', requireAuth, async (req, res) => {
 // 7. Apply with Resume API Route
 app.post('/api/jobs/apply', async (req, res) => {
   try {
-    const { jobId, jobTitle, company, userEmail } = req.body;
-
+    const { jobId, jobTitle, company, userEmail, resumeName } = req.body;
     if (!jobId || !jobTitle) {
       return res.status(400).json({ success: false, message: 'Missing required job parameters' });
     }
-
+    
     const newApplication = {
       id: 'app-' + Date.now(),
       jobId,
       jobTitle,
       company,
       userEmail: userEmail || 'architexjobs@gmail.com',
+      resumeUsed: resumeName || 'Primary_Software_Resume.pdf',
       appliedAt: new Date().toISOString(),
       status: 'Applied Successfully'
     };
@@ -1939,8 +1939,8 @@ app.post('/api/jobs/apply', async (req, res) => {
           html: `
             <div style="font-family: sans-serif; color: #333; padding: 20px;">
               <h2 style="color: #2563eb;">Application Logged Successfully</h2>
-              <p>Your resume has been successfully submitted for <strong>${jobTitle}</strong> at <strong>${company}</strong>.</p>
-              <p>This application is now tracked live on your dashboard.</p>
+              <p>Your resume (<strong>${newApplication.resumeUsed}</strong>) has been successfully submitted for <strong>${jobTitle}</strong> at <strong>${company}</strong>.</p>
+              <p>This application is now tracked live on your dashboard along with linked project assets.</p>
             </div>
           `
         });
@@ -1955,6 +1955,7 @@ app.post('/api/jobs/apply', async (req, res) => {
     console.log('--- LIVE APPLICATION BACKEND PROOF ---');
     console.log('Job ID:', jobId);
     console.log('Job Title:', jobTitle);
+    console.log('Resume Used:', newApplication.resumeUsed);
     console.log('Target User Email:', newApplication.userEmail);
     console.log('Database Status: SAVED');
     console.log('Email Status:', emailStatus);

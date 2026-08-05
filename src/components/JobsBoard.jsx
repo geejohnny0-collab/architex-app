@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Layers, Upload, FileText, CheckCircle2, X, Briefcase, Send, Check } from 'lucide-react';
+import { Layers, Upload, FileText, CheckCircle2, X, Briefcase, Send, Check, Eye } from 'lucide-react';
 
 export default function JobsBoard() {
   const [jobs] = useState([
@@ -9,7 +9,10 @@ export default function JobsBoard() {
       company: 'Architex Systems',
       location: 'Remote (US/TX)',
       type: 'Full-Time W2',
-      description: 'Build high-throughput data pipelines, custom APIs, and backend architectures.',
+      c2hRate: '$130 - $150/hr',
+      salaryW2: '$195,000/yr',
+      hiringManager: 'Alex Mercer (CTO)',
+      description: 'Build high-throughput data pipelines, custom APIs, and backend architectures. You will lead the infrastructure migration to distributed clusters and integrate high-concurrency microservices.',
       techStack: ['Node.js', 'Python', 'PostgreSQL', 'Docker'],
       projects: [{ name: 'API Gateway Scaling', budget: '$5,000', timeline: '2 Weeks' }]
     },
@@ -19,7 +22,10 @@ export default function JobsBoard() {
       company: 'DataFlow Metrics',
       location: 'Remote',
       type: 'Contract-to-Hire',
-      description: 'Develop autonomous market scrapers, lead generation scripts, and multi-platform sync tools.',
+      c2hRate: '$110 - $130/hr',
+      salaryW2: '$170,000/yr',
+      hiringManager: 'Sarah Jenkins (VP Engineering)',
+      description: 'Develop autonomous market scrapers, lead generation scripts, and multi-platform sync tools. Responsible for maintaining web scrapers against strict anti-bot systems.',
       techStack: ['Python', 'Selenium', 'BeautifulSoup'],
       projects: [{ name: 'E-commerce Feed Scraper', budget: '$3,200', timeline: '1 Week' }]
     }
@@ -27,6 +33,7 @@ export default function JobsBoard() {
 
   const [appliedJobs, setAppliedJobs] = useState([]);
   const [activeJobModal, setActiveJobModal] = useState(null);
+  const [jobDetailDrawer, setJobDetailDrawer] = useState(null);
   const [selectedResume, setSelectedResume] = useState('Primary_Software_Resume.pdf');
   const [uploadedFile, setUploadedFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -101,30 +108,53 @@ export default function JobsBoard() {
             <div key={job.id} className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
                 <div>
-                  <h2 style={{ fontSize: '1.2rem', fontWeight: '800', margin: '0 0 0.25rem 0', color: 'var(--text-main)' }}>{job.title}</h2>
+                  <h2 
+                    onClick={() => setJobDetailDrawer(job)}
+                    style={{ fontSize: '1.2rem', fontWeight: '800', margin: '0 0 0.25rem 0', color: 'var(--text-main)', cursor: 'pointer' }}
+                    title="Click to view full job description"
+                  >
+                    {job.title}
+                  </h2>
                   <div style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginBottom: '0.5rem' }}>
                     <strong style={{ color: 'var(--text-main)' }}>{job.company}</strong> • {job.location} • <span style={{ color: 'var(--primary)', fontWeight: '700' }}>{job.type}</span>
                   </div>
                 </div>
-                <button
-                  onClick={() => handleOpenApplyModal(job)}
-                  disabled={hasApplied}
-                  className={hasApplied ? 'btn-secondary' : 'btn-primary'}
-                  style={{
-                    padding: '0.6rem 1.25rem',
-                    fontWeight: '800',
-                    fontSize: '0.86rem',
-                    cursor: hasApplied ? 'not-allowed' : 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px'
-                  }}
-                >
-                  {hasApplied ? <><Check size={16} /> Applied with Resume</> : <><Send size={16} /> Apply with Resume</>}
-                </button>
+
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <button
+                    onClick={() => setJobDetailDrawer(job)}
+                    className="btn-secondary"
+                    style={{ padding: '0.6rem 1rem', fontSize: '0.86rem', display: 'flex', alignItems: 'center', gap: '5px' }}
+                  >
+                    <Eye size={15} /> View Details
+                  </button>
+
+                  <button
+                    onClick={() => handleOpenApplyModal(job)}
+                    disabled={hasApplied}
+                    className={hasApplied ? 'btn-secondary' : 'btn-primary'}
+                    style={{
+                      padding: '0.6rem 1.25rem',
+                      fontWeight: '800',
+                      fontSize: '0.86rem',
+                      cursor: hasApplied ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    {hasApplied ? <><Check size={16} /> Applied</> : <><Send size={16} /> Apply</>}
+                  </button>
+                </div>
               </div>
 
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: '1.5', margin: 0 }}>{job.description}</p>
+              <p 
+                onClick={() => setJobDetailDrawer(job)}
+                style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: '1.5', margin: 0, cursor: 'pointer' }}
+                title="Click to read full description"
+              >
+                {job.description}
+              </p>
 
               {/* Linked Projects Preview Box */}
               <div style={{ background: 'var(--bg-surface-hover)', padding: '0.75rem 1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', fontSize: '0.85rem' }}>
@@ -145,10 +175,109 @@ export default function JobsBoard() {
         })}
       </div>
 
+      {/* DETAILED JOB OVERVIEW MODAL */}
+      {jobDetailDrawer && (
+        <div className="modal-overlay" onClick={() => setJobDetailDrawer(null)}>
+          <div className="modal-content" style={{ maxWidth: '620px' }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div>
+                <span className="badge badge-primary">{jobDetailDrawer.type}</span>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: '800', margin: '4px 0 0 0', color: 'var(--text-main)' }}>
+                  {jobDetailDrawer.title}
+                </h2>
+              </div>
+              <button onClick={() => setJobDetailDrawer(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', maxHeight: '65vh', overflowY: 'auto' }}>
+              <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                <strong style={{ color: 'var(--text-main)', fontSize: '1rem' }}>{jobDetailDrawer.company}</strong> • {jobDetailDrawer.location}
+              </div>
+
+              {jobDetailDrawer.hiringManager && (
+                <div style={{ background: 'var(--bg-surface-hover)', padding: '0.85rem 1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
+                  <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: '800' }}>Hiring Lead</div>
+                  <div style={{ fontSize: '0.92rem', fontWeight: '800', color: 'var(--text-main)', marginTop: '2px' }}>{jobDetailDrawer.hiringManager}</div>
+                </div>
+              )}
+
+              {/* Full Description */}
+              <div>
+                <h3 style={{ fontSize: '0.95rem', fontWeight: '800', marginBottom: '6px', color: 'var(--text-main)' }}>Full Role Description</h3>
+                <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', lineHeight: '1.6', margin: 0 }}>
+                  {jobDetailDrawer.description}
+                </p>
+              </div>
+
+              {/* Compensation */}
+              <div style={{ display: 'flex', gap: '1.5rem', background: 'var(--bg-surface-hover)', padding: '0.85rem 1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
+                {jobDetailDrawer.c2hRate && (
+                  <div>
+                    <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: '800' }}>C2H Rate</div>
+                    <div style={{ fontSize: '1rem', fontWeight: '800', color: 'var(--accent-green, #10b981)' }}>{jobDetailDrawer.c2hRate}</div>
+                  </div>
+                )}
+                {jobDetailDrawer.salaryW2 && (
+                  <div>
+                    <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: '800' }}>W2 Compensation</div>
+                    <div style={{ fontSize: '1rem', fontWeight: '800', color: 'var(--primary)' }}>{jobDetailDrawer.salaryW2}</div>
+                  </div>
+                )}
+              </div>
+
+              {/* Associated Project Scope */}
+              <div style={{ background: 'var(--bg-surface-hover)', padding: '0.9rem 1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
+                <div style={{ fontSize: '0.78rem', color: 'var(--primary)', textTransform: 'uppercase', fontWeight: '800', letterSpacing: '0.05em', marginBottom: '4px' }}>
+                  Associated Project Scope
+                </div>
+                <div style={{ fontSize: '0.9rem', fontWeight: '700', color: 'var(--text-main)' }}>
+                  {jobDetailDrawer.projects[0].name}
+                </div>
+                <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                  Fixed Budget: {jobDetailDrawer.projects[0].budget} • Timeline: {jobDetailDrawer.projects[0].timeline}
+                </div>
+              </div>
+
+              {/* Tech Stack */}
+              <div>
+                <h3 style={{ fontSize: '0.95rem', fontWeight: '800', marginBottom: '8px', color: 'var(--text-main)' }}>Tech Stack Required</h3>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  {jobDetailDrawer.techStack.map((s, i) => (
+                    <span key={i} style={{ fontSize: '0.78rem', background: 'var(--bg-surface-hover)', color: 'var(--primary)', padding: '4px 12px', borderRadius: '16px', fontWeight: '700', border: '1px solid var(--border-color)' }}>
+                      {s}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button onClick={() => setJobDetailDrawer(null)} className="btn-secondary">
+                Close
+              </button>
+              <button
+                onClick={() => {
+                  const targetJob = jobDetailDrawer;
+                  setJobDetailDrawer(null);
+                  handleOpenApplyModal(targetJob);
+                }}
+                disabled={appliedJobs.includes(jobDetailDrawer.id)}
+                className="btn-primary"
+                style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                <Send size={15} /> Apply with Resume
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* INTERACTIVE APPLICATION MODAL OVERLAY */}
       {activeJobModal && (
-        <div className="modal-overlay">
-          <div className="modal-content" style={{ maxWidth: '520px' }}>
+        <div className="modal-overlay" onClick={() => setActiveJobModal(null)}>
+          <div className="modal-content" style={{ maxWidth: '520px' }} onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2 style={{ fontSize: '1.15rem', fontWeight: '800', margin: 0, color: 'var(--text-main)' }}>
                 Apply to {activeJobModal.company}

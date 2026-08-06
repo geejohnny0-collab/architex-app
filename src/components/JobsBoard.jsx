@@ -13,8 +13,7 @@ export default function JobsBoard() {
       salaryW2: '$195,000/yr',
       hiringManager: 'Alex Mercer (CTO)',
       description: 'Build high-throughput data pipelines, custom APIs, and backend architectures. You will lead the infrastructure migration to distributed clusters and integrate high-concurrency microservices.',
-      techStack: ['Node.js', 'Python', 'PostgreSQL', 'Docker'],
-      projects: [{ name: 'API Gateway Scaling', budget: '$5,000', timeline: '2 Weeks' }]
+      techStack: ['Node.js', 'Python', 'PostgreSQL', 'Docker']
     },
     {
       id: 'job-2',
@@ -26,8 +25,7 @@ export default function JobsBoard() {
       salaryW2: '$170,000/yr',
       hiringManager: 'Sarah Jenkins (VP Engineering)',
       description: 'Develop autonomous market scrapers, lead generation scripts, and multi-platform sync tools. Responsible for maintaining web scrapers against strict anti-bot systems.',
-      techStack: ['Python', 'Selenium', 'BeautifulSoup'],
-      projects: [{ name: 'E-commerce Feed Scraper', budget: '$3,200', timeline: '1 Week' }]
+      techStack: ['Python', 'Selenium', 'BeautifulSoup']
     }
   ]);
 
@@ -93,7 +91,7 @@ export default function JobsBoard() {
       <div className="glass-panel" style={{ padding: '1.25rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 style={{ fontSize: '1.4rem', fontWeight: '800', margin: 0, color: 'var(--text-main)' }}>Jobs Marketplace</h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: '4px 0 0 0' }}>Low competition direct pipeline roles with linked projects.</p>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: '4px 0 0 0' }}>Low competition direct pipeline roles with verified employers.</p>
         </div>
         <div style={{ background: 'var(--primary-light)', color: 'var(--primary)', padding: '0.5rem 1rem', borderRadius: 'var(--radius-full)', fontWeight: '800', fontSize: '0.88rem' }}>
           Applications Submitted: {appliedJobs.length}
@@ -148,18 +146,17 @@ export default function JobsBoard() {
                 </div>
               </div>
 
-              <p 
+              {/* Role Overview Box */}
+              <div 
                 onClick={() => setJobDetailDrawer(job)}
-                style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: '1.5', margin: 0, cursor: 'pointer' }}
-                title="Click to read full description"
+                style={{ background: 'var(--bg-surface-hover)', padding: '0.85rem 1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', cursor: 'pointer' }}
               >
-                {job.description}
-              </p>
-
-              {/* Linked Projects Preview Box */}
-              <div style={{ background: 'var(--bg-surface-hover)', padding: '0.75rem 1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', fontSize: '0.85rem' }}>
-                <span style={{ color: 'var(--primary)', fontWeight: '700' }}>Linked Job Project:</span>{' '}
-                <span style={{ color: 'var(--text-main)' }}>{job.projects[0].name}</span> (Budget: {job.projects[0].budget} • Timeline: {job.projects[0].timeline})
+                <div style={{ fontSize: '0.78rem', color: 'var(--primary)', textTransform: 'uppercase', fontWeight: '800', letterSpacing: '0.05em', marginBottom: '4px' }}>
+                  Role Overview
+                </div>
+                <div style={{ fontSize: '0.88rem', color: 'var(--text-main)', lineHeight: '1.5' }}>
+                  {job.description}
+                </div>
               </div>
 
               {/* Tech Stack Badges */}
@@ -227,19 +224,6 @@ export default function JobsBoard() {
                 )}
               </div>
 
-              {/* Associated Project Scope */}
-              <div style={{ background: 'var(--bg-surface-hover)', padding: '0.9rem 1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
-                <div style={{ fontSize: '0.78rem', color: 'var(--primary)', textTransform: 'uppercase', fontWeight: '800', letterSpacing: '0.05em', marginBottom: '4px' }}>
-                  Associated Project Scope
-                </div>
-                <div style={{ fontSize: '0.9rem', fontWeight: '700', color: 'var(--text-main)' }}>
-                  {jobDetailDrawer.projects[0].name}
-                </div>
-                <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                  Fixed Budget: {jobDetailDrawer.projects[0].budget} • Timeline: {jobDetailDrawer.projects[0].timeline}
-                </div>
-              </div>
-
               {/* Tech Stack */}
               <div>
                 <h3 style={{ fontSize: '0.95rem', fontWeight: '800', marginBottom: '8px', color: 'var(--text-main)' }}>Tech Stack Required</h3>
@@ -292,16 +276,13 @@ export default function JobsBoard() {
                 Position: <strong style={{ color: 'var(--text-main)' }}>{activeJobModal.title}</strong>
               </div>
 
-              {/* Linked Projects Inside Modal */}
+              {/* Role Overview Inside Modal */}
               <div style={{ background: 'var(--bg-surface-hover)', padding: '0.9rem 1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
                 <div style={{ fontSize: '0.78rem', color: 'var(--primary)', textTransform: 'uppercase', fontWeight: '800', letterSpacing: '0.05em', marginBottom: '4px' }}>
-                  Associated Project Scope
+                  Role Overview
                 </div>
-                <div style={{ fontSize: '0.9rem', fontWeight: '700', color: 'var(--text-main)' }}>
-                  {activeJobModal.projects[0].name}
-                </div>
-                <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                  Fixed Budget: {activeJobModal.projects[0].budget} • Timeline: {activeJobModal.projects[0].timeline}
+                <div style={{ fontSize: '0.88rem', color: 'var(--text-main)', lineHeight: '1.5' }}>
+                  {activeJobModal.description}
                 </div>
               </div>
 

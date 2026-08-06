@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Layers, Upload, FileText, CheckCircle2, X, Briefcase, Send, Check, Eye, Plus, ShieldCheck, Award, Lock, Sparkles } from 'lucide-react';
+import { Layers, Upload, FileText, CheckCircle2, X, Briefcase, Send, Check, Eye, Plus, ShieldCheck, Award, Lock, Sparkles, User, Mail, Link as LinkIcon, FileEdit } from 'lucide-react';
 
 export default function JobsBoard({ user }) {
   const userEmail = (user?.email || '').toLowerCase();
@@ -41,7 +41,15 @@ export default function JobsBoard({ user }) {
   const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
   const [selectedResume, setSelectedResume] = useState('Primary_Software_Resume.pdf');
   const [uploadedFile, setUploadedFile] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [applyMode, setApplyMode] = useState('resume'); // 'resume' | 'manual'
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Manual Application State
+  const [applicantName, setApplicantName] = useState(user?.name || '');
+  const [applicantEmail, setApplicantEmail] = useState(user?.email || 'architexjobs@gmail.com');
+  const [applicantPortfolio, setApplicantPortfolio] = useState('');
+  const [applicantNote, setApplicantNote] = useState('');
 
   // New Job Form State
   const [newTitle, setNewTitle] = useState('');
@@ -51,7 +59,6 @@ export default function JobsBoard({ user }) {
   const [newSalaryW2, setNewSalaryW2] = useState('');
   const [newLocation, setNewLocation] = useState('Remote');
   const [newLocationDetail, setNewLocationDetail] = useState('');
-  const [newSkills, setNewSkills] = useState('');
   const [newDescription, setNewDescription] = useState('');
 
   const handleClickPostJob = () => {
@@ -65,6 +72,12 @@ export default function JobsBoard({ user }) {
   const handleOpenApplyModal = (job) => {
     setActiveJobModal(job);
     setUploadedFile(null);
+    setApplyMode('resume');
+    setIsDragging(false);
+    setApplicantName(user?.name || '');
+    setApplicantEmail(user?.email || 'architexjobs@gmail.com');
+    setApplicantPortfolio('');
+    setApplicantNote('');
   };
 
   const handleFileUpload = (e) => {
@@ -75,23 +88,61 @@ export default function JobsBoard({ user }) {
     }
   };
 
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      setUploadedFile(file);
+      setSelectedResume(file.name);
+    }
+  };
+
   const handleConfirmApply = async () => {
     if (!activeJobModal) return;
     setIsSubmitting(true);
 
     try {
-      const resumeNameToSubmit = uploadedFile ? uploadedFile.name : selectedResume;
-
-      const response = await fetch('/api/jobs/apply', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      let submissionData = {};
+      if (applyMode === 'manual') {
+        if (!applicantName.trim() || !applicantEmail.trim()) {
+          throw new Error('Please enter your Name and Email address for manual submission.');
+        }
+        submissionData = {
+          jobId: activeJobModal.id,
+          jobTitle: activeJobModal.title,
+          company: activeJobModal.company,
+          userEmail: applicantEmail.trim(),
+          applicantName: applicantName.trim(),
+          portfolioUrl: applicantPortfolio.trim() || null,
+          coverNote: applicantNote.trim() || null,
+          resumeName: 'Manual Application (No Resume)'
+        };
+      } else {
+        const resumeNameToSubmit = uploadedFile ? uploadedFile.name : selectedResume;
+        submissionData = {
           jobId: activeJobModal.id,
           jobTitle: activeJobModal.title,
           company: activeJobModal.company,
           userEmail: 'architexjobs@gmail.com',
           resumeName: resumeNameToSubmit
-        })
+        };
+      }
+
+      const response = await fetch('/api/jobs/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(submissionData)
       });
 
       const data = await response.json();
@@ -101,7 +152,10 @@ export default function JobsBoard({ user }) {
 
       setAppliedJobs((prev) => [...prev, activeJobModal.id]);
       setActiveJobModal(null);
-      alert(`Application and resume (${resumeNameToSubmit}) submitted successfully! Confirmation email dispatched.`);
+      alert(applyMode === 'manual' 
+        ? `Manual application submitted successfully for ${applicantName}! Confirmation email dispatched.`
+        : `Application and resume (${submissionData.resumeName}) submitted successfully! Confirmation email dispatched.`
+      );
     } catch (error) {
       console.error('Submission Error:', error);
       alert('Error: ' + error.message);
@@ -230,13 +284,15 @@ export default function JobsBoard({ user }) {
               </div>
 
               {/* Tech Stack Badges */}
-              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                {job.techStack.map((tech, idx) => (
-                  <span key={idx} style={{ background: 'var(--bg-surface-hover)', color: 'var(--text-muted)', padding: '0.25rem 0.75rem', borderRadius: '15px', fontSize: '0.78rem', fontWeight: '600', border: '1px solid var(--border-color)' }}>
-                    {tech}
-                  </span>
-                ))}
-              </div>
+              {job.techStack && job.techStack.length > 0 && (
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  {job.techStack.map((tech, idx) => (
+                    <span key={idx} style={{ background: 'var(--bg-surface-hover)', color: 'var(--text-muted)', padding: '0.25rem 0.75rem', borderRadius: '15px', fontSize: '0.78rem', fontWeight: '600', border: '1px solid var(--border-color)' }}>
+                      {tech}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           );
         })}
@@ -369,18 +425,6 @@ export default function JobsBoard({ user }) {
                   </div>
                 )}
               </div>
-
-              {/* Tech Stack */}
-              <div>
-                <h3 style={{ fontSize: '0.95rem', fontWeight: '800', marginBottom: '8px', color: 'var(--text-main)' }}>Tech Stack Required</h3>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                  {jobDetailDrawer.techStack.map((s, i) => (
-                    <span key={i} style={{ fontSize: '0.78rem', background: 'var(--bg-surface-hover)', color: 'var(--primary)', padding: '4px 12px', borderRadius: '16px', fontWeight: '700', border: '1px solid var(--border-color)' }}>
-                      {s}
-                    </span>
-                  ))}
-                </div>
-              </div>
             </div>
 
             <div className="modal-footer">
@@ -397,7 +441,7 @@ export default function JobsBoard({ user }) {
                 className="btn-primary"
                 style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
               >
-                <Send size={15} /> Apply with Resume
+                <Send size={15} /> Apply
               </button>
             </div>
           </div>
@@ -489,10 +533,10 @@ export default function JobsBoard({ user }) {
         </div>
       )}
 
-      {/* INTERACTIVE APPLICATION MODAL OVERLAY */}
+      {/* INTERACTIVE APPLICATION MODAL OVERLAY (RESUME DRAG & DROP + MANUAL MODE) */}
       {activeJobModal && (
         <div className="modal-overlay" onClick={() => setActiveJobModal(null)}>
-          <div className="modal-content" style={{ maxWidth: '520px' }} onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content" style={{ maxWidth: '540px' }} onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2 style={{ fontSize: '1.15rem', fontWeight: '800', margin: 0, color: 'var(--text-main)' }}>
                 Apply to {activeJobModal.company}
@@ -502,82 +546,172 @@ export default function JobsBoard({ user }) {
               </button>
             </div>
 
-            <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
               <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
                 Position: <strong style={{ color: 'var(--text-main)' }}>{activeJobModal.title}</strong>
               </div>
 
-              {/* Role Overview Inside Modal */}
-              <div style={{ background: 'var(--bg-surface-hover)', padding: '0.9rem 1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
-                <div style={{ fontSize: '0.78rem', color: 'var(--primary)', textTransform: 'uppercase', fontWeight: '800', letterSpacing: '0.05em', marginBottom: '4px' }}>
-                  Role Overview
-                </div>
-                <div style={{ fontSize: '0.88rem', color: 'var(--text-main)', lineHeight: '1.5' }}>
-                  {activeJobModal.description}
-                </div>
-              </div>
-
-              {/* Upload Resume File Input */}
-              <div>
-                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', marginBottom: '6px', color: 'var(--text-main)' }}>
-                  Upload Resume Document (PDF / DOCX):
-                </label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <label
-                    htmlFor="resume-file-input"
-                    className="btn-secondary"
-                    style={{
-                      padding: '0.55rem 1rem',
-                      fontSize: '0.84rem',
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px'
-                    }}
-                  >
-                    <Upload size={16} /> Choose File
-                  </label>
-                  <input
-                    id="resume-file-input"
-                    type="file"
-                    accept=".pdf,.doc,.docx"
-                    onChange={handleFileUpload}
-                    style={{ display: 'none' }}
-                  />
-                  <span style={{ fontSize: '0.84rem', color: uploadedFile ? 'var(--primary)' : 'var(--text-muted)', fontWeight: uploadedFile ? '700' : '400' }}>
-                    {uploadedFile ? `📄 ${uploadedFile.name}` : 'No new file chosen'}
-                  </span>
-                </div>
-              </div>
-
-              {/* Stored Resume Selector Dropdown */}
-              <div>
-                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', marginBottom: '6px', color: 'var(--text-main)' }}>
-                  Or Select Stored Profile Resume:
-                </label>
-                <select 
-                  value={selectedResume} 
-                  onChange={(e) => {
-                    setSelectedResume(e.target.value);
-                    setUploadedFile(null);
-                  }}
-                  style={{
-                    width: '100%',
-                    padding: '0.65rem',
-                    borderRadius: 'var(--radius-sm)',
-                    backgroundColor: 'var(--bg-surface-hover)',
-                    border: '1px solid var(--border-color)',
-                    color: 'var(--text-main)',
-                    fontSize: '0.88rem',
-                    outline: 'none',
-                    boxSizing: 'border-box'
-                  }}
+              {/* Application Mode Tab Switcher */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', background: 'var(--bg-surface-hover)', padding: '4px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
+                <button
+                  type="button"
+                  onClick={() => setApplyMode('resume')}
+                  className={applyMode === 'resume' ? 'btn-primary' : 'btn-secondary'}
+                  style={{ padding: '0.5rem', fontSize: '0.84rem', fontWeight: '700', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                 >
-                  <option value="Primary_Software_Resume.pdf">Primary_Software_Resume.pdf (Backend & Automation)</option>
-                  <option value="Audio_Engineering_CV.pdf">Audio_Engineering_CV.pdf (Sound Production)</option>
-                  <option value="FullStack_Custom_Profile.pdf">FullStack_Custom_Profile.pdf</option>
-                </select>
+                  <FileText size={15} /> Apply with Resume
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setApplyMode('manual')}
+                  className={applyMode === 'manual' ? 'btn-primary' : 'btn-secondary'}
+                  style={{ padding: '0.5rem', fontSize: '0.84rem', fontWeight: '700', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                >
+                  <FileEdit size={15} /> Apply Manually (No Resume)
+                </button>
               </div>
+
+              {/* MODE A: RESUME UPLOAD (DRAG & DROP + STORED RESUME) */}
+              {applyMode === 'resume' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+                  {/* Drag and Drop Zone */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', marginBottom: '6px', color: 'var(--text-main)' }}>
+                      Drag & Drop Resume File (PDF / DOCX):
+                    </label>
+                    <div
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                      style={{
+                        border: isDragging ? '2px dashed var(--primary)' : '2px dashed var(--border-color)',
+                        background: isDragging ? 'var(--primary-light)' : 'var(--bg-surface-hover)',
+                        padding: '1.25rem',
+                        borderRadius: 'var(--radius-sm)',
+                        textAlign: 'center',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      <input
+                        id="resume-file-drag-input"
+                        type="file"
+                        accept=".pdf,.doc,.docx"
+                        onChange={handleFileUpload}
+                        style={{ display: 'none' }}
+                      />
+                      <label htmlFor="resume-file-drag-input" style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                        <Upload size={24} style={{ color: 'var(--primary)' }} />
+                        <span style={{ fontSize: '0.86rem', fontWeight: '700', color: 'var(--text-main)' }}>
+                          {uploadedFile ? `📄 ${uploadedFile.name}` : 'Drag & drop file here, or click to browse'}
+                        </span>
+                        <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                          Supports PDF, DOCX up to 10MB
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Stored Resume Selector Dropdown */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', marginBottom: '6px', color: 'var(--text-main)' }}>
+                      Or Select Stored Profile Resume:
+                    </label>
+                    <select 
+                      value={selectedResume} 
+                      onChange={(e) => {
+                        setSelectedResume(e.target.value);
+                        setUploadedFile(null);
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '0.65rem',
+                        borderRadius: 'var(--radius-sm)',
+                        backgroundColor: 'var(--bg-surface-hover)',
+                        border: '1px solid var(--border-color)',
+                        color: 'var(--text-main)',
+                        fontSize: '0.88rem',
+                        outline: 'none',
+                        boxSizing: 'border-box'
+                      }}
+                    >
+                      <option value="Primary_Software_Resume.pdf">Primary_Software_Resume.pdf (Backend & Automation)</option>
+                      <option value="Audio_Engineering_CV.pdf">Audio_Engineering_CV.pdf (Sound Production)</option>
+                      <option value="FullStack_Custom_Profile.pdf">FullStack_Custom_Profile.pdf</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {/* MODE B: MANUAL APPLICATION FORM (NO RESUME REQUIRED) */}
+              {applyMode === 'manual' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', marginBottom: '4px', color: 'var(--text-main)' }}>
+                        Full Name *
+                      </label>
+                      <div style={{ position: 'relative' }}>
+                        <User size={15} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                        <input
+                          type="text"
+                          required
+                          placeholder="Your Full Name"
+                          value={applicantName}
+                          onChange={(e) => setApplicantName(e.target.value)}
+                          style={{ width: '100%', padding: '0.6rem 0.6rem 0.6rem 2.2rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.86rem', boxSizing: 'border-box' }}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', marginBottom: '4px', color: 'var(--text-main)' }}>
+                        Contact Email *
+                      </label>
+                      <div style={{ position: 'relative' }}>
+                        <Mail size={15} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                        <input
+                          type="email"
+                          required
+                          placeholder="your.email@gmail.com"
+                          value={applicantEmail}
+                          onChange={(e) => setApplicantEmail(e.target.value)}
+                          style={{ width: '100%', padding: '0.6rem 0.6rem 0.6rem 2.2rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.86rem', boxSizing: 'border-box' }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', marginBottom: '4px', color: 'var(--text-main)' }}>
+                      GitHub / Portfolio / LinkedIn URL
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <LinkIcon size={15} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                      <input
+                        type="url"
+                        placeholder="https://github.com/yourusername"
+                        value={applicantPortfolio}
+                        onChange={(e) => setApplicantPortfolio(e.target.value)}
+                        style={{ width: '100%', padding: '0.6rem 0.6rem 0.6rem 2.2rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.86rem', boxSizing: 'border-box' }}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', marginBottom: '4px', color: 'var(--text-main)' }}>
+                      Intro / Experience Summary & Cover Note
+                    </label>
+                    <textarea
+                      rows={3}
+                      placeholder="Briefly describe your relevant experience, technical skills, or why you're a great fit..."
+                      value={applicantNote}
+                      onChange={(e) => setApplicantNote(e.target.value)}
+                      style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.86rem', boxSizing: 'border-box', resize: 'none' }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="modal-footer">
@@ -593,7 +727,7 @@ export default function JobsBoard({ user }) {
                 disabled={isSubmitting}
                 className="btn-primary"
               >
-                {isSubmitting ? 'Submitting & Dispatching Email...' : 'Confirm & Submit Application'}
+                {isSubmitting ? 'Submitting & Dispatching Email...' : (applyMode === 'manual' ? 'Submit Manual Application' : 'Confirm & Submit Application')}
               </button>
             </div>
           </div>

@@ -282,9 +282,26 @@ export default function JobsBoard({ user }) {
                 Maybe Later
               </button>
               <button 
-                onClick={() => {
-                  setIsVerificationModalOpen(false);
-                  alert('Redirecting to $99 Business Verification checkout...');
+                onClick={async () => {
+                  try {
+                    const token = localStorage.getItem('architex_token');
+                    const res = await fetch('/api/payments/create-checkout-session', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                      },
+                      body: JSON.stringify({ type: 'certified' })
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.url) {
+                      window.location.href = data.url;
+                    } else {
+                      alert('Stripe Notice: ' + (data.error || 'Checkout initialization failed'));
+                    }
+                  } catch (err) {
+                    alert('Checkout Error: ' + err.message);
+                  }
                 }} 
                 className="btn-primary" 
                 style={{ padding: '0.65rem 1.4rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '6px' }}

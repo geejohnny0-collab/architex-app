@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { Layers, Upload, FileText, CheckCircle2, X, Briefcase, Send, Check, Eye, Plus, ShieldCheck, Award, Lock, Sparkles } from 'lucide-react';
 
 export default function JobsBoard({ user }) {
-  const isBusinessOrRecruiter = ['business', 'recruiter', 'enterprise'].includes((user?.userType || '').toLowerCase()) || user?.verified === true;
-  const isPaidVerifiedBusiness = user?.verified === true || user?.isVerified === true;
+  const userEmail = (user?.email || '').toLowerCase();
+  const isOwnerAccount = ['geejohnny0@gmail.com', 'architexjobs@gmail.com', 'architex@gmail.com'].includes(userEmail) || user?.isAdmin === true;
+  const isBusinessOrRecruiter = ['business', 'recruiter', 'enterprise'].includes((user?.userType || '').toLowerCase()) || user?.verified === true || isOwnerAccount;
+  const isPaidVerifiedBusiness = user?.verified === true || user?.isVerified === true || user?.isCertified === true || isOwnerAccount;
 
   const [jobs, setJobs] = useState([
     {

@@ -59,6 +59,7 @@ export default function JobsBoard({ user }) {
   const [isDragging, setIsDragging] = useState(false);
   const [applyMode, setApplyMode] = useState('resume');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [confirmationBanner, setConfirmationBanner] = useState({ show: false, message: '', company: '' });
 
   // Advanced Manual Application State
   const [manualForm, setManualForm] = useState({
@@ -194,7 +195,9 @@ export default function JobsBoard({ user }) {
     setIsSubmitting(true);
 
     try {
+      const emailToTarget = user?.email || (applyMode === 'manual' ? manualForm.email : 'architexjobs@gmail.com');
       let submissionData = {};
+
       if (applyMode === 'manual') {
         if (!manualForm.firstName.trim() || !manualForm.email.trim()) {
           throw new Error('Please fill in your Name and Email address for manual application.');
@@ -206,7 +209,7 @@ export default function JobsBoard({ user }) {
           jobId: activeJobModal.id,
           jobTitle: activeJobModal.title,
           company: activeJobModal.company,
-          userEmail: manualForm.email.trim(),
+          userEmail: emailToTarget,
           applicantName: `${manualForm.firstName} ${manualForm.lastName}`.trim(),
           manualDetails: {
             ...manualForm,
@@ -221,7 +224,7 @@ export default function JobsBoard({ user }) {
           jobId: activeJobModal.id,
           jobTitle: activeJobModal.title,
           company: activeJobModal.company,
-          userEmail: 'architexjobs@gmail.com',
+          userEmail: emailToTarget,
           resumeName: resumeNameToSubmit
         };
       }
@@ -237,12 +240,24 @@ export default function JobsBoard({ user }) {
         throw new Error(data.message || 'Failed to submit application');
       }
 
-      setAppliedJobs((prev) => [...prev, activeJobModal.id]);
+      const appliedJobId = activeJobModal.id;
+      const companyName = activeJobModal.company;
+
+      setAppliedJobs((prev) => [...prev, appliedJobId]);
       setActiveJobModal(null);
-      alert(applyMode === 'manual' 
-        ? `Comprehensive manual application submitted successfully for ${manualForm.firstName} ${manualForm.lastName}! Confirmation email dispatched.`
-        : `Application and resume (${submissionData.resumeName}) submitted successfully! Confirmation email dispatched.`
-      );
+
+      // In-App Green Confirmation Banner
+      setConfirmationBanner({
+        show: true,
+        message: `Application Confirmed for ${companyName}! Confirmation email dispatched from architexjobs@gmail.com to ${emailToTarget}.`,
+        company: companyName
+      });
+
+      // Auto-hide banner after 7 seconds
+      setTimeout(() => {
+        setConfirmationBanner({ show: false, message: '', company: '' });
+      }, 7000);
+
     } catch (error) {
       console.error('Submission Error:', error);
       alert('Error: ' + error.message);
@@ -291,6 +306,33 @@ export default function JobsBoard({ user }) {
   return (
     <div style={{ padding: '1rem', maxWidth: '1000px', margin: '0 auto', fontFamily: 'inherit', position: 'relative' }}>
       
+      {/* In-App Confirmation Banner */}
+      {confirmationBanner.show && (
+        <div style={{
+          background: '#10b981',
+          color: '#ffffff',
+          padding: '1rem 1.25rem',
+          borderRadius: 'var(--radius-md)',
+          marginBottom: '1.25rem',
+          display: 'flex',
+          alignItems: 'center',
+          justify: 'space-between',
+          boxShadow: '0 4px 15px rgba(16, 185, 129, 0.35)',
+          animation: 'fadeIn 0.3s ease'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '700', fontSize: '0.92rem' }}>
+            <CheckCircle2 size={22} style={{ flexShrink: 0 }} />
+            <span>{confirmationBanner.message}</span>
+          </div>
+          <button 
+            onClick={() => setConfirmationBanner({ show: false, message: '', company: '' })}
+            style={{ background: 'none', border: 'none', color: '#ffffff', cursor: 'pointer', padding: '4px' }}
+          >
+            <X size={18} />
+          </button>
+        </div>
+      )}
+
       {/* Header Section */}
       <div className="glass-panel" style={{ padding: '1.25rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layers, Upload, FileText, CheckCircle2, X, Briefcase, Send, Check, Eye, Plus, ShieldCheck, Award, Lock, Sparkles, User, Mail, Link as LinkIcon, FileEdit } from 'lucide-react';
 
 export default function JobsBoard({ user }) {
@@ -7,7 +7,7 @@ export default function JobsBoard({ user }) {
   const isBusinessOrRecruiter = ['business', 'recruiter', 'enterprise'].includes((user?.userType || '').toLowerCase()) || user?.verified === true || isOwnerAccount;
   const isPaidVerifiedBusiness = user?.verified === true || user?.isVerified === true || user?.isCertified === true || isOwnerAccount;
 
-  const [jobs, setJobs] = useState([
+  const DEFAULT_JOBS = [
     {
       id: 'job-1',
       title: 'Senior Backend Engineer',
@@ -32,7 +32,22 @@ export default function JobsBoard({ user }) {
       description: 'Develop autonomous market scrapers, lead generation scripts, and multi-platform sync tools. Responsible for maintaining web scrapers against strict anti-bot systems.',
       techStack: ['Python', 'Selenium', 'BeautifulSoup']
     }
-  ]);
+  ];
+
+  const [jobs, setJobs] = useState(() => {
+    try {
+      const saved = localStorage.getItem('architex_published_jobs');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load published jobs from storage:', e);
+    }
+    return DEFAULT_JOBS;
+  });
 
   const [appliedJobs, setAppliedJobs] = useState([]);
   const [activeJobModal, setActiveJobModal] = useState(null);
@@ -42,7 +57,7 @@ export default function JobsBoard({ user }) {
   const [selectedResume, setSelectedResume] = useState('Primary_Software_Resume.pdf');
   const [uploadedFile, setUploadedFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [applyMode, setApplyMode] = useState('resume'); // 'resume' | 'manual'
+  const [applyMode, setApplyMode] = useState('resume');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Manual Application State
@@ -60,6 +75,15 @@ export default function JobsBoard({ user }) {
   const [newLocation, setNewLocation] = useState('Remote');
   const [newLocationDetail, setNewLocationDetail] = useState('');
   const [newDescription, setNewDescription] = useState('');
+
+  // Persist jobs on state change
+  useEffect(() => {
+    try {
+      localStorage.setItem('architex_published_jobs', JSON.stringify(jobs));
+    } catch (e) {
+      console.error('Failed to persist jobs:', e);
+    }
+  }, [jobs]);
 
   const handleClickPostJob = () => {
     if (!isPaidVerifiedBusiness) {
@@ -183,7 +207,14 @@ export default function JobsBoard({ user }) {
       techStack: []
     };
 
-    setJobs([newJobObj, ...jobs]);
+    const updatedJobsList = [newJobObj, ...jobs];
+    setJobs(updatedJobsList);
+    try {
+      localStorage.setItem('architex_published_jobs', JSON.stringify(updatedJobsList));
+    } catch (err) {
+      console.error('Failed to save to localStorage:', err);
+    }
+
     setNewTitle('');
     setNewCompany('');
     setNewDescription('');
@@ -191,7 +222,7 @@ export default function JobsBoard({ user }) {
     setNewSalaryW2('');
     setNewLocationDetail('');
     setIsPostJobModalOpen(false);
-    alert('Job listing published successfully!');
+    alert('Job listing published permanently successfully!');
   };
 
   return (
@@ -557,7 +588,7 @@ export default function JobsBoard({ user }) {
                   type="button"
                   onClick={() => setApplyMode('resume')}
                   className={applyMode === 'resume' ? 'btn-primary' : 'btn-secondary'}
-                  style={{ padding: '0.5rem', fontSize: '0.84rem', fontWeight: '700', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                  style={{ padding: '0.55rem', fontSize: '0.84rem', fontWeight: '700', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                 >
                   <FileText size={15} /> Apply with Resume
                 </button>
@@ -565,7 +596,7 @@ export default function JobsBoard({ user }) {
                   type="button"
                   onClick={() => setApplyMode('manual')}
                   className={applyMode === 'manual' ? 'btn-primary' : 'btn-secondary'}
-                  style={{ padding: '0.5rem', fontSize: '0.84rem', fontWeight: '700', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                  style={{ padding: '0.55rem', fontSize: '0.84rem', fontWeight: '700', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                 >
                   <FileEdit size={15} /> Apply Manually (No Resume)
                 </button>

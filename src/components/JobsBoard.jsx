@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Layers, Upload, FileText, CheckCircle2, X, Briefcase, Send, Check, Eye, Plus } from 'lucide-react';
+import { Layers, Upload, FileText, CheckCircle2, X, Briefcase, Send, Check, Eye, Plus, ShieldCheck, Award, Lock, Sparkles } from 'lucide-react';
 
 export default function JobsBoard({ user }) {
   const isBusinessOrRecruiter = ['business', 'recruiter', 'enterprise'].includes((user?.userType || '').toLowerCase()) || user?.verified === true;
+  const isPaidVerifiedBusiness = user?.verified === true || user?.isVerified === true;
 
   const [jobs, setJobs] = useState([
     {
@@ -35,6 +36,7 @@ export default function JobsBoard({ user }) {
   const [activeJobModal, setActiveJobModal] = useState(null);
   const [jobDetailDrawer, setJobDetailDrawer] = useState(null);
   const [isPostJobModalOpen, setIsPostJobModalOpen] = useState(false);
+  const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
   const [selectedResume, setSelectedResume] = useState('Primary_Software_Resume.pdf');
   const [uploadedFile, setUploadedFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -48,6 +50,14 @@ export default function JobsBoard({ user }) {
   const [newLocation, setNewLocation] = useState('Remote');
   const [newSkills, setNewSkills] = useState('');
   const [newDescription, setNewDescription] = useState('');
+
+  const handleClickPostJob = () => {
+    if (!isPaidVerifiedBusiness) {
+      setIsVerificationModalOpen(true);
+    } else {
+      setIsPostJobModalOpen(true);
+    }
+  };
 
   const handleOpenApplyModal = (job) => {
     setActiveJobModal(job);
@@ -140,10 +150,10 @@ export default function JobsBoard({ user }) {
             Applications Submitted: {appliedJobs.length}
           </div>
 
-          {/* Post a Job Button: ONLY Visible for Verified Business & Recruiter Accounts */}
+          {/* Post a Job Button: ONLY Visible for Business & Recruiter Accounts */}
           {isBusinessOrRecruiter && (
             <button
-              onClick={() => setIsPostJobModalOpen(true)}
+              onClick={handleClickPostJob}
               className="btn-primary"
               style={{ padding: '0.55rem 1.15rem', fontSize: '0.86rem', display: 'flex', alignItems: 'center', gap: '6px' }}
             >
@@ -226,6 +236,65 @@ export default function JobsBoard({ user }) {
           );
         })}
       </div>
+
+      {/* $99 PAID BUSINESS VERIFICATION MODAL */}
+      {isVerificationModalOpen && (
+        <div className="modal-overlay" onClick={() => setIsVerificationModalOpen(false)}>
+          <div className="modal-content" style={{ maxWidth: '520px', textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 style={{ fontSize: '1.15rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '8px', margin: 0, color: 'var(--text-main)' }}>
+                <ShieldCheck size={20} style={{ color: 'var(--primary)' }} /> Verified Business Upgrade Required
+              </h2>
+              <button onClick={() => setIsVerificationModalOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', alignItems: 'center', padding: '1.5rem' }}>
+              <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Award size={32} style={{ color: 'var(--primary)' }} />
+              </div>
+
+              <div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--text-main)', margin: '0 0 8px' }}>
+                  Get Certified Business Status ($99)
+                </h3>
+                <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', lineHeight: '1.5', margin: 0 }}>
+                  Publishing official job listings on Architex requires a **Verified Business Account ($99)** to eliminate spam and protect our developer community.
+                </p>
+              </div>
+
+              <div style={{ background: 'var(--bg-surface-hover)', padding: '1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', width: '100%', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <CheckCircle2 size={16} style={{ color: '#10b981' }} /> Unlimited Business Job Postings
+                </div>
+                <div style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <CheckCircle2 size={16} style={{ color: '#10b981' }} /> Verified Business Badge on Profile & Posts
+                </div>
+                <div style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <CheckCircle2 size={16} style={{ color: '#10b981' }} /> Priority Placement in Developer Talent Pipeline
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-footer" style={{ justifyContent: 'center', gap: '12px' }}>
+              <button onClick={() => setIsVerificationModalOpen(false)} className="btn-secondary">
+                Maybe Later
+              </button>
+              <button 
+                onClick={() => {
+                  setIsVerificationModalOpen(false);
+                  alert('Redirecting to $99 Business Verification checkout...');
+                }} 
+                className="btn-primary" 
+                style={{ padding: '0.65rem 1.4rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                <Sparkles size={16} /> Get Verified Business ($99)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* DETAILED JOB OVERVIEW MODAL */}
       {jobDetailDrawer && (
@@ -313,7 +382,7 @@ export default function JobsBoard({ user }) {
         </div>
       )}
 
-      {/* POST JOB MODAL (BUSINESS & RECRUITER ACCOUNTS ONLY) */}
+      {/* POST JOB MODAL (PAID VERIFIED BUSINESS & RECRUITER ACCOUNTS ONLY) */}
       {isPostJobModalOpen && isBusinessOrRecruiter && (
         <div className="modal-overlay" onClick={() => setIsPostJobModalOpen(false)}>
           <div className="modal-content" style={{ maxWidth: '560px' }} onClick={(e) => e.stopPropagation()}>

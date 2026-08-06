@@ -50,6 +50,7 @@ export default function JobsBoard({ user }) {
   const [newC2hRate, setNewC2hRate] = useState('');
   const [newSalaryW2, setNewSalaryW2] = useState('');
   const [newLocation, setNewLocation] = useState('Remote');
+  const [newLocationDetail, setNewLocationDetail] = useState('');
   const [newSkills, setNewSkills] = useState('');
   const [newDescription, setNewDescription] = useState('');
 
@@ -120,19 +121,21 @@ export default function JobsBoard({ user }) {
       type: newWorkType,
       c2hRate: newC2hRate.trim() || null,
       salaryW2: newSalaryW2.trim() || null,
-      location: newLocation.trim() || 'Remote',
+      location: newLocationDetail.trim() 
+        ? (newLocation === 'Remote' ? `Remote (${newLocationDetail.trim()})` : `${newLocation} - ${newLocationDetail.trim()}`)
+        : newLocation,
       hiringManager: user?.name || 'Hiring Lead',
       description: newDescription.trim(),
-      techStack: newSkills.split(',').map(s => s.trim()).filter(Boolean)
+      techStack: []
     };
 
     setJobs([newJobObj, ...jobs]);
     setNewTitle('');
     setNewCompany('');
     setNewDescription('');
-    setNewSkills('');
     setNewC2hRate('');
     setNewSalaryW2('');
+    setNewLocationDetail('');
     setIsPostJobModalOpen(false);
     alert('Job listing published successfully!');
   };
@@ -436,6 +439,23 @@ export default function JobsBoard({ user }) {
                       <option value="Full-Time W2">Full-Time W2</option>
                       <option value="Contract or Full-Time W2">Contract or Full-Time W2 (Both Options)</option>
                     </select>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <div>
+                    <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>Location Type *</label>
+                    <select value={newLocation} onChange={(e) => setNewLocation(e.target.value)}
+                      style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.86rem' }}>
+                      <option value="Remote">Remote</option>
+                      <option value="Onsite">Onsite</option>
+                      <option value="Hybrid">Hybrid</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>City / State / Region</label>
+                    <input type="text" placeholder={newLocation === 'Remote' ? 'e.g. Remote (US/TX) or Global' : 'e.g. Austin, TX'} value={newLocationDetail} onChange={(e) => setNewLocationDetail(e.target.value)}
+                      style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.86rem', boxSizing: 'border-box' }} />
                   </div>
                 </div>
 

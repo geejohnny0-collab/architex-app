@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Layers, Upload, FileText, CheckCircle2, X, Briefcase, Send, Check, Eye, Plus, ShieldCheck, Award, Lock, Sparkles, User, Mail, Link as LinkIcon, FileEdit } from 'lucide-react';
+import { Layers, Upload, FileText, CheckCircle2, X, Briefcase, Send, Check, Eye, Plus, ShieldCheck, Award, Lock, Sparkles, User, Mail, Link as LinkIcon, FileEdit, Trash2, Calendar, Phone, MapPin, Globe, GraduationCap, FileCheck, PenTool } from 'lucide-react';
 
 export default function JobsBoard({ user }) {
   const userEmail = (user?.email || '').toLowerCase();
@@ -60,11 +60,57 @@ export default function JobsBoard({ user }) {
   const [applyMode, setApplyMode] = useState('resume');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Manual Application State
-  const [applicantName, setApplicantName] = useState(user?.name || '');
-  const [applicantEmail, setApplicantEmail] = useState(user?.email || 'architexjobs@gmail.com');
-  const [applicantPortfolio, setApplicantPortfolio] = useState('');
-  const [applicantNote, setApplicantNote] = useState('');
+  // Advanced Manual Application State
+  const [manualForm, setManualForm] = useState({
+    firstName: user?.name ? user.name.split(' ')[0] : '',
+    lastName: user?.name ? user.name.split(' ').slice(1).join(' ') : '',
+    email: user?.email || 'architexjobs@gmail.com',
+    phone: '',
+    cityState: '',
+    country: 'United States',
+    linkedIn: '',
+    portfolio: '',
+    gitHub: '',
+    currentTitle: '',
+    currentEmployer: '',
+    yearsExperience: '3-5 years',
+    desiredSalary: '',
+    desiredRate: '',
+    earliestStartDate: '',
+    employmentPreference: 'Full-Time',
+    workAuth: 'Authorized to work without restriction',
+    sponsorshipRequired: 'No',
+    willingToRelocate: 'No',
+    willingToTravel: 'Up to 25%',
+    technicalSkills: '',
+    certifications: '',
+    languages: 'English',
+    educationLevel: "Bachelor's Degree",
+    degree: 'Computer Science / Engineering',
+    school: '',
+    graduationYear: '2022',
+    noticePeriod: '2 Weeks',
+    interviewAvailability: 'Weekdays 9 AM - 5 PM CST',
+    bgCheckConsent: true,
+    eeoGender: 'Prefer not to answer',
+    eeoVeteran: 'Prefer not to answer',
+    eeoDisability: 'Prefer not to answer',
+    eeoRace: 'Prefer not to answer',
+    agreeAccuracy: true,
+    agreePrivacy: true,
+    signature: '',
+    signDate: new Date().toISOString().split('T')[0]
+  });
+
+  // Dynamic Work Experience Entries
+  const [experiences, setExperiences] = useState([
+    { company: '', title: '', dates: '', current: true, responsibilities: '' }
+  ]);
+
+  // Dynamic Projects Entries
+  const [projectsList, setProjectsList] = useState([
+    { name: '', description: '', techUsed: '', projectUrl: '', repoUrl: '' }
+  ]);
 
   // New Job Form State
   const [newTitle, setNewTitle] = useState('');
@@ -76,7 +122,6 @@ export default function JobsBoard({ user }) {
   const [newLocationDetail, setNewLocationDetail] = useState('');
   const [newDescription, setNewDescription] = useState('');
 
-  // Persist jobs on state change
   useEffect(() => {
     try {
       localStorage.setItem('architex_published_jobs', JSON.stringify(jobs));
@@ -98,10 +143,6 @@ export default function JobsBoard({ user }) {
     setUploadedFile(null);
     setApplyMode('resume');
     setIsDragging(false);
-    setApplicantName(user?.name || '');
-    setApplicantEmail(user?.email || 'architexjobs@gmail.com');
-    setApplicantPortfolio('');
-    setApplicantNote('');
   };
 
   const handleFileUpload = (e) => {
@@ -132,6 +173,22 @@ export default function JobsBoard({ user }) {
     }
   };
 
+  const addExperience = () => {
+    setExperiences([...experiences, { company: '', title: '', dates: '', current: false, responsibilities: '' }]);
+  };
+
+  const removeExperience = (index) => {
+    setExperiences(experiences.filter((_, i) => i !== index));
+  };
+
+  const addProject = () => {
+    setProjectsList([...projectsList, { name: '', description: '', techUsed: '', projectUrl: '', repoUrl: '' }]);
+  };
+
+  const removeProject = (index) => {
+    setProjectsList(projectsList.filter((_, i) => i !== index));
+  };
+
   const handleConfirmApply = async () => {
     if (!activeJobModal) return;
     setIsSubmitting(true);
@@ -139,18 +196,24 @@ export default function JobsBoard({ user }) {
     try {
       let submissionData = {};
       if (applyMode === 'manual') {
-        if (!applicantName.trim() || !applicantEmail.trim()) {
-          throw new Error('Please enter your Name and Email address for manual submission.');
+        if (!manualForm.firstName.trim() || !manualForm.email.trim()) {
+          throw new Error('Please fill in your Name and Email address for manual application.');
+        }
+        if (!manualForm.signature.trim()) {
+          throw new Error('Please provide your Electronic Signature to confirm your application.');
         }
         submissionData = {
           jobId: activeJobModal.id,
           jobTitle: activeJobModal.title,
           company: activeJobModal.company,
-          userEmail: applicantEmail.trim(),
-          applicantName: applicantName.trim(),
-          portfolioUrl: applicantPortfolio.trim() || null,
-          coverNote: applicantNote.trim() || null,
-          resumeName: 'Manual Application (No Resume)'
+          userEmail: manualForm.email.trim(),
+          applicantName: `${manualForm.firstName} ${manualForm.lastName}`.trim(),
+          manualDetails: {
+            ...manualForm,
+            experiences,
+            projects: projectsList
+          },
+          resumeName: 'Comprehensive Manual Application'
         };
       } else {
         const resumeNameToSubmit = uploadedFile ? uploadedFile.name : selectedResume;
@@ -177,7 +240,7 @@ export default function JobsBoard({ user }) {
       setAppliedJobs((prev) => [...prev, activeJobModal.id]);
       setActiveJobModal(null);
       alert(applyMode === 'manual' 
-        ? `Manual application submitted successfully for ${applicantName}! Confirmation email dispatched.`
+        ? `Comprehensive manual application submitted successfully for ${manualForm.firstName} ${manualForm.lastName}! Confirmation email dispatched.`
         : `Application and resume (${submissionData.resumeName}) submitted successfully! Confirmation email dispatched.`
       );
     } catch (error) {
@@ -564,10 +627,10 @@ export default function JobsBoard({ user }) {
         </div>
       )}
 
-      {/* INTERACTIVE APPLICATION MODAL OVERLAY (RESUME DRAG & DROP + MANUAL MODE) */}
+      {/* COMPREHENSIVE INTERACTIVE APPLICATION MODAL OVERLAY */}
       {activeJobModal && (
         <div className="modal-overlay" onClick={() => setActiveJobModal(null)}>
-          <div className="modal-content" style={{ maxWidth: '540px' }} onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content" style={{ maxWidth: '640px' }} onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2 style={{ fontSize: '1.15rem', fontWeight: '800', margin: 0, color: 'var(--text-main)' }}>
                 Apply to {activeJobModal.company}
@@ -577,7 +640,7 @@ export default function JobsBoard({ user }) {
               </button>
             </div>
 
-            <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
+            <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem', maxHeight: '70vh', overflowY: 'auto' }}>
               <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
                 Position: <strong style={{ color: 'var(--text-main)' }}>{activeJobModal.title}</strong>
               </div>
@@ -598,7 +661,7 @@ export default function JobsBoard({ user }) {
                   className={applyMode === 'manual' ? 'btn-primary' : 'btn-secondary'}
                   style={{ padding: '0.55rem', fontSize: '0.84rem', fontWeight: '700', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                 >
-                  <FileEdit size={15} /> Apply Manually (No Resume)
+                  <FileEdit size={15} /> Apply Manually (Full Form)
                 </button>
               </div>
 
@@ -674,73 +737,438 @@ export default function JobsBoard({ user }) {
                 </div>
               )}
 
-              {/* MODE B: MANUAL APPLICATION FORM (NO RESUME REQUIRED) */}
+              {/* MODE B: ENTERPRISE MANUAL APPLICATION FORM */}
               {applyMode === 'manual' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', marginBottom: '4px', color: 'var(--text-main)' }}>
-                        Full Name *
-                      </label>
-                      <div style={{ position: 'relative' }}>
-                        <User size={15} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                        <input
-                          type="text"
-                          required
-                          placeholder="Your Full Name"
-                          value={applicantName}
-                          onChange={(e) => setApplicantName(e.target.value)}
-                          style={{ width: '100%', padding: '0.6rem 0.6rem 0.6rem 2.2rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.86rem', boxSizing: 'border-box' }}
-                        />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                  
+                  {/* SECTION 1: BASIC & CONTACT INFORMATION */}
+                  <div style={{ background: 'var(--bg-surface-hover)', padding: '1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
+                    <h3 style={{ fontSize: '0.88rem', fontWeight: '800', color: 'var(--primary)', margin: '0 0 10px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      1. Basic & Contact Information
+                    </h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                        <div>
+                          <label style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '3px' }}>First Name *</label>
+                          <input type="text" required placeholder="First Name" value={manualForm.firstName} onChange={(e) => setManualForm({...manualForm, firstName: e.target.value})}
+                            style={{ width: '100%', padding: '0.55rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.84rem', boxSizing: 'border-box' }} />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '3px' }}>Last Name *</label>
+                          <input type="text" required placeholder="Last Name" value={manualForm.lastName} onChange={(e) => setManualForm({...manualForm, lastName: e.target.value})}
+                            style={{ width: '100%', padding: '0.55rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.84rem', boxSizing: 'border-box' }} />
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                        <div>
+                          <label style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '3px' }}>Email *</label>
+                          <input type="email" required placeholder="Email Address" value={manualForm.email} onChange={(e) => setManualForm({...manualForm, email: e.target.value})}
+                            style={{ width: '100%', padding: '0.55rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.84rem', boxSizing: 'border-box' }} />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '3px' }}>Phone Number</label>
+                          <input type="tel" placeholder="(555) 000-0000" value={manualForm.phone} onChange={(e) => setManualForm({...manualForm, phone: e.target.value})}
+                            style={{ width: '100%', padding: '0.55rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.84rem', boxSizing: 'border-box' }} />
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                        <div>
+                          <label style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '3px' }}>City & State</label>
+                          <input type="text" placeholder="e.g. Austin, TX" value={manualForm.cityState} onChange={(e) => setManualForm({...manualForm, cityState: e.target.value})}
+                            style={{ width: '100%', padding: '0.55rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.84rem', boxSizing: 'border-box' }} />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '3px' }}>Country</label>
+                          <input type="text" placeholder="Country" value={manualForm.country} onChange={(e) => setManualForm({...manualForm, country: e.target.value})}
+                            style={{ width: '100%', padding: '0.55rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.84rem', boxSizing: 'border-box' }} />
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+                        <div>
+                          <label style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '3px' }}>LinkedIn Profile</label>
+                          <input type="url" placeholder="linkedin.com/in/..." value={manualForm.linkedIn} onChange={(e) => setManualForm({...manualForm, linkedIn: e.target.value})}
+                            style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.8rem', boxSizing: 'border-box' }} />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '3px' }}>Portfolio Website</label>
+                          <input type="url" placeholder="yourportfolio.com" value={manualForm.portfolio} onChange={(e) => setManualForm({...manualForm, portfolio: e.target.value})}
+                            style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.8rem', boxSizing: 'border-box' }} />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '3px' }}>GitHub Profile</label>
+                          <input type="url" placeholder="github.com/..." value={manualForm.gitHub} onChange={(e) => setManualForm({...manualForm, gitHub: e.target.value})}
+                            style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.8rem', boxSizing: 'border-box' }} />
+                        </div>
                       </div>
                     </div>
+                  </div>
 
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', marginBottom: '4px', color: 'var(--text-main)' }}>
-                        Contact Email *
-                      </label>
-                      <div style={{ position: 'relative' }}>
-                        <Mail size={15} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                        <input
-                          type="email"
-                          required
-                          placeholder="your.email@gmail.com"
-                          value={applicantEmail}
-                          onChange={(e) => setApplicantEmail(e.target.value)}
-                          style={{ width: '100%', padding: '0.6rem 0.6rem 0.6rem 2.2rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.86rem', boxSizing: 'border-box' }}
-                        />
+                  {/* SECTION 2: PROFESSIONAL INFORMATION & WORK PREFERENCES */}
+                  <div style={{ background: 'var(--bg-surface-hover)', padding: '1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
+                    <h3 style={{ fontSize: '0.88rem', fontWeight: '800', color: 'var(--primary)', margin: '0 0 10px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      2. Professional Information & Preferences
+                    </h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                        <div>
+                          <label style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '3px' }}>Current Job Title</label>
+                          <input type="text" placeholder="e.g. Software Engineer" value={manualForm.currentTitle} onChange={(e) => setManualForm({...manualForm, currentTitle: e.target.value})}
+                            style={{ width: '100%', padding: '0.55rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.84rem', boxSizing: 'border-box' }} />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '3px' }}>Current Employer</label>
+                          <input type="text" placeholder="e.g. Tech Corp" value={manualForm.currentEmployer} onChange={(e) => setManualForm({...manualForm, currentEmployer: e.target.value})}
+                            style={{ width: '100%', padding: '0.55rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.84rem', boxSizing: 'border-box' }} />
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+                        <div>
+                          <label style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '3px' }}>Years of Experience</label>
+                          <select value={manualForm.yearsExperience} onChange={(e) => setManualForm({...manualForm, yearsExperience: e.target.value})}
+                            style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.8rem' }}>
+                            <option>0-1 year</option>
+                            <option>1-3 years</option>
+                            <option>3-5 years</option>
+                            <option>5-8 years</option>
+                            <option>8+ years</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '3px' }}>Desired Hourly Rate ($/hr)</label>
+                          <input type="text" placeholder="e.g. $125/hr" value={manualForm.desiredRate} onChange={(e) => setManualForm({...manualForm, desiredRate: e.target.value})}
+                            style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.8rem', boxSizing: 'border-box' }} />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '3px' }}>Desired Salary ($/yr)</label>
+                          <input type="text" placeholder="e.g. $180,000/yr" value={manualForm.desiredSalary} onChange={(e) => setManualForm({...manualForm, desiredSalary: e.target.value})}
+                            style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.8rem', boxSizing: 'border-box' }} />
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+                        <div>
+                          <label style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '3px' }}>Work Preference</label>
+                          <select value={manualForm.employmentPreference} onChange={(e) => setManualForm({...manualForm, employmentPreference: e.target.value})}
+                            style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.8rem' }}>
+                            <option>Full-Time W2</option>
+                            <option>Contract (C2H / 1099)</option>
+                            <option>Part-Time</option>
+                            <option>Internship</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '3px' }}>Relocation Willingness</label>
+                          <select value={manualForm.willingToRelocate} onChange={(e) => setManualForm({...manualForm, willingToRelocate: e.target.value})}
+                            style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.8rem' }}>
+                            <option>No</option>
+                            <option>Yes</option>
+                            <option>Negotiable / Remote preferred</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '3px' }}>Travel Willingness</label>
+                          <select value={manualForm.willingToTravel} onChange={(e) => setManualForm({...manualForm, willingToTravel: e.target.value})}
+                            style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.8rem' }}>
+                            <option>None</option>
+                            <option>Up to 25%</option>
+                            <option>Up to 50%</option>
+                            <option>50%+</option>
+                          </select>
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', marginBottom: '4px', color: 'var(--text-main)' }}>
-                      GitHub / Portfolio / LinkedIn URL
-                    </label>
-                    <div style={{ position: 'relative' }}>
-                      <LinkIcon size={15} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                      <input
-                        type="url"
-                        placeholder="https://github.com/yourusername"
-                        value={applicantPortfolio}
-                        onChange={(e) => setApplicantPortfolio(e.target.value)}
-                        style={{ width: '100%', padding: '0.6rem 0.6rem 0.6rem 2.2rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.86rem', boxSizing: 'border-box' }}
-                      />
+                  {/* SECTION 3: WORK EXPERIENCE (MULTI-ENTRY) */}
+                  <div style={{ background: 'var(--bg-surface-hover)', padding: '1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                      <h3 style={{ fontSize: '0.88rem', fontWeight: '800', color: 'var(--primary)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        3. Work Experience
+                      </h3>
+                      <button type="button" onClick={addExperience} className="btn-secondary" style={{ padding: '0.3rem 0.75rem', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <Plus size={14} /> Add Experience
+                      </button>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {experiences.map((exp, idx) => (
+                        <div key={idx} style={{ background: 'var(--bg-surface)', padding: '0.85rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: '0.78rem', fontWeight: '800', color: 'var(--text-main)' }}>Experience #{idx + 1}</span>
+                            {experiences.length > 1 && (
+                              <button type="button" onClick={() => removeExperience(idx)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 0 }}>
+                                <Trash2 size={15} />
+                              </button>
+                            )}
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                            <input type="text" placeholder="Company Name" value={exp.company} onChange={(e) => {
+                              const updated = [...experiences];
+                              updated[idx].company = e.target.value;
+                              setExperiences(updated);
+                            }} style={{ padding: '0.5rem', borderRadius: '4px', background: 'var(--bg-surface-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.8rem' }} />
+                            
+                            <input type="text" placeholder="Job Title" value={exp.title} onChange={(e) => {
+                              const updated = [...experiences];
+                              updated[idx].title = e.target.value;
+                              setExperiences(updated);
+                            }} style={{ padding: '0.5rem', borderRadius: '4px', background: 'var(--bg-surface-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.8rem' }} />
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', alignItems: 'center' }}>
+                            <input type="text" placeholder="Employment Dates (e.g. 2021 - Present)" value={exp.dates} onChange={(e) => {
+                              const updated = [...experiences];
+                              updated[idx].dates = e.target.value;
+                              setExperiences(updated);
+                            }} style={{ padding: '0.5rem', borderRadius: '4px', background: 'var(--bg-surface-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.8rem' }} />
+
+                            <label style={{ fontSize: '0.78rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                              <input type="checkbox" checked={exp.current} onChange={(e) => {
+                                const updated = [...experiences];
+                                updated[idx].current = e.target.checked;
+                                setExperiences(updated);
+                              }} /> Current Position
+                            </label>
+                          </div>
+
+                          <textarea rows={2} placeholder="Key responsibilities and achievements..." value={exp.responsibilities} onChange={(e) => {
+                            const updated = [...experiences];
+                            updated[idx].responsibilities = e.target.value;
+                            setExperiences(updated);
+                          }} style={{ padding: '0.5rem', borderRadius: '4px', background: 'var(--bg-surface-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.8rem', resize: 'none' }} />
+                        </div>
+                      ))}
                     </div>
                   </div>
 
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', marginBottom: '4px', color: 'var(--text-main)' }}>
-                      Intro / Experience Summary & Cover Note
-                    </label>
-                    <textarea
-                      rows={3}
-                      placeholder="Briefly describe your relevant experience, technical skills, or why you're a great fit..."
-                      value={applicantNote}
-                      onChange={(e) => setApplicantNote(e.target.value)}
-                      style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.86rem', boxSizing: 'border-box', resize: 'none' }}
-                    />
+                  {/* SECTION 4: PROJECTS (SOFTWARE & CREATIVE ROLES) */}
+                  <div style={{ background: 'var(--bg-surface-hover)', padding: '1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                      <h3 style={{ fontSize: '0.88rem', fontWeight: '800', color: 'var(--primary)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        4. Key Projects & Portfolio
+                      </h3>
+                      <button type="button" onClick={addProject} className="btn-secondary" style={{ padding: '0.3rem 0.75rem', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <Plus size={14} /> Add Project
+                      </button>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {projectsList.map((proj, idx) => (
+                        <div key={idx} style={{ background: 'var(--bg-surface)', padding: '0.85rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: '0.78rem', fontWeight: '800', color: 'var(--text-main)' }}>Project #{idx + 1}</span>
+                            {projectsList.length > 1 && (
+                              <button type="button" onClick={() => removeProject(idx)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 0 }}>
+                                <Trash2 size={15} />
+                              </button>
+                            )}
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                            <input type="text" placeholder="Project Name" value={proj.name} onChange={(e) => {
+                              const updated = [...projectsList];
+                              updated[idx].name = e.target.value;
+                              setProjectsList(updated);
+                            }} style={{ padding: '0.5rem', borderRadius: '4px', background: 'var(--bg-surface-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.8rem' }} />
+
+                            <input type="text" placeholder="Technologies Used" value={proj.techUsed} onChange={(e) => {
+                              const updated = [...projectsList];
+                              updated[idx].techUsed = e.target.value;
+                              setProjectsList(updated);
+                            }} style={{ padding: '0.5rem', borderRadius: '4px', background: 'var(--bg-surface-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.8rem' }} />
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                            <input type="url" placeholder="Project / Live URL" value={proj.projectUrl} onChange={(e) => {
+                              const updated = [...projectsList];
+                              updated[idx].projectUrl = e.target.value;
+                              setProjectsList(updated);
+                            }} style={{ padding: '0.5rem', borderRadius: '4px', background: 'var(--bg-surface-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.8rem' }} />
+
+                            <input type="url" placeholder="GitHub Repository URL" value={proj.repoUrl} onChange={(e) => {
+                              const updated = [...projectsList];
+                              updated[idx].repoUrl = e.target.value;
+                              setProjectsList(updated);
+                            }} style={{ padding: '0.5rem', borderRadius: '4px', background: 'var(--bg-surface-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.8rem' }} />
+                          </div>
+
+                          <input type="text" placeholder="Brief Description..." value={proj.description} onChange={(e) => {
+                            const updated = [...projectsList];
+                            updated[idx].description = e.target.value;
+                            setProjectsList(updated);
+                          }} style={{ padding: '0.5rem', borderRadius: '4px', background: 'var(--bg-surface-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.8rem' }} />
+                        </div>
+                      ))}
+                    </div>
                   </div>
+
+                  {/* SECTION 5: EDUCATION & SKILLS */}
+                  <div style={{ background: 'var(--bg-surface-hover)', padding: '1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
+                    <h3 style={{ fontSize: '0.88rem', fontWeight: '800', color: 'var(--primary)', margin: '0 0 10px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      5. Education & Skills
+                    </h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '8px' }}>
+                        <div>
+                          <label style={{ fontSize: '0.74rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '3px' }}>Education Level</label>
+                          <select value={manualForm.educationLevel} onChange={(e) => setManualForm({...manualForm, educationLevel: e.target.value})}
+                            style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.78rem' }}>
+                            <option>High School</option>
+                            <option>Associate Degree</option>
+                            <option>Bachelor's Degree</option>
+                            <option>Master's Degree</option>
+                            <option>Doctorate / PhD</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '0.74rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '3px' }}>Degree / Field</label>
+                          <input type="text" placeholder="e.g. Computer Science" value={manualForm.degree} onChange={(e) => setManualForm({...manualForm, degree: e.target.value})}
+                            style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.78rem', boxSizing: 'border-box' }} />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '0.74rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '3px' }}>School / University</label>
+                          <input type="text" placeholder="School Name" value={manualForm.school} onChange={(e) => setManualForm({...manualForm, school: e.target.value})}
+                            style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.78rem', boxSizing: 'border-box' }} />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '0.74rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '3px' }}>Grad Year</label>
+                          <input type="text" placeholder="2022" value={manualForm.graduationYear} onChange={(e) => setManualForm({...manualForm, graduationYear: e.target.value})}
+                            style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.78rem', boxSizing: 'border-box' }} />
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                        <div>
+                          <label style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '3px' }}>Technical Skills (comma separated)</label>
+                          <input type="text" placeholder="e.g. React, Node.js, Python, PostgreSQL, AWS" value={manualForm.technicalSkills} onChange={(e) => setManualForm({...manualForm, technicalSkills: e.target.value})}
+                            style={{ width: '100%', padding: '0.55rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.84rem', boxSizing: 'border-box' }} />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '3px' }}>Certifications & Licenses</label>
+                          <input type="text" placeholder="e.g. AWS Certified Architect, PMP" value={manualForm.certifications} onChange={(e) => setManualForm({...manualForm, certifications: e.target.value})}
+                            style={{ width: '100%', padding: '0.55rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.84rem', boxSizing: 'border-box' }} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* SECTION 6: SCREENING QUESTIONS & CONSENT */}
+                  <div style={{ background: 'var(--bg-surface-hover)', padding: '1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
+                    <h3 style={{ fontSize: '0.88rem', fontWeight: '800', color: 'var(--primary)', margin: '0 0 10px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      6. Employer Screening Questions
+                    </h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                        <div>
+                          <label style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '3px' }}>Work Authorization</label>
+                          <select value={manualForm.workAuth} onChange={(e) => setManualForm({...manualForm, workAuth: e.target.value})}
+                            style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.8rem' }}>
+                            <option>Authorized to work without restriction</option>
+                            <option>Requires H1B / Visa Sponsorship</option>
+                            <option>US Citizen / Permanent Resident</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '3px' }}>Notice Period / Availability</label>
+                          <input type="text" placeholder="e.g. 2 Weeks / Immediate" value={manualForm.noticePeriod} onChange={(e) => setManualForm({...manualForm, noticePeriod: e.target.value})}
+                            style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.8rem', boxSizing: 'border-box' }} />
+                        </div>
+                      </div>
+
+                      <label style={{ fontSize: '0.8rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', marginTop: '4px' }}>
+                        <input type="checkbox" checked={manualForm.bgCheckConsent} onChange={(e) => setManualForm({...manualForm, bgCheckConsent: e.target.checked})} />
+                        I consent to a standard background check upon employer offer
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* SECTION 7: EQUAL EMPLOYMENT OPPORTUNITY (EEO - OPTIONAL) */}
+                  <div style={{ background: 'var(--bg-surface-hover)', padding: '1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
+                    <h3 style={{ fontSize: '0.88rem', fontWeight: '800', color: 'var(--primary)', margin: '0 0 6px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      7. Equal Employment Opportunity (Optional)
+                    </h3>
+                    <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '0 0 10px 0' }}>
+                      Submission of this information is voluntary and will not affect your application status.
+                    </p>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '8px' }}>
+                      <div>
+                        <label style={{ fontSize: '0.74rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '3px' }}>Gender</label>
+                        <select value={manualForm.eeoGender} onChange={(e) => setManualForm({...manualForm, eeoGender: e.target.value})}
+                          style={{ width: '100%', padding: '0.45rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.78rem' }}>
+                          <option>Prefer not to answer</option>
+                          <option>Male</option>
+                          <option>Female</option>
+                          <option>Non-Binary</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '0.74rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '3px' }}>Veteran Status</label>
+                        <select value={manualForm.eeoVeteran} onChange={(e) => setManualForm({...manualForm, eeoVeteran: e.target.value})}
+                          style={{ width: '100%', padding: '0.45rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.78rem' }}>
+                          <option>Prefer not to answer</option>
+                          <option>Not a Veteran</option>
+                          <option>Protected Veteran</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '0.74rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '3px' }}>Disability Status</label>
+                        <select value={manualForm.eeoDisability} onChange={(e) => setManualForm({...manualForm, eeoDisability: e.target.value})}
+                          style={{ width: '100%', padding: '0.45rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.78rem' }}>
+                          <option>Prefer not to answer</option>
+                          <option>No Disability</option>
+                          <option>Yes, I Have a Disability</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '0.74rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '3px' }}>Ethnicity / Race</label>
+                        <select value={manualForm.eeoRace} onChange={(e) => setManualForm({...manualForm, eeoRace: e.target.value})}
+                          style={{ width: '100%', padding: '0.45rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.78rem' }}>
+                          <option>Prefer not to answer</option>
+                          <option>Asian</option>
+                          <option>Black / African American</option>
+                          <option>Hispanic / Latino</option>
+                          <option>White / Caucasian</option>
+                          <option>Two or More Races</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* SECTION 8: FINAL CONFIRMATION & ELECTRONIC SIGNATURE */}
+                  <div style={{ background: 'var(--bg-surface-hover)', padding: '1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
+                    <h3 style={{ fontSize: '0.88rem', fontWeight: '800', color: 'var(--primary)', margin: '0 0 10px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      8. Final Consent & Electronic Signature
+                    </h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <label style={{ fontSize: '0.8rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                        <input type="checkbox" checked={manualForm.agreeAccuracy} onChange={(e) => setManualForm({...manualForm, agreeAccuracy: e.target.checked})} />
+                        I certify that all information provided in this application is accurate and true.
+                      </label>
+                      <label style={{ fontSize: '0.8rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                        <input type="checkbox" checked={manualForm.agreePrivacy} onChange={(e) => setManualForm({...manualForm, agreePrivacy: e.target.checked})} />
+                        I consent to the processing of my application data in accordance with privacy policy.
+                      </label>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '10px', marginTop: '6px' }}>
+                        <div>
+                          <label style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '3px' }}>Electronic Signature (Type Full Name) *</label>
+                          <input type="text" required placeholder="Type your full legal name as signature" value={manualForm.signature} onChange={(e) => setManualForm({...manualForm, signature: e.target.value})}
+                            style={{ width: '100%', padding: '0.55rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.84rem', boxSizing: 'border-box' }} />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '3px' }}>Signature Date</label>
+                          <input type="date" value={manualForm.signDate} onChange={(e) => setManualForm({...manualForm, signDate: e.target.value})}
+                            style={{ width: '100%', padding: '0.55rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.84rem', boxSizing: 'border-box' }} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                 </div>
               )}
             </div>

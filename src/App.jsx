@@ -582,7 +582,7 @@ export default function App() {
           )}
 
           {activeView === 'jobs' && (
-            <JobsView onSendApplicationMessage={handleSendApplicationMessage} />
+            <JobsView user={user} onSendApplicationMessage={handleSendApplicationMessage} />
           )}
 
           {activeView === 'groups' && (

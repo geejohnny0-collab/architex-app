@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { Layers, Upload, FileText, CheckCircle2, X, Briefcase, Send, Check, Eye } from 'lucide-react';
+import { Layers, Upload, FileText, CheckCircle2, X, Briefcase, Send, Check, Eye, Plus } from 'lucide-react';
 
-export default function JobsBoard() {
-  const [jobs] = useState([
+export default function JobsBoard({ user }) {
+  const isBusinessOrRecruiter = ['business', 'recruiter', 'enterprise'].includes((user?.userType || '').toLowerCase()) || user?.verified === true;
+
+  const [jobs, setJobs] = useState([
     {
       id: 'job-1',
       title: 'Senior Backend Engineer',
@@ -32,9 +34,20 @@ export default function JobsBoard() {
   const [appliedJobs, setAppliedJobs] = useState([]);
   const [activeJobModal, setActiveJobModal] = useState(null);
   const [jobDetailDrawer, setJobDetailDrawer] = useState(null);
+  const [isPostJobModalOpen, setIsPostJobModalOpen] = useState(false);
   const [selectedResume, setSelectedResume] = useState('Primary_Software_Resume.pdf');
   const [uploadedFile, setUploadedFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // New Job Form State
+  const [newTitle, setNewTitle] = useState('');
+  const [newCompany, setNewCompany] = useState('');
+  const [newWorkType, setNewWorkType] = useState('Contract to Hire (C2H) & W2');
+  const [newC2hRate, setNewC2hRate] = useState('');
+  const [newSalaryW2, setNewSalaryW2] = useState('');
+  const [newLocation, setNewLocation] = useState('Remote');
+  const [newSkills, setNewSkills] = useState('');
+  const [newDescription, setNewDescription] = useState('');
 
   const handleOpenApplyModal = (job) => {
     setActiveJobModal(job);
@@ -84,6 +97,34 @@ export default function JobsBoard() {
     }
   };
 
+  const handlePostJobSubmit = (e) => {
+    e.preventDefault();
+    if (!newTitle.trim() || !newCompany.trim()) return;
+
+    const newJobObj = {
+      id: 'j_' + Date.now(),
+      title: newTitle.trim(),
+      company: newCompany.trim(),
+      type: newWorkType,
+      c2hRate: newC2hRate.trim() || null,
+      salaryW2: newSalaryW2.trim() || null,
+      location: newLocation.trim() || 'Remote',
+      hiringManager: user?.name || 'Hiring Lead',
+      description: newDescription.trim(),
+      techStack: newSkills.split(',').map(s => s.trim()).filter(Boolean)
+    };
+
+    setJobs([newJobObj, ...jobs]);
+    setNewTitle('');
+    setNewCompany('');
+    setNewDescription('');
+    setNewSkills('');
+    setNewC2hRate('');
+    setNewSalaryW2('');
+    setIsPostJobModalOpen(false);
+    alert('Job listing published successfully!');
+  };
+
   return (
     <div style={{ padding: '1rem', maxWidth: '1000px', margin: '0 auto', fontFamily: 'inherit', position: 'relative' }}>
       
@@ -93,8 +134,22 @@ export default function JobsBoard() {
           <h1 style={{ fontSize: '1.4rem', fontWeight: '800', margin: 0, color: 'var(--text-main)' }}>Jobs Marketplace</h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: '4px 0 0 0' }}>Low competition direct pipeline roles with verified employers.</p>
         </div>
-        <div style={{ background: 'var(--primary-light)', color: 'var(--primary)', padding: '0.5rem 1rem', borderRadius: 'var(--radius-full)', fontWeight: '800', fontSize: '0.88rem' }}>
-          Applications Submitted: {appliedJobs.length}
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ background: 'var(--primary-light)', color: 'var(--primary)', padding: '0.5rem 1rem', borderRadius: 'var(--radius-full)', fontWeight: '800', fontSize: '0.88rem' }}>
+            Applications Submitted: {appliedJobs.length}
+          </div>
+
+          {/* Post a Job Button: ONLY Visible for Verified Business & Recruiter Accounts */}
+          {isBusinessOrRecruiter && (
+            <button
+              onClick={() => setIsPostJobModalOpen(true)}
+              className="btn-primary"
+              style={{ padding: '0.55rem 1.15rem', fontSize: '0.86rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+            >
+              <Plus size={16} /> Post a Job
+            </button>
+          )}
         </div>
       </div>
 
@@ -254,6 +309,80 @@ export default function JobsBoard() {
                 <Send size={15} /> Apply with Resume
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* POST JOB MODAL (BUSINESS & RECRUITER ACCOUNTS ONLY) */}
+      {isPostJobModalOpen && isBusinessOrRecruiter && (
+        <div className="modal-overlay" onClick={() => setIsPostJobModalOpen(false)}>
+          <div className="modal-content" style={{ maxWidth: '560px' }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 style={{ fontSize: '1.15rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '8px', margin: 0, color: 'var(--text-main)' }}>
+                <Plus size={18} style={{ color: 'var(--primary)' }} /> Post a Business Job Listing
+              </h2>
+              <button onClick={() => setIsPostJobModalOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handlePostJobSubmit}>
+              <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: '60vh', overflowY: 'auto' }}>
+                <div>
+                  <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>Job Title *</label>
+                  <input type="text" required placeholder="e.g. Senior Full-Stack Engineer" value={newTitle} onChange={(e) => setNewTitle(e.target.value)}
+                    style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.86rem', boxSizing: 'border-box' }} />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <div>
+                    <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>Company *</label>
+                    <input type="text" required placeholder="Company name" value={newCompany} onChange={(e) => setNewCompany(e.target.value)}
+                      style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.86rem', boxSizing: 'border-box' }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>Agreement Type</label>
+                    <select value={newWorkType} onChange={(e) => setNewWorkType(e.target.value)}
+                      style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.86rem' }}>
+                      <option>Contract to Hire (C2H) & W2</option>
+                      <option>Full-Time W2</option>
+                      <option>Fractional Executive Retainer</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <div>
+                    <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>C2H Hourly Rate</label>
+                    <input type="text" placeholder="e.g. $120 - $140/hr" value={newC2hRate} onChange={(e) => setNewC2hRate(e.target.value)}
+                      style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.86rem', boxSizing: 'border-box' }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>W2 Salary</label>
+                    <input type="text" placeholder="e.g. $195,000/yr" value={newSalaryW2} onChange={(e) => setNewSalaryW2(e.target.value)}
+                      style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.86rem', boxSizing: 'border-box' }} />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>Tech Stack (comma separated)</label>
+                  <input type="text" placeholder="e.g. React, TypeScript, Node.js, AWS" value={newSkills} onChange={(e) => setNewSkills(e.target.value)}
+                    style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.86rem', boxSizing: 'border-box' }} />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>Job Description *</label>
+                  <textarea rows={4} required placeholder="Describe the role, responsibilities, and requirements..."
+                    value={newDescription} onChange={(e) => setNewDescription(e.target.value)}
+                    style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.86rem', boxSizing: 'border-box', resize: 'none' }} />
+                </div>
+              </div>
+
+              <div className="modal-footer">
+                <button type="button" onClick={() => setIsPostJobModalOpen(false)} className="btn-secondary">Cancel</button>
+                <button type="submit" className="btn-primary">Publish Job</button>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -60,6 +60,7 @@ export default function JobsBoard({ user }) {
   const [applyMode, setApplyMode] = useState('resume');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [confirmationBanner, setConfirmationBanner] = useState({ show: false, message: '', company: '' });
+  const [confirmationModalScreen, setConfirmationModalScreen] = useState(null);
 
   // Advanced Manual Application State
   const [manualForm, setManualForm] = useState({
@@ -242,21 +243,19 @@ export default function JobsBoard({ user }) {
 
       const appliedJobId = activeJobModal.id;
       const companyName = activeJobModal.company;
+      const jobTitle = activeJobModal.title;
 
       setAppliedJobs((prev) => [...prev, appliedJobId]);
       setActiveJobModal(null);
 
-      // In-App Green Confirmation Banner
-      setConfirmationBanner({
-        show: true,
-        message: `Application Confirmed for ${companyName}! Confirmation email dispatched from architexjobs@gmail.com to ${emailToTarget}.`,
-        company: companyName
+      // Open Confirmation Modal Popup Screen
+      setConfirmationModalScreen({
+        jobTitle: jobTitle,
+        company: companyName,
+        email: emailToTarget,
+        resumeName: submissionData.resumeName,
+        date: new Date().toLocaleTimeString()
       });
-
-      // Auto-hide banner after 7 seconds
-      setTimeout(() => {
-        setConfirmationBanner({ show: false, message: '', company: '' });
-      }, 7000);
 
     } catch (error) {
       console.error('Submission Error:', error);
@@ -1231,6 +1230,40 @@ export default function JobsBoard({ user }) {
                 {isSubmitting ? 'Submitting & Dispatching Email...' : (applyMode === 'manual' ? 'Submit Manual Application' : 'Confirm & Submit Application')}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* APPLICATION CONFIRMATION SCREEN MODAL POPUP */}
+      {confirmationModalScreen && (
+        <div className="modal-overlay" onClick={() => setConfirmationModalScreen(null)}>
+          <div className="modal-content" style={{ maxWidth: '480px', textAlign: 'center', padding: '2rem' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ width: '72px', height: '72px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.25rem' }}>
+              <CheckCircle2 size={42} />
+            </div>
+
+            <h2 style={{ fontSize: '1.4rem', fontWeight: '800', margin: '0 0 0.5rem', color: 'var(--text-main)' }}>
+              Application Confirmed!
+            </h2>
+            
+            <p style={{ fontSize: '0.92rem', color: 'var(--text-muted)', lineHeight: '1.5', margin: '0 0 1.25rem' }}>
+              Your application for <strong style={{ color: 'var(--text-main)' }}>{confirmationModalScreen.jobTitle}</strong> at <strong style={{ color: 'var(--text-main)' }}>{confirmationModalScreen.company}</strong> has been logged successfully!
+            </p>
+
+            <div style={{ background: 'var(--bg-surface-hover)', padding: '1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '1.5rem', fontSize: '0.84rem' }}>
+              <div><span style={{ color: 'var(--text-muted)' }}>Recipient Email:</span> <strong style={{ color: 'var(--text-main)' }}>{confirmationModalScreen.email}</strong></div>
+              <div><span style={{ color: 'var(--text-muted)' }}>Sent From:</span> <strong style={{ color: 'var(--primary)' }}>architexjobs@gmail.com</strong></div>
+              <div><span style={{ color: 'var(--text-muted)' }}>Submission Payload:</span> <strong style={{ color: 'var(--text-main)' }}>{confirmationModalScreen.resumeName}</strong></div>
+              <div><span style={{ color: 'var(--text-muted)' }}>Timestamp:</span> <strong style={{ color: 'var(--text-main)' }}>{confirmationModalScreen.date}</strong></div>
+            </div>
+
+            <button 
+              onClick={() => setConfirmationModalScreen(null)} 
+              className="btn-primary" 
+              style={{ width: '100%', padding: '0.75rem', fontSize: '0.95rem', fontWeight: '800' }}
+            >
+              Return to Jobs Board
+            </button>
           </div>
         </div>
       )}

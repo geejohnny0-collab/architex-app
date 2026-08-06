@@ -429,27 +429,31 @@ export default function JobsBoard({ user }) {
                       style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.86rem', boxSizing: 'border-box' }} />
                   </div>
                   <div>
-                    <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>Agreement Type</label>
+                    <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>Agreement Type *</label>
                     <select value={newWorkType} onChange={(e) => setNewWorkType(e.target.value)}
                       style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.86rem' }}>
-                      <option>Contract to Hire (C2H) & W2</option>
-                      <option>Full-Time W2</option>
-                      <option>Fractional Executive Retainer</option>
+                      <option value="Contract-to-Hire (C2H)">Contract / Contract-to-Hire (C2H)</option>
+                      <option value="Full-Time W2">Full-Time W2</option>
+                      <option value="Contract or Full-Time W2">Contract or Full-Time W2 (Both Options)</option>
                     </select>
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                  <div>
-                    <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>C2H Hourly Rate</label>
-                    <input type="text" placeholder="e.g. $120 - $140/hr" value={newC2hRate} onChange={(e) => setNewC2hRate(e.target.value)}
-                      style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.86rem', boxSizing: 'border-box' }} />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>W2 Salary</label>
-                    <input type="text" placeholder="e.g. $195,000/yr" value={newSalaryW2} onChange={(e) => setNewSalaryW2(e.target.value)}
-                      style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.86rem', boxSizing: 'border-box' }} />
-                  </div>
+                <div style={{ display: 'grid', gridTemplateColumns: newWorkType.includes('W2') && newWorkType.includes('Contract') ? '1fr 1fr' : '1fr', gap: '10px' }}>
+                  {(newWorkType.includes('Contract') || newWorkType.includes('C2H')) && (
+                    <div>
+                      <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>Contract Hourly Rate ($/hr)</label>
+                      <input type="text" placeholder="e.g. $120 - $140/hr" value={newC2hRate} onChange={(e) => setNewC2hRate(e.target.value)}
+                        style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.86rem', boxSizing: 'border-box' }} />
+                    </div>
+                  )}
+                  {(newWorkType.includes('W2') || newWorkType.includes('Both')) && (
+                    <div>
+                      <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>W2 Annual Salary ($/yr)</label>
+                      <input type="text" placeholder="e.g. $195,000/yr" value={newSalaryW2} onChange={(e) => setNewSalaryW2(e.target.value)}
+                        style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.86rem', boxSizing: 'border-box' }} />
+                    </div>
+                  )}
                 </div>
 
                 <div>

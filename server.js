@@ -18,6 +18,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { OAuth2Client } from 'google-auth-library';
 import Stripe from 'stripe';
+import nodemailer from 'nodemailer';
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_dummy');
 
 const __filename = fileURLToPath(import.meta.url);
@@ -1909,8 +1910,6 @@ app.post('/api/credits/spend', requireAuth, async (req, res) => {
 });
 
 // 7. Apply with Resume API Route (MotionMedias Email Handler)
-const nodemailer = require('nodemailer');
-
 const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
     port: parseInt(process.env.SMTP_PORT || '587'),

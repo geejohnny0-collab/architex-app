@@ -1929,18 +1929,18 @@ app.post('/api/jobs/apply', async (req, res) => {
         const targetCompany = companyName || company || 'Architex';
 
         const mailOptions = {
-            from: '"MotionMedias" <noreply@motionmedias.com>',
+            from: '"Architex Jobs" <architexjobs@gmail.com>',
             to: targetEmail,
             subject: `Application Received: ${jobTitle} at ${targetCompany}`,
             html: `
-                <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;">
-                    <h2 style="color: #111;">Application Received!</h2>
+                <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px;">
+                    <h2 style="color: #2563eb; margin-top: 0;">Application Received!</h2>
                     <p>Hi <strong>${targetName}</strong>,</p>
-                    <p>We have successfully received your application for the <strong>${jobTitle}</strong> position at <strong>${targetCompany}</strong> via MotionMedias.</p>
+                    <p>We have successfully received your application for the <strong>${jobTitle}</strong> position at <strong>${targetCompany}</strong> via Architex Jobs Network.</p>
                     <p>The hiring team will review your submission and reach out if there is a strong fit.</p>
                     <br>
                     <p>Best regards,</p>
-                    <p><strong>MotionMedias Team</strong></p>
+                    <p><strong>Architex Jobs Team</strong> (architexjobs@gmail.com)</p>
                 </div>
             `,
         };

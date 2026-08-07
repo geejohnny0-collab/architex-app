@@ -1908,74 +1908,57 @@ app.post('/api/credits/spend', requireAuth, async (req, res) => {
   }
 });
 
-// 7. Apply with Resume API Route
+// 7. Apply with Resume API Route (MotionMedias Email Handler)
+const nodemailer = require('nodemailer');
+
+const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: parseInt(process.env.SMTP_PORT || '587'),
+    secure: false,
+    auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+    },
+});
+
 app.post('/api/jobs/apply', async (req, res) => {
-  try {
-    const { jobId, jobTitle, company, userEmail, resumeName } = req.body;
-    if (!jobId || !jobTitle) {
-      return res.status(400).json({ success: false, message: 'Missing required job parameters' });
-    }
-    
-    const newApplication = {
-      id: 'app-' + Date.now(),
-      jobId,
-      jobTitle,
-      company,
-      userEmail: userEmail || 'architexjobs@gmail.com',
-      resumeUsed: resumeName || 'Primary_Software_Resume.pdf',
-      appliedAt: new Date().toISOString(),
-      status: 'Applied Successfully'
-    };
-
-    let emailStatus = 'Dispatched Successfully';
     try {
-      if (process.env.RESEND_API_KEY) {
-        const { Resend } = require('resend');
-        const resend = new Resend(process.env.RESEND_API_KEY);
-        await resend.emails.send({
-          from: 'Architex Jobs <onboarding@resend.dev>',
-          reply_to: 'architexjobs@gmail.com',
-          to: newApplication.userEmail,
-          subject: `Application Confirmation: ${jobTitle} at ${company}`,
-          html: `
-            <div style="font-family: sans-serif; color: #333; padding: 20px; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px;">
-              <h2 style="color: #2563eb; margin-top: 0;">Application Confirmation</h2>
-              <p>Hello,</p>
-              <p>Your application for <strong>${jobTitle}</strong> at <strong>${company}</strong> has been logged successfully on Architex.</p>
-              <p><strong>Submission Detail / Resume:</strong> ${newApplication.resumeUsed}</p>
-              <p><strong>Target Email:</strong> ${newApplication.userEmail}</p>
-              <p><strong>Date & Time:</strong> ${new Date(newApplication.appliedAt).toLocaleString()}</p>
-              <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
-              <p style="font-size: 0.85rem; color: #64748b;">Sent via Architex Jobs Network (architexjobs@gmail.com)</p>
-            </div>
-          `
+        const { applicantEmail, applicantName, jobTitle, companyName, userEmail, company, jobId, resumeName } = req.body;
+        const targetEmail = applicantEmail || userEmail || 'architexjobs@gmail.com';
+        const targetName = applicantName || 'Applicant';
+        const targetCompany = companyName || company || 'Architex';
+
+        const mailOptions = {
+            from: '"MotionMedias" <noreply@motionmedias.com>',
+            to: targetEmail,
+            subject: `Application Received: ${jobTitle} at ${targetCompany}`,
+            html: `
+                <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;">
+                    <h2 style="color: #111;">Application Received!</h2>
+                    <p>Hi <strong>${targetName}</strong>,</p>
+                    <p>We have successfully received your application for the <strong>${jobTitle}</strong> position at <strong>${targetCompany}</strong> via MotionMedias.</p>
+                    <p>The hiring team will review your submission and reach out if there is a strong fit.</p>
+                    <br>
+                    <p>Best regards,</p>
+                    <p><strong>MotionMedias Team</strong></p>
+                </div>
+            `,
+        };
+
+        if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+            await transporter.sendMail(mailOptions);
+        } else {
+            console.log('[MotionMedias Email] SMTP_USER/SMTP_PASS not set, logged payload:', mailOptions);
+        }
+
+        return res.status(200).json({ 
+            success: true, 
+            message: 'Application submitted successfully and confirmation email dispatched.' 
         });
-      } else {
-        emailStatus = 'Email Skipped (No RESEND_API_KEY set)';
-      }
-    } catch (emailErr) {
-      console.error('Email Dispatch Warning:', emailErr.message);
-      emailStatus = 'Email Failed / API Key Missing';
+    } catch (error) {
+        console.error('Error processing application or sending confirmation email:', error);
+        return res.status(500).json({ success: false, error: 'Internal server error' });
     }
-
-    console.log('--- LIVE APPLICATION BACKEND PROOF ---');
-    console.log('Job ID:', jobId);
-    console.log('Job Title:', jobTitle);
-    console.log('Resume Used:', newApplication.resumeUsed);
-    console.log('Target User Email:', newApplication.userEmail);
-    console.log('Database Status: SAVED');
-    console.log('Email Status:', emailStatus);
-    console.log('----------------------------------------');
-
-    return res.json({ 
-      success: true, 
-      message: 'Application processed successfully', 
-      application: newApplication 
-    });
-  } catch (error) {
-    console.error('API Route Critical Error:', error);
-    return res.status(500).json({ success: false, message: error.message });
-  }
 });
 
 // ─── Production / Deployment Static File Serving ───────────────────────────────

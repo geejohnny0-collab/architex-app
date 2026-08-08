@@ -1909,54 +1909,52 @@ app.post('/api/credits/spend', requireAuth, async (req, res) => {
   }
 });
 
-// 7. Apply with Resume API Route (MotionMedias Email Handler)
+// 7. Apply with Resume API Route (Live Gmail SMTP Transporter)
 const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: false,
+    service: 'gmail',
     auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-    },
+        user: process.env.SMTP_USER || 'architexjobs@gmail.com',
+        pass: process.env.SMTP_PASS
+    }
 });
 
 app.post('/api/jobs/apply', async (req, res) => {
     try {
-        const { applicantEmail, applicantName, jobTitle, companyName, userEmail, company, jobId, resumeName } = req.body;
+        const { applicantEmail, applicantName, jobTitle, companyName, userEmail, company } = req.body;
         const targetEmail = applicantEmail || userEmail || 'architexjobs@gmail.com';
         const targetName = applicantName || 'Applicant';
         const targetCompany = companyName || company || 'Architex';
 
         const mailOptions = {
-            from: '"Architex Jobs" <architexjobs@gmail.com>',
+            from: '"Architex Systems" <architexjobs@gmail.com>',
             to: targetEmail,
-            subject: `Application Received: ${jobTitle} at ${targetCompany}`,
+            subject: `Application Confirmed: ${jobTitle} at ${targetCompany}`,
             html: `
-                <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px;">
-                    <h2 style="color: #2563eb; margin-top: 0;">Application Received!</h2>
-                    <p>Hi <strong>${targetName}</strong>,</p>
-                    <p>We have successfully received your application for the <strong>${jobTitle}</strong> position at <strong>${targetCompany}</strong> via Architex Jobs Network.</p>
-                    <p>The hiring team will review your submission and reach out if there is a strong fit.</p>
+                <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e1e1e1; border-radius: 8px;">
+                    <h2 style="color: #1a1a1a;">Application Confirmed!</h2>
+                    <p>Your application for <strong>${jobTitle}</strong> at <strong>${targetCompany}</strong> has been logged successfully!</p>
+                    <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+                    <p><strong>Recipient Email:</strong> ${targetEmail}</p>
+                    <p><strong>Sent From:</strong> architexjobs@gmail.com</p>
+                    <p><strong>Submission Payload:</strong> Resume attached / logged</p>
+                    <p><strong>Timestamp:</strong> ${new Date().toLocaleTimeString()}</p>
                     <br>
                     <p>Best regards,</p>
-                    <p><strong>Architex Jobs Team</strong> (architexjobs@gmail.com)</p>
+                    <p><strong>${targetCompany} Hiring Team</strong></p>
                 </div>
             `,
         };
 
-        if (process.env.SMTP_USER && process.env.SMTP_PASS) {
-            await transporter.sendMail(mailOptions);
-        } else {
-            console.log('[MotionMedias Email] SMTP_USER/SMTP_PASS not set, logged payload:', mailOptions);
-        }
+        const info = await transporter.sendMail(mailOptions);
+        console.log('Email sent successfully:', info.response);
 
         return res.status(200).json({ 
             success: true, 
-            message: 'Application submitted successfully and confirmation email dispatched.' 
+            message: 'Application logged and email sent successfully.' 
         });
     } catch (error) {
-        console.error('Error processing application or sending confirmation email:', error);
-        return res.status(500).json({ success: false, error: 'Internal server error' });
+        console.error('Failed to send live confirmation email:', error);
+        return res.status(500).json({ success: false, error: 'Failed to send confirmation email' });
     }
 });
 

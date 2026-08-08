@@ -1958,24 +1958,27 @@ app.post('/api/jobs/apply', async (req, res) => {
             `,
         };
 
-        // Fire live 1-to-1 direct email to applicant's signed-up email
-        try {
-            const info = await transporter.sendMail(mailOptions);
-            console.log('Live email dispatched successfully via Gmail SMTP:', info.response);
-        } catch (mailErr) {
-            console.error('Nodemailer dispatch error:', mailErr.message);
-        }
+        // Non-blocking background email dispatch (instant <50ms HTTP response)
+        setImmediate(async () => {
+            try {
+                const info = await transporter.sendMail(mailOptions);
+                console.log('Live email dispatched successfully via Gmail SMTP to applicant:', info.response);
+            } catch (mailErr) {
+                console.error('Nodemailer dispatch warning:', mailErr.message);
+            }
 
-        // Separate 1-to-1 copy to admin owner
-        try {
-            await transporter.sendMail({
-                ...mailOptions,
-                to: 'geejohnny0@gmail.com',
-                subject: `[ADMIN NOTIFICATION] Application Received: ${jobTitle || 'Position'} from ${targetEmail}`
-            });
-        } catch (adminMailErr) {
-            console.error('Admin copy dispatch error:', adminMailErr.message);
-        }
+            if (targetEmail.toLowerCase() !== 'geejohnny0@gmail.com' && targetEmail.toLowerCase() !== 'architexjobs@gmail.com') {
+                try {
+                    await transporter.sendMail({
+                        ...mailOptions,
+                        to: 'geejohnny0@gmail.com',
+                        subject: `[ADMIN NOTIFICATION] Application Received: ${jobTitle || 'Position'} from ${targetEmail}`
+                    });
+                } catch (adminMailErr) {
+                    console.error('Admin copy dispatch warning:', adminMailErr.message);
+                }
+            }
+        });
 
         return res.status(200).json({ 
             success: true, 

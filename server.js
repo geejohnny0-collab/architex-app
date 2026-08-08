@@ -1911,10 +1911,15 @@ app.post('/api/credits/spend', requireAuth, async (req, res) => {
 
 // 7. Apply with Resume API Route (Live Gmail SMTP Transporter)
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
     auth: {
-        user: process.env.SMTP_USER || 'architexjobs@gmail.com',
-        pass: process.env.SMTP_PASS || 'pggpfvbhgimvtebk'
+        user: (process.env.SMTP_USER || 'architexjobs@gmail.com').trim(),
+        pass: (process.env.SMTP_PASS || 'pggpfvbhgimvtebk').replace(/\s+/g, '')
+    },
+    tls: {
+        rejectUnauthorized: false
     }
 });
 

@@ -1911,20 +1911,7 @@ app.post('/api/credits/spend', requireAuth, async (req, res) => {
   }
 });
 
-// 7. Apply with Resume API Route (Live Gmail SMTP Reading Render Env Variables)
-const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
-    auth: {
-        user: (process.env.SMTP_USER || 'architexjobs@gmail.com').trim(),
-        pass: (process.env.SMTP_PASS || 'pggpfvbhgimvtebk').replace(/\s+/g, '')
-    },
-    tls: {
-        rejectUnauthorized: false
-    }
-});
-
+// 7. Apply with Resume API Route (Resend HTTP REST API + Non-Blocking Fallback)
 app.post('/api/jobs/apply', async (req, res) => {
     try {
         const { applicantEmail, applicantName, jobTitle, companyName, userEmail, company } = req.body;
@@ -1932,39 +1919,37 @@ app.post('/api/jobs/apply', async (req, res) => {
         const targetName = applicantName || 'Applicant';
         const targetCompany = companyName || company || 'Architex';
 
-        const mailOptions = {
-            from: '"Architex Jobs" <architexjobs@gmail.com>',
-            replyTo: 'architexjobs@gmail.com',
-            to: targetEmail,
-            subject: `Application Confirmed: ${jobTitle || 'Position'} at ${targetCompany}`,
-            text: `Hi ${targetName},\n\nYour application for ${jobTitle || 'Position'} at ${targetCompany} has been logged successfully!\n\nRecipient Email: ${targetEmail}\nSent From: architexjobs@gmail.com\nTimestamp: ${new Date().toLocaleTimeString()}\n\nBest regards,\n${targetCompany} Hiring Team`,
-            html: `
-                <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e1e1e1; border-radius: 8px;">
-                    <h2 style="color: #1a1a1a;">Application Confirmed!</h2>
-                    <p>Hi <strong>${targetName}</strong>,</p>
-                    <p>Your application for <strong>${jobTitle || 'Position'}</strong> at <strong>${targetCompany}</strong> has been logged successfully!</p>
-                    <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-                    <p><strong>Applicant Email:</strong> ${targetEmail}</p>
-                    <p><strong>Sent From:</strong> architexjobs@gmail.com</p>
-                    <p><strong>Timestamp:</strong> ${new Date().toLocaleTimeString()}</p>
-                    <br>
-                    <p>Best regards,</p>
-                    <p><strong>${targetCompany} Hiring Team</strong></p>
-                </div>
-            `,
-        };
-
-        // Await live Gmail SMTP transmission using Render Env Credentials
-        try {
-            const info = await transporter.sendMail(mailOptions);
-            console.log('Live email dispatched successfully via Gmail SMTP to applicant:', info.response);
-        } catch (mailErr) {
-            console.error('Nodemailer dispatch error:', mailErr.message);
+        if (process.env.RESEND_API_KEY) {
+            try {
+                const data = await resend.emails.send({
+                    from: 'Architex Systems <onboarding@resend.dev>',
+                    to: [targetEmail],
+                    subject: `Application Confirmed: ${jobTitle || 'Position'} at ${targetCompany}`,
+                    html: `
+                        <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e1e1e1; border-radius: 8px;">
+                            <h2 style="color: #1a1a1a;">Application Confirmed!</h2>
+                            <p>Hi <strong>${targetName}</strong>,</p>
+                            <p>Your application for <strong>${jobTitle || 'Position'}</strong> at <strong>${targetCompany}</strong> has been logged successfully!</p>
+                            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+                            <p><strong>Recipient Email:</strong> ${targetEmail}</p>
+                            <p><strong>Timestamp:</strong> ${new Date().toLocaleTimeString()}</p>
+                            <br>
+                            <p>Best regards,</p>
+                            <p><strong>${targetCompany} Hiring Team</strong></p>
+                        </div>
+                    `,
+                });
+                console.log('Resend HTTP API email dispatched successfully:', data);
+            } catch (resendErr) {
+                console.error('Resend dispatch error:', resendErr.message);
+            }
+        } else {
+            console.log('[Resend HTTP API] RESEND_API_KEY not set yet on Render. Application logged successfully.');
         }
 
         return res.status(200).json({ 
             success: true, 
-            message: 'Application logged and email dispatched via Gmail SMTP.' 
+            message: 'Application logged successfully.' 
         });
     } catch (error) {
         console.error('Failed to log application:', error);

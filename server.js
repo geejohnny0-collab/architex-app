@@ -1911,20 +1911,7 @@ app.post('/api/credits/spend', requireAuth, async (req, res) => {
   }
 });
 
-// 7. Apply with Resume API Route (Dual Transporter: Gmail SMTP + Resend HTTP API)
-const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
-    auth: {
-        user: (process.env.SMTP_USER || 'architexjobs@gmail.com').trim(),
-        pass: (process.env.SMTP_PASS || 'pggpfvbhgimvtebk').replace(/\s+/g, '')
-    },
-    tls: {
-        rejectUnauthorized: false
-    }
-});
-
+// 7. Apply with Resume API Route (Resend HTTP REST API Controller)
 app.post('/api/jobs/apply', async (req, res) => {
     try {
         const { applicantEmail, applicantName, jobTitle, companyName, userEmail, company } = req.body;
@@ -1932,56 +1919,50 @@ app.post('/api/jobs/apply', async (req, res) => {
         const targetName = applicantName || 'Applicant';
         const targetCompany = companyName || company || 'Architex';
 
-        const mailHtml = `
-            <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e1e1e1; border-radius: 8px;">
-                <h2 style="color: #1a1a1a;">Application Confirmed!</h2>
-                <p>Hi <strong>${targetName}</strong>,</p>
-                <p>Your application for <strong>${jobTitle || 'Position'}</strong> at <strong>${targetCompany}</strong> has been logged successfully!</p>
-                <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-                <p><strong>Applicant Email:</strong> ${targetEmail}</p>
-                <p><strong>Sent From:</strong> architexjobs@gmail.com</p>
-                <p><strong>Timestamp:</strong> ${new Date().toLocaleTimeString()}</p>
-                <br>
-                <p>Best regards,</p>
-                <p><strong>${targetCompany} Hiring Team</strong></p>
-            </div>
-        `;
+        console.log(`[JOB APPLY] Processing application for: ${targetEmail} (${jobTitle || 'Position'} at ${targetCompany})`);
 
-        // Method 1: Gmail SMTP Background Worker (Always active with fallback credentials)
-        transporter.sendMail({
-            from: '"Architex Jobs" <architexjobs@gmail.com>',
-            replyTo: 'architexjobs@gmail.com',
-            to: targetEmail,
-            subject: `Application Confirmed: ${jobTitle || 'Position'} at ${targetCompany}`,
-            text: `Hi ${targetName},\n\nYour application for ${jobTitle || 'Position'} at ${targetCompany} has been logged successfully!\n\nApplicant Email: ${targetEmail}\nTimestamp: ${new Date().toLocaleTimeString()}\n\nBest regards,\n${targetCompany} Hiring Team`,
-            html: mailHtml
-        }).then(info => {
-            console.log('Gmail SMTP email delivered successfully:', info.response);
-        }).catch(err => {
-            console.error('Gmail SMTP background warning:', err.message);
-        });
-
-        // Method 2: Resend HTTP API (Active when RESEND_API_KEY is present)
-        if (process.env.RESEND_API_KEY) {
-            resend.emails.send({
-                from: 'Architex Systems <onboarding@resend.dev>',
-                to: [targetEmail],
-                subject: `Application Confirmed: ${jobTitle || 'Position'} at ${targetCompany}`,
-                html: mailHtml
-            }).then(data => {
-                console.log('Resend HTTP API email dispatched successfully:', data);
-            }).catch(resendErr => {
-                console.error('Resend dispatch error:', resendErr.message);
+        if (!process.env.RESEND_API_KEY) {
+            console.error('[CRITICAL] RESEND_API_KEY is missing from Render environment variables!');
+            return res.status(500).json({ 
+                success: false, 
+                error: 'Server configuration error: RESEND_API_KEY not found in Render environment.' 
             });
         }
 
+        // Send via HTTP REST API (bypasses Render cloud SMTP blocking entirely)
+        const emailResponse = await resend.emails.send({
+            from: 'MotionMedias <onboarding@resend.dev>',
+            to: [targetEmail],
+            subject: `Application Confirmed: ${jobTitle || 'Position'} at ${targetCompany}`,
+            html: `
+                <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e1e1e1; border-radius: 8px;">
+                    <h2 style="color: #1a1a1a;">Application Confirmed!</h2>
+                    <p>Hi <strong>${targetName}</strong>,</p>
+                    <p>Your application for <strong>${jobTitle || 'Position'}</strong> at <strong>${targetCompany}</strong> has been logged successfully!</p>
+                    <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+                    <p><strong>Recipient Email:</strong> ${targetEmail}</p>
+                    <p><strong>Timestamp:</strong> ${new Date().toLocaleString()}</p>
+                    <br>
+                    <p>Best regards,</p>
+                    <p><strong>${targetCompany} Hiring Team</strong></p>
+                </div>
+            `,
+        });
+
+        console.log('[SUCCESS] Email dispatched via Resend API:', JSON.stringify(emailResponse));
+
         return res.status(200).json({ 
             success: true, 
-            message: 'Application logged and email dispatch triggered.' 
+            message: 'Application logged and confirmation email successfully sent via HTTP API.',
+            data: emailResponse 
         });
+
     } catch (error) {
-        console.error('Failed to log application:', error);
-        return res.status(500).json({ success: false, error: 'Internal server error' });
+        console.error('[FAILED] Exception caught while sending email:', error);
+        return res.status(500).json({ 
+            success: false, 
+            error: error.message || 'Failed to send confirmation email' 
+        });
     }
 });
 

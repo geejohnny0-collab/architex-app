@@ -1934,7 +1934,7 @@ app.post('/api/jobs/apply', async (req, res) => {
 
         // Send via HTTP POST REST API over HTTPS Port 443 (bypasses Render cloud SMTP blocking)
         const emailResponse = await resendClient.emails.send({
-            from: 'MotionMedias <onboarding@resend.dev>',
+            from: 'Architex Jobs <onboarding@resend.dev>',
             to: [targetEmail],
             subject: `Application Confirmed: ${jobTitle || 'Position'} at ${targetCompany}`,
             html: `

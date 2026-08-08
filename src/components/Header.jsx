@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { 
   Search, Plus, Sun, Moon, MessageSquare, Bell, User, 
   Settings, LogOut, CheckCircle, ShieldCheck, ChevronDown, Sparkles, Zap,
@@ -452,9 +453,10 @@ export default function Header({
         </div>
       </div>
 
-      {/* Responsive Slide-Out Navigation Drawer */}
-      {mobileMenuOpen && (
+      {/* Responsive Slide-Out Navigation Drawer (Rendered via React Portal directly into document.body) */}
+      {mobileMenuOpen && ReactDOM.createPortal(
         <div 
+          className="mobile-menu-container"
           onClick={(e) => {
             if (e.target === e.currentTarget) setMobileMenuOpen(false);
           }}
@@ -469,7 +471,7 @@ export default function Header({
           }}
         >
           <div 
-            className="glass-panel" 
+            className="mobile-menu-drawer glass-panel" 
             style={{
               width: '100%',
               maxWidth: '340px',
@@ -612,7 +614,8 @@ export default function Header({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </header>
   );

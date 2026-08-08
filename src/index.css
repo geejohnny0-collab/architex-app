@@ -399,3 +399,16 @@ a {
     padding-bottom: 96px !important;
   }
 }
+
+/* Structural Portal Overlay Container Rules */
+.mobile-menu-container {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  display: flex;
+}
+
+.mobile-menu-drawer {
+  position: relative;
+  z-index: 1000000;
+}

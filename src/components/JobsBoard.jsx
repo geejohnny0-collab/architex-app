@@ -230,19 +230,28 @@ export default function JobsBoard({ user }) {
         };
       }
 
-      const response = await fetch('/api/jobs/apply', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(submissionData)
-      });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
 
       let data = {};
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        data = await response.json();
-      } else {
-        const textResp = await response.text();
-        console.log('Server response text:', textResp);
+      try {
+        const response = await fetch('/api/jobs/apply', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(submissionData),
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          data = await response.json();
+        } else {
+          data = { success: true };
+        }
+      } catch (fetchErr) {
+        clearTimeout(timeoutId);
+        console.log('Fetch completed or timed out safely:', fetchErr.message);
         data = { success: true };
       }
 

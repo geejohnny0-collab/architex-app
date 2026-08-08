@@ -1945,16 +1945,20 @@ app.post('/api/jobs/apply', async (req, res) => {
             `,
         };
 
-        const info = await transporter.sendMail(mailOptions);
-        console.log('Email sent successfully:', info.response);
+        // Asynchronously dispatch email in non-blocking background mode for instant response
+        transporter.sendMail(mailOptions).then((info) => {
+            console.log('Live email dispatched successfully via Gmail SMTP:', info.response);
+        }).catch((err) => {
+            console.error('Nodemailer background dispatch warning:', err.message);
+        });
 
         return res.status(200).json({ 
             success: true, 
-            message: 'Application logged and email sent successfully.' 
+            message: 'Application logged and email dispatched.' 
         });
     } catch (error) {
-        console.error('Failed to send live confirmation email:', error);
-        return res.status(500).json({ success: false, error: 'Failed to send confirmation email' });
+        console.error('Failed to log application:', error);
+        return res.status(500).json({ success: false, error: 'Internal server error' });
     }
 });
 

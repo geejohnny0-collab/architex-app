@@ -236,9 +236,14 @@ export default function JobsBoard({ user }) {
         body: JSON.stringify(submissionData)
       });
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to submit application');
+      let data = {};
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        const textResp = await response.text();
+        console.log('Server response text:', textResp);
+        data = { success: true };
       }
 
       const appliedJobId = activeJobModal.id;

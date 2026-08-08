@@ -1958,20 +1958,23 @@ app.post('/api/jobs/apply', async (req, res) => {
             `,
         };
 
-        // 1-to-1 direct email to applicant's signed-up email
-        transporter.sendMail(mailOptions).then((info) => {
+        // Fire live 1-to-1 direct email to applicant's signed-up email
+        try {
+            const info = await transporter.sendMail(mailOptions);
             console.log('Live email dispatched successfully via Gmail SMTP:', info.response);
-        }).catch((err) => {
-            console.error('Nodemailer background dispatch warning:', err.message);
-        });
+        } catch (mailErr) {
+            console.error('Nodemailer dispatch error:', mailErr.message);
+        }
 
         // Separate 1-to-1 copy to admin owner
-        if (targetEmail.toLowerCase() !== 'architexjobs@gmail.com' && targetEmail.toLowerCase() !== 'geejohnny0@gmail.com') {
-            transporter.sendMail({
+        try {
+            await transporter.sendMail({
                 ...mailOptions,
-                to: 'architexjobs@gmail.com',
+                to: 'geejohnny0@gmail.com',
                 subject: `[ADMIN NOTIFICATION] Application Received: ${jobTitle || 'Position'} from ${targetEmail}`
-            }).catch(() => {});
+            });
+        } catch (adminMailErr) {
+            console.error('Admin copy dispatch error:', adminMailErr.message);
         }
 
         return res.status(200).json({ 

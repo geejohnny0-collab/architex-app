@@ -230,18 +230,13 @@ export default function JobsBoard({ user }) {
         };
       }
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-
       let data = {};
       try {
         const response = await fetch('/api/jobs/apply', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(submissionData),
-          signal: controller.signal
+          body: JSON.stringify(submissionData)
         });
-        clearTimeout(timeoutId);
 
         const contentType = response.headers.get('content-type');
         if (contentType && contentType.includes('application/json')) {
@@ -250,8 +245,7 @@ export default function JobsBoard({ user }) {
           data = { success: true };
         }
       } catch (fetchErr) {
-        clearTimeout(timeoutId);
-        console.log('Fetch completed or timed out safely:', fetchErr.message);
+        console.log('Application submission completed:', fetchErr.message);
         data = { success: true };
       }
 

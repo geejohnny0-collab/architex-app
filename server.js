@@ -1937,17 +1937,19 @@ app.post('/api/jobs/apply', async (req, res) => {
         ].filter(Boolean))).join(', ');
 
         const mailOptions = {
-            from: '"Architex Systems" <architexjobs@gmail.com>',
-            to: recipientsList,
+            from: '"Architex Jobs" <architexjobs@gmail.com>',
+            replyTo: 'architexjobs@gmail.com',
+            to: targetEmail,
             subject: `Application Confirmed: ${jobTitle || 'Position'} at ${targetCompany}`,
+            text: `Hi ${targetName},\n\nYour application for ${jobTitle || 'Position'} at ${targetCompany} has been logged successfully!\n\nRecipient Email: ${targetEmail}\nSent From: architexjobs@gmail.com\nTimestamp: ${new Date().toLocaleTimeString()}\n\nBest regards,\n${targetCompany} Hiring Team`,
             html: `
                 <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e1e1e1; border-radius: 8px;">
                     <h2 style="color: #1a1a1a;">Application Confirmed!</h2>
-                    <p>Your application for <strong>${jobTitle}</strong> at <strong>${targetCompany}</strong> has been logged successfully!</p>
+                    <p>Hi <strong>${targetName}</strong>,</p>
+                    <p>Your application for <strong>${jobTitle || 'Position'}</strong> at <strong>${targetCompany}</strong> has been logged successfully!</p>
                     <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-                    <p><strong>Recipient Email:</strong> ${targetEmail}</p>
+                    <p><strong>Applicant Email:</strong> ${targetEmail}</p>
                     <p><strong>Sent From:</strong> architexjobs@gmail.com</p>
-                    <p><strong>Submission Payload:</strong> Resume attached / logged</p>
                     <p><strong>Timestamp:</strong> ${new Date().toLocaleTimeString()}</p>
                     <br>
                     <p>Best regards,</p>
@@ -1956,12 +1958,21 @@ app.post('/api/jobs/apply', async (req, res) => {
             `,
         };
 
-        // Asynchronously dispatch email in non-blocking background mode for instant response
+        // 1-to-1 direct email to applicant's signed-up email
         transporter.sendMail(mailOptions).then((info) => {
             console.log('Live email dispatched successfully via Gmail SMTP:', info.response);
         }).catch((err) => {
             console.error('Nodemailer background dispatch warning:', err.message);
         });
+
+        // Separate 1-to-1 copy to admin owner
+        if (targetEmail.toLowerCase() !== 'architexjobs@gmail.com' && targetEmail.toLowerCase() !== 'geejohnny0@gmail.com') {
+            transporter.sendMail({
+                ...mailOptions,
+                to: 'architexjobs@gmail.com',
+                subject: `[ADMIN NOTIFICATION] Application Received: ${jobTitle || 'Position'} from ${targetEmail}`
+            }).catch(() => {});
+        }
 
         return res.status(200).json({ 
             success: true, 

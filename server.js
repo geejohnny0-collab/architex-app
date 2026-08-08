@@ -1914,7 +1914,7 @@ const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
         user: process.env.SMTP_USER || 'architexjobs@gmail.com',
-        pass: process.env.SMTP_PASS
+        pass: process.env.SMTP_PASS || 'pggpfvbhgimvtebk'
     }
 });
 

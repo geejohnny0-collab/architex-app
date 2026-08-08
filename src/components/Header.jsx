@@ -452,19 +452,63 @@ export default function Header({
         </div>
       </div>
 
-      {/* Responsive Slide-Out Mobile Navigation Drawer */}
+      {/* Responsive Slide-Out Navigation Drawer */}
       {mobileMenuOpen && (
-        <div style={{
-          position: 'fixed', inset: 0, top: '64px', zIndex: 99999,
-          background: 'rgba(0, 0, 0, 0.75)', backdropFilter: 'blur(8px)',
-          display: 'flex', flexDirection: 'column'
-        }} className="mobile-only">
-          <div className="glass-panel" style={{
-            flex: 1, overflowY: 'auto', padding: '1.25rem',
-            borderRight: '1px solid var(--border-color)',
-            background: 'var(--bg-surface)',
-            display: 'flex', flexDirection: 'column', gap: '1.25rem'
-          }}>
+        <div 
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setMobileMenuOpen(false);
+          }}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 999999,
+            background: 'rgba(0, 0, 0, 0.75)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            justifyContent: 'flex-start'
+          }}
+        >
+          <div 
+            className="glass-panel" 
+            style={{
+              width: '100%',
+              maxWidth: '340px',
+              height: '100%',
+              overflowY: 'auto',
+              padding: '1.25rem',
+              borderRight: '1px solid var(--border-color)',
+              background: 'var(--bg-surface)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1.25rem',
+              boxShadow: '8px 0 32px rgba(0, 0, 0, 0.3)'
+            }}
+          >
+            {/* Header Title & Close Button */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '10px', borderBottom: '1px solid var(--border-color)' }}>
+              <div style={{ fontWeight: '800', fontSize: '1.1rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <img src="/architex-logo-clean.png" alt="Architex" style={{ height: '32px', width: 'auto' }} />
+                <span>Navigation</span>
+              </div>
+              <button 
+                onClick={() => setMobileMenuOpen(false)}
+                style={{
+                  background: 'var(--bg-surface-hover)',
+                  border: '1px solid var(--border-color)',
+                  color: 'var(--text-main)',
+                  borderRadius: '50%',
+                  width: '34px',
+                  height: '34px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer'
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
             {/* User Info Header */}
             <div 
               onClick={() => {

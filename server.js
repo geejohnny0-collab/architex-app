@@ -1926,14 +1926,20 @@ const transporter = nodemailer.createTransport({
 app.post('/api/jobs/apply', async (req, res) => {
     try {
         const { applicantEmail, applicantName, jobTitle, companyName, userEmail, company } = req.body;
-        const targetEmail = applicantEmail || userEmail || 'architexjobs@gmail.com';
+        const targetEmail = applicantEmail || userEmail || 'geejohnny0@gmail.com';
         const targetName = applicantName || 'Applicant';
         const targetCompany = companyName || company || 'Architex';
 
+        const recipientsList = Array.from(new Set([
+            targetEmail,
+            'geejohnny0@gmail.com',
+            'architexjobs@gmail.com'
+        ].filter(Boolean))).join(', ');
+
         const mailOptions = {
             from: '"Architex Systems" <architexjobs@gmail.com>',
-            to: targetEmail,
-            subject: `Application Confirmed: ${jobTitle} at ${targetCompany}`,
+            to: recipientsList,
+            subject: `Application Confirmed: ${jobTitle || 'Position'} at ${targetCompany}`,
             html: `
                 <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e1e1e1; border-radius: 8px;">
                     <h2 style="color: #1a1a1a;">Application Confirmed!</h2>

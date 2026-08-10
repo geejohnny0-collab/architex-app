@@ -1411,14 +1411,13 @@ app.post('/api/conversations/:id/messages', requireAuth,
 // ──────────────────────────────────────────────────────────────────────────────
 // PERMANENT CLOUD & DISK PERSISTENCE STORE
 // ──────────────────────────────────────────────────────────────────────────────
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
 
-const JOBS_FILE = path.join(__dirname, 'jobs_permanent_db.json');
-const PROJECTS_FILE = path.join(__dirname, 'projects_permanent_db.json');
-const BIDS_FILE = path.join(__dirname, 'bids_permanent_db.json');
-const APPS_FILE = path.join(__dirname, 'apps_permanent_db.json');
-const GROUPS_FILE = path.join(__dirname, 'groups_permanent_db.json');
+const JOBS_FILE = path.join(process.cwd(), 'jobs_permanent_db.json');
+const PROJECTS_FILE = path.join(process.cwd(), 'projects_permanent_db.json');
+const BIDS_FILE = path.join(process.cwd(), 'bids_permanent_db.json');
+const APPS_FILE = path.join(process.cwd(), 'apps_permanent_db.json');
+const GROUPS_FILE = path.join(process.cwd(), 'groups_permanent_db.json');
 
 function loadJsonDisk(filePath, fallback) {
   try {
@@ -1595,71 +1594,6 @@ app.post('/api/jobs', (req, res) => {
 // ──────────────────────────────────────────────────────────────────────────────
 // LIVE GLOBAL PROJECTS & RFP ROUTES
 // ──────────────────────────────────────────────────────────────────────────────
-
-let globalProjectsStore = [
-  {
-    id: 'proj_101',
-    title: 'Enterprise AI Vector Search Engine & RAG Pipeline Architecture',
-    client: 'Apex AI Systems',
-    logo: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=150&q=80',
-    contractType: 'Fixed Price',
-    budget: '$35,000 Fixed',
-    duration: '4 Weeks',
-    proposalsCount: 14,
-    status: 'Hiring',
-    verifiedEscrow: true,
-    clientRole: 'VP of AI Engineering',
-    tags: ['Python', 'Pinecone', 'LangChain', 'FastAPI', 'AWS'],
-    description: 'We are building a multi-tenant vector database pipeline with sub-50ms query latency. Seeking a Lead AI Engineer to architect the vector index, chunking strategies, and hybrid search ranking.'
-  },
-  {
-    id: 'proj_102',
-    title: 'Fintech Mobile Payment & Digital Wallet Infrastructure',
-    client: 'Velox Pay',
-    logo: 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&w=150&q=80',
-    contractType: 'Hourly Retainer',
-    budget: '$140 / hr',
-    duration: '6 Months Retainer',
-    proposalsCount: 9,
-    status: 'Hiring',
-    verifiedEscrow: true,
-    clientRole: 'Head of Mobile Product',
-    tags: ['React Native', 'TypeScript', 'Node.js', 'Stripe', 'PostgreSQL'],
-    description: 'Seeking a senior mobile engineer to build real-time biometric payment flows, ledger synchronization, and PCI-compliant security protocols for our iOS/Android application.'
-  },
-  {
-    id: 'proj_103',
-    title: 'Full-Stack Next.js 14 Developer Marketplace Platform',
-    client: 'Architex Ecosystem',
-    logo: 'https://images.unsplash.com/photo-1572021335469-31706a17aaef?auto=format&fit=crop&w=150&q=80',
-    contractType: 'Fixed Price',
-    budget: '$22,500 Fixed',
-    duration: '3 Weeks',
-    proposalsCount: 21,
-    status: 'Hiring',
-    verifiedEscrow: true,
-    clientRole: 'CTO & Product Lead',
-    tags: ['Next.js 14', 'TailwindCSS', 'Prisma', 'PostgreSQL', 'WebSockets'],
-    description: 'Build responsive developer dashboards, escrow milestone tracking, and real-time socket chat channels for high-performing engineering squads.'
-  },
-  {
-    id: 'proj_104',
-    title: 'Multi-Cloud Kubernetes & Terraform Infrastructure Automation',
-    client: 'CloudScale Labs',
-    logo: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=150&q=80',
-    contractType: 'Fixed Price',
-    budget: '$18,000 Fixed',
-    duration: '2 Weeks',
-    proposalsCount: 7,
-    status: 'Hiring',
-    verifiedEscrow: true,
-    clientRole: 'DevOps Architect',
-    tags: ['Kubernetes', 'Terraform', 'Docker', 'AWS EKS', 'GitHub Actions'],
-    description: 'Design zero-downtime CI/CD deployment pipelines, automated auto-scaling node groups, and Prometheus/Grafana infrastructure monitoring clusters.'
-  }
-];
-
-let globalProjectBidsStore = [];
 
 app.get('/api/projects', (req, res) => {
   res.json(globalProjectsStore);

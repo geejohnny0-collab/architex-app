@@ -292,6 +292,8 @@ export default function JobsBoard({ user }) {
       id: 'j_' + Date.now(),
       title: newTitle.trim(),
       company: newCompany.trim(),
+      posterEmail: userEmail || user?.email || 'architexjobs@gmail.com',
+      posterName: user?.name || 'Hiring Lead',
       type: newWorkType,
       c2hRate: newC2hRate.trim() || null,
       salaryW2: newSalaryW2.trim() || null,
@@ -328,11 +330,12 @@ export default function JobsBoard({ user }) {
 
   const [activeBoardTab, setActiveBoardTab] = useState('ALL_JOBS'); // 'ALL_JOBS' | 'MY_POSTED_JOBS'
 
-  // Filter jobs posted by current user / owner
+  // Filter jobs posted by current user / owner so EVERY poster sees their own posted jobs & applicants
   const myPostedJobs = jobs.filter(j => 
     isOwnerAccount || 
-    (j.posterEmail && j.posterEmail.toLowerCase() === userEmail) ||
-    (j.company && user?.name && j.company.toLowerCase().includes(user.name.toLowerCase()))
+    (j.posterEmail && userEmail && j.posterEmail.toLowerCase() === userEmail.toLowerCase()) ||
+    (j.hiringManager && user?.name && j.hiringManager.toLowerCase() === user.name.toLowerCase()) ||
+    (!j.posterEmail && isBusinessOrRecruiter)
   );
 
   return (

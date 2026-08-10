@@ -1,22 +1,23 @@
 [
   {
-    "id": "job-owner-posted-1",
-    "title": "Senior Software Architect & Full-Stack Developer",
-    "company": "Architex Enterprise",
-    "location": "Remote (US)",
-    "type": "Full-Time W2",
-    "c2hRate": "$125 - $150/hr",
-    "salaryW2": "$190,000/yr",
-    "hiringManager": "Architex Business Lead",
+    "id": "job-marketing-55",
+    "title": "Senior Marketing Specialist",
+    "company": "Architex Growth & Marketing",
+    "location": "Remote",
+    "type": "Contract-to-Hire",
+    "c2hRate": "$55/hr",
+    "salaryW2": "$115,000/yr",
+    "hiringManager": "Growth Marketing Lead",
     "posterEmail": "geejohnny0@gmail.com",
-    "description": "Lead full-stack developer position building cloud software, scalable web applications, and database architectures.",
+    "description": "We are seeking a driven Senior Marketing Specialist ($55/hr) to execute high-impact growth marketing campaigns, optimize lead generation funnels, and scale brand visibility. You will lead paid social ad strategies (Meta & Google Ads), craft compelling content blueprints, manage automated email funnels, and analyze conversion metrics across digital channels.",
     "techStack": [
-      "React",
-      "Node.js",
-      "PostgreSQL",
-      "AWS"
+      "Growth Marketing",
+      "SEO & Content Strategy",
+      "Meta & Google Ads",
+      "Email Funnels",
+      "Google Analytics"
     ],
-    "createdAt": "2026-08-10T16:00:00.000Z"
+    "createdAt": "2026-08-10T16:24:00.000Z"
   },
   {
     "id": "job-1",

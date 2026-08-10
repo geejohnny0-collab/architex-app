@@ -1470,31 +1470,7 @@ let globalJobsStore = loadJsonDisk(JOBS_FILE, [
   }
 ]);
 
-let globalJobApplicationsStore = loadJsonDisk(APPS_FILE, [
-  {
-    id: 'app-101',
-    jobId: 'job-1',
-    jobTitle: 'Senior Backend Engineer',
-    companyName: 'Architex Systems',
-    applicantName: 'David Johnson',
-    applicantEmail: 'david.j.tech@gmail.com',
-    phone: '(512) 890-3411',
-    cityState: 'Austin, TX',
-    resumeName: 'David_Johnson_Backend_Resume.pdf',
-    currentTitle: 'Senior Infrastructure Engineer',
-    currentEmployer: 'CloudScale Tech',
-    yearsExperience: '6+ Years',
-    technicalSkills: 'Node.js, Python, PostgreSQL, Docker, Redis, Kubernetes',
-    desiredSalary: '$185,000/yr',
-    desiredRate: '$135/hr',
-    linkedIn: 'https://linkedin.com/in/david-johnson-dev',
-    gitHub: 'https://github.com/djohnson-arch',
-    portfolio: 'https://davidjohnson.dev',
-    noticePeriod: '2 Weeks',
-    workAuth: 'US Citizen (No Sponsorship Needed)',
-    appliedAt: '2 hours ago'
-  }
-]);
+let globalJobApplicationsStore = loadJsonDisk(APPS_FILE, []);
 
 let globalProjectsStore = loadJsonDisk(PROJECTS_FILE, [
   {

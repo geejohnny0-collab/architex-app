@@ -356,16 +356,14 @@ export default function JobsBoard({ user }) {
             Applications Submitted: {appliedJobs.length}
           </div>
 
-          {/* Post a Job Button: ONLY Visible for Business & Recruiter Accounts */}
-          {isBusinessOrRecruiter && (
-            <button
-              onClick={handleClickPostJob}
-              className="btn-primary"
-              style={{ padding: '0.55rem 1.15rem', fontSize: '0.86rem', display: 'flex', alignItems: 'center', gap: '6px' }}
-            >
-              <Plus size={16} /> Post a Job
-            </button>
-          )}
+          {/* Post a Job Button: Always Visible for All Users */}
+          <button
+            onClick={handleClickPostJob}
+            className="btn-primary"
+            style={{ padding: '0.55rem 1.15rem', fontSize: '0.86rem', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
+          >
+            <Plus size={16} /> Post a Job
+          </button>
         </div>
       </div>
 

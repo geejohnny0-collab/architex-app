@@ -1502,19 +1502,26 @@ let globalGroupsStore = loadJsonDisk(GROUPS_FILE, [
 ]);
 
 app.get('/api/jobs/applications', async (req, res) => {
+  let dbApps = [];
   try {
     if (prisma && prisma.jobApplication) {
-      const dbApps = await prisma.jobApplication.findMany({
+      dbApps = await prisma.jobApplication.findMany({
         orderBy: { appliedAt: 'desc' }
       });
-      if (dbApps && dbApps.length > 0) {
-        return res.json(dbApps);
-      }
     }
   } catch (err) {
     console.error('Fetch PostgreSQL DB applications error:', err.message);
   }
-  res.json(globalJobApplicationsStore);
+
+  // Always prioritize database records, fallback/combine with memory store
+  const combined = [...dbApps];
+  globalJobApplicationsStore.forEach(app => {
+    if (!combined.some(a => a.id === app.id)) {
+      combined.push(app);
+    }
+  });
+
+  res.json(combined);
 });
 
 // ─── MASTER ADMIN DATA RECOVERY & VAULT ROUTES ──────────────────────────────
@@ -1530,10 +1537,10 @@ app.get('/api/admin/vault', async (req, res) => {
       dbApplications = await prisma.jobApplication.findMany({ orderBy: { appliedAt: 'desc' } });
     }
   } catch (err) {
-    console.error('Master Vault fetch error:', err.message);
+    console.error('Master Vault fetch database error:', err.message);
   }
 
-  // Combine DB applications and Memory applications safely
+  // Vault ALWAYS combines Database records, File Vault records, and Memory records
   const allApps = [...dbApplications];
   globalJobApplicationsStore.forEach(app => {
     if (!allApps.some(a => a.id === app.id)) {

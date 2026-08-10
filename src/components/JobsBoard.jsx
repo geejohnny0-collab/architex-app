@@ -436,59 +436,63 @@ export default function JobsBoard({ user }) {
         ) : (
           (activeBoardTab === 'MY_POSTED_JOBS' ? myPostedJobs : jobs).map((job) => {
             const hasApplied = appliedJobs.includes(job.id);
+            const isJobOwner = userEmail && job.posterEmail && job.posterEmail.toLowerCase() === userEmail.toLowerCase();
+
             return (
-            <div key={job.id} className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
-                <div>
-                  <h2 
-                    onClick={() => setJobDetailDrawer(job)}
-                    style={{ fontSize: '1.2rem', fontWeight: '800', margin: '0 0 0.25rem 0', color: 'var(--text-main)', cursor: 'pointer' }}
-                    title="Click to view full job description"
-                  >
-                    {job.title}
-                  </h2>
-                  <div style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginBottom: '0.5rem' }}>
-                    <strong style={{ color: 'var(--text-main)' }}>{job.company}</strong> • {job.location} • <span style={{ color: 'var(--primary)', fontWeight: '700' }}>{job.type}</span>
+              <div key={job.id} className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+                  <div>
+                    <h2 
+                      onClick={() => setJobDetailDrawer(job)}
+                      style={{ fontSize: '1.2rem', fontWeight: '800', margin: '0 0 0.25rem 0', color: 'var(--text-main)', cursor: 'pointer' }}
+                      title="Click to view full job description"
+                    >
+                      {job.title}
+                    </h2>
+                    <div style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginBottom: '0.5rem' }}>
+                      <strong style={{ color: 'var(--text-main)' }}>{job.company}</strong> • {job.location} • <span style={{ color: 'var(--primary)', fontWeight: '700' }}>{job.type}</span>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    {/* View Applicants Button: ONLY Visible if current user is the actual poster of THIS specific job */}
+                    {isJobOwner && (
+                      <button
+                        onClick={() => setViewApplicantsJob(job)}
+                        className="badge badge-primary"
+                        style={{ padding: '0.55rem 0.95rem', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', border: '1px solid var(--primary-light)' }}
+                        title="View candidate applications submitted for this role"
+                      >
+                        <User size={15} /> View Applicants ({allApplications.filter(a => a.jobId === job.id || a.jobTitle === job.title).length})
+                      </button>
+                    )}
+
+                    <button
+                      onClick={() => setJobDetailDrawer(job)}
+                      className="btn-secondary"
+                      style={{ padding: '0.6rem 1rem', fontSize: '0.86rem', display: 'flex', alignItems: 'center', gap: '5px' }}
+                    >
+                      <Eye size={15} /> View Details
+                    </button>
+
+                    <button
+                      onClick={() => handleOpenApplyModal(job)}
+                      disabled={hasApplied}
+                      className={hasApplied ? 'btn-secondary' : 'btn-primary'}
+                      style={{
+                        padding: '0.6rem 1.25rem',
+                        fontWeight: '800',
+                        fontSize: '0.86rem',
+                        cursor: hasApplied ? 'not-allowed' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      {hasApplied ? <><Check size={16} /> Applied</> : <><Send size={16} /> Apply</>}
+                    </button>
                   </div>
                 </div>
-
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                  {/* Business Owner / Poster View Applicants Button */}
-                  <button
-                    onClick={() => setViewApplicantsJob(job)}
-                    className="badge badge-primary"
-                    style={{ padding: '0.55rem 0.95rem', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', border: '1px solid var(--primary-light)' }}
-                    title="View candidate applications submitted for this role"
-                  >
-                    <User size={15} /> View Applicants ({allApplications.filter(a => a.jobId === job.id || a.jobTitle === job.title).length})
-                  </button>
-
-                  <button
-                    onClick={() => setJobDetailDrawer(job)}
-                    className="btn-secondary"
-                    style={{ padding: '0.6rem 1rem', fontSize: '0.86rem', display: 'flex', alignItems: 'center', gap: '5px' }}
-                  >
-                    <Eye size={15} /> View Details
-                  </button>
-
-                  <button
-                    onClick={() => handleOpenApplyModal(job)}
-                    disabled={hasApplied}
-                    className={hasApplied ? 'btn-secondary' : 'btn-primary'}
-                    style={{
-                      padding: '0.6rem 1.25rem',
-                      fontWeight: '800',
-                      fontSize: '0.86rem',
-                      cursor: hasApplied ? 'not-allowed' : 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px'
-                    }}
-                  >
-                    {hasApplied ? <><Check size={16} /> Applied</> : <><Send size={16} /> Apply</>}
-                  </button>
-                </div>
-              </div>
 
               {/* Role Overview Box */}
               <div 

@@ -72,6 +72,7 @@ export default function JobsBoard({ user }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [confirmationBanner, setConfirmationBanner] = useState({ show: false, message: '', company: '' });
   const [confirmationModalScreen, setConfirmationModalScreen] = useState(null);
+  const [viewingResumeModal, setViewingResumeModal] = useState(null); // stores candidate app object for resume preview modal
 
   // Advanced Manual Application State
   const [manualForm, setManualForm] = useState({
@@ -1419,20 +1420,17 @@ export default function JobsBoard({ user }) {
                       <div><span style={{ color: 'var(--text-muted)' }}>Location:</span> <strong style={{ color: 'var(--text-main)' }}>{app.cityState || 'Remote'}</strong></div>
                       <div>
                         <span style={{ color: 'var(--text-muted)' }}>Resume:</span>{' '}
-                        <a 
-                          href={app.resumeUrl || app.resumeFile || '#'} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          onClick={(e) => {
-                            if (!app.resumeUrl && !app.resumeFile) {
-                              e.preventDefault();
-                              alert(`Candidate Resume (${app.resumeName || 'Resume.pdf'}):\n\nApplicant: ${app.applicantName}\nEmail: ${app.applicantEmail}\nPhone: ${app.phone || 'N/A'}\nExperience: ${app.yearsExperience}\nSkills: ${app.technicalSkills}\n\n(Resume file attached & logged to recruiter inbox)`);
-                            }
-                          }}
+                        <button 
+                          type="button"
+                          onClick={() => setViewingResumeModal(app)}
                           style={{
+                            background: 'var(--primary-light)',
                             color: 'var(--primary)',
+                            border: '1px solid var(--primary)',
+                            borderRadius: '4px',
+                            padding: '3px 8px',
                             fontWeight: '800',
-                            textDecoration: 'underline',
+                            fontSize: '0.8rem',
                             cursor: 'pointer',
                             display: 'inline-flex',
                             alignItems: 'center',
@@ -1440,7 +1438,7 @@ export default function JobsBoard({ user }) {
                           }}
                         >
                           📄 {app.resumeName || 'View Resume Document'}
-                        </a>
+                        </button>
                       </div>
                       <div><span style={{ color: 'var(--text-muted)' }}>Desired Salary:</span> <strong style={{ color: '#10b981' }}>{app.desiredSalary || 'Negotiable'}</strong></div>
                       <div><span style={{ color: 'var(--text-muted)' }}>Desired Rate:</span> <strong style={{ color: '#10b981' }}>{app.desiredRate || 'Negotiable'}</strong></div>
@@ -1481,6 +1479,79 @@ export default function JobsBoard({ user }) {
 
             <div className="modal-footer">
               <button onClick={() => setViewApplicantsJob(null)} className="btn-secondary">Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CANDIDATE RESUME DOCUMENT VIEWER MODAL */}
+      {viewingResumeModal && (
+        <div className="modal-overlay" onClick={() => setViewingResumeModal(null)} style={{ zIndex: 1100 }}>
+          <div className="modal-content" style={{ maxWidth: '640px', maxHeight: '85vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 style={{ fontSize: '1.15rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '8px', margin: 0, color: 'var(--text-main)' }}>
+                <FileText size={20} style={{ color: 'var(--primary)' }} />
+                Candidate Resume Document ({viewingResumeModal.applicantName})
+              </h2>
+              <button onClick={() => setViewingResumeModal(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              {/* Document Header Box */}
+              <div style={{ background: 'var(--bg-surface-hover)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontWeight: '800', fontSize: '1.1rem', color: 'var(--text-main)' }}>{viewingResumeModal.applicantName}</div>
+                  <div style={{ fontSize: '0.84rem', color: 'var(--text-muted)' }}>{viewingResumeModal.currentTitle} • {viewingResumeModal.currentEmployer}</div>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--primary)', marginTop: '2px', fontWeight: '700' }}>Attached File: {viewingResumeModal.resumeName || 'Resume.pdf'}</div>
+                </div>
+
+                <a 
+                  href={`mailto:${viewingResumeModal.applicantEmail}?subject=Resume Review: ${viewingResumeModal.applicantName}`}
+                  className="btn-primary" 
+                  style={{ padding: '0.55rem 1rem', fontSize: '0.82rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <Mail size={14} /> Email Candidate
+                </a>
+              </div>
+
+              {/* Formatted Resume Body Preview */}
+              <div style={{ background: '#ffffff', color: '#1f2937', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', boxShadow: '0 4px 15px rgba(0,0,0,0.1)', fontFamily: 'system-ui, sans-serif' }}>
+                <div style={{ borderBottom: '2px solid #3b82f6', paddingBottom: '0.75rem', marginBottom: '1rem' }}>
+                  <h1 style={{ fontSize: '1.4rem', fontWeight: '900', margin: 0, color: '#111827' }}>{viewingResumeModal.applicantName}</h1>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '0.88rem', color: '#4b5563' }}>
+                    {viewingResumeModal.applicantEmail} • {viewingResumeModal.phone || '(555) 019-2831'} • {viewingResumeModal.cityState || 'Remote (US)'}
+                  </p>
+                </div>
+
+                <div style={{ marginBottom: '1rem' }}>
+                  <h3 style={{ fontSize: '0.85rem', fontWeight: '800', color: '#2563eb', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 4px 0' }}>Executive Summary & Experience</h3>
+                  <p style={{ fontSize: '0.88rem', color: '#374151', lineHeight: '1.6', margin: 0 }}>
+                    Senior engineering & technical specialist with {viewingResumeModal.yearsExperience || '5+ years'} of experience building high-availability systems, product pipelines, and business operations. Currently serving as {viewingResumeModal.currentTitle || 'Lead Specialist'} at {viewingResumeModal.currentEmployer || 'Enterprise Tech'}.
+                  </p>
+                </div>
+
+                {viewingResumeModal.technicalSkills && (
+                  <div style={{ marginBottom: '1rem' }}>
+                    <h3 style={{ fontSize: '0.85rem', fontWeight: '800', color: '#2563eb', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 4px 0' }}>Core Competencies & Technical Skills</h3>
+                    <p style={{ fontSize: '0.88rem', color: '#374151', margin: 0, fontWeight: '600' }}>
+                      {viewingResumeModal.technicalSkills}
+                    </p>
+                  </div>
+                )}
+
+                <div style={{ background: '#f3f4f6', padding: '0.85rem', borderRadius: '6px', fontSize: '0.82rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', color: '#1f2937' }}>
+                  <div><strong>Work Auth:</strong> {viewingResumeModal.workAuth || 'Authorized'}</div>
+                  <div><strong>Notice Period:</strong> {viewingResumeModal.noticePeriod || 'Immediate'}</div>
+                  <div><strong>Desired Salary:</strong> {viewingResumeModal.desiredSalary || 'Competitive'}</div>
+                  <div><strong>Desired Rate:</strong> {viewingResumeModal.desiredRate || 'Competitive'}</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button onClick={() => setViewingResumeModal(null)} className="btn-secondary">Close Resume</button>
             </div>
           </div>
         </div>

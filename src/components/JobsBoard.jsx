@@ -326,9 +326,17 @@ export default function JobsBoard({ user }) {
     alert('Job listing published permanently successfully!');
   };
 
+  const [activeBoardTab, setActiveBoardTab] = useState('ALL_JOBS'); // 'ALL_JOBS' | 'MY_POSTED_JOBS'
+
+  // Filter jobs posted by current user / owner
+  const myPostedJobs = jobs.filter(j => 
+    isOwnerAccount || 
+    (j.posterEmail && j.posterEmail.toLowerCase() === userEmail) ||
+    (j.company && user?.name && j.company.toLowerCase().includes(user.name.toLowerCase()))
+  );
+
   return (
-    <div style={{ padding: '1rem', maxWidth: '1000px', margin: '0 auto', fontFamily: 'inherit', position: 'relative' }}>
-      
+    <div style={{ maxWidth: '1100px', margin: '0 auto', paddingBottom: '3rem' }}>
       {/* In-App Confirmation Banner */}
       {confirmationBanner.show && (
         <div style={{
@@ -357,7 +365,7 @@ export default function JobsBoard({ user }) {
       )}
 
       {/* Header Section */}
-      <div className="glass-panel" style={{ padding: '1.25rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+      <div className="glass-panel" style={{ padding: '1.25rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 style={{ fontSize: '1.4rem', fontWeight: '800', margin: 0, color: 'var(--text-main)' }}>Jobs Marketplace</h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: '4px 0 0 0' }}>Low competition direct pipeline roles with verified employers.</p>
@@ -379,11 +387,56 @@ export default function JobsBoard({ user }) {
         </div>
       </div>
 
+      {/* Dedicated Navigation Tabs: ALL JOBS vs MY POSTED JOBS & CANDIDATE APPLICATIONS */}
+      <div style={{ display: 'flex', gap: '10px', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
+        <button
+          onClick={() => setActiveBoardTab('ALL_JOBS')}
+          style={{
+            padding: '8px 18px',
+            borderRadius: 'var(--radius-full)',
+            fontWeight: '800',
+            fontSize: '0.86rem',
+            border: 'none',
+            background: activeBoardTab === 'ALL_JOBS' ? 'var(--primary)' : 'var(--bg-surface-hover)',
+            color: activeBoardTab === 'ALL_JOBS' ? '#ffffff' : 'var(--text-muted)',
+            cursor: 'pointer'
+          }}
+        >
+          💼 All Active Jobs ({jobs.length})
+        </button>
+
+        <button
+          onClick={() => setActiveBoardTab('MY_POSTED_JOBS')}
+          style={{
+            padding: '8px 18px',
+            borderRadius: 'var(--radius-full)',
+            fontWeight: '800',
+            fontSize: '0.86rem',
+            border: 'none',
+            background: activeBoardTab === 'MY_POSTED_JOBS' ? 'var(--primary)' : 'var(--bg-surface-hover)',
+            color: activeBoardTab === 'MY_POSTED_JOBS' ? '#ffffff' : 'var(--text-muted)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}
+        >
+          <User size={15} /> My Posted Jobs & Received Applications ({myPostedJobs.length})
+        </button>
+      </div>
+
       {/* Jobs List Grid */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-        {jobs.map((job) => {
-          const hasApplied = appliedJobs.includes(job.id);
-          return (
+        {(activeBoardTab === 'MY_POSTED_JOBS' ? myPostedJobs : jobs).length === 0 ? (
+          <div className="glass-panel" style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+            <Briefcase size={38} style={{ margin: '0 auto 0.75rem', opacity: 0.5 }} />
+            <h3 style={{ fontSize: '1.1rem', fontWeight: '800', margin: 0, color: 'var(--text-main)' }}>No Posted Jobs Found</h3>
+            <p style={{ marginTop: '6px', fontSize: '0.86rem' }}>Click "+ Post a Job" above to publish your first engineering position and receive candidate applications!</p>
+          </div>
+        ) : (
+          (activeBoardTab === 'MY_POSTED_JOBS' ? myPostedJobs : jobs).map((job) => {
+            const hasApplied = appliedJobs.includes(job.id);
+            return (
             <div key={job.id} className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
                 <div>
@@ -462,7 +515,7 @@ export default function JobsBoard({ user }) {
               )}
             </div>
           );
-        })}
+        }))}
       </div>
 
       {/* $99 PAID BUSINESS VERIFICATION MODAL */}

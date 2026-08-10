@@ -1408,7 +1408,41 @@ app.post('/api/conversations/:id/messages', requireAuth,
 // LIVE GLOBAL JOBS BOARD ROUTES
 // ──────────────────────────────────────────────────────────────────────────────
 
-let globalJobsStore = [
+// ──────────────────────────────────────────────────────────────────────────────
+// PERMANENT CLOUD & DISK PERSISTENCE STORE
+// ──────────────────────────────────────────────────────────────────────────────
+const fs = require('fs');
+const path = require('path');
+
+const JOBS_FILE = path.join(__dirname, 'jobs_permanent_db.json');
+const PROJECTS_FILE = path.join(__dirname, 'projects_permanent_db.json');
+const BIDS_FILE = path.join(__dirname, 'bids_permanent_db.json');
+const APPS_FILE = path.join(__dirname, 'apps_permanent_db.json');
+const GROUPS_FILE = path.join(__dirname, 'groups_permanent_db.json');
+
+function loadJsonDisk(filePath, fallback) {
+  try {
+    if (fs.existsSync(filePath)) {
+      const content = fs.readFileSync(filePath, 'utf8');
+      const parsed = JSON.parse(content);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {
+    console.error('Failed to load permanent disk file:', filePath, e.message);
+  }
+  return fallback;
+}
+
+function saveJsonDisk(filePath, data) {
+  try {
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
+    console.log('[PERMANENT DISK SAVE SUCCESS]', filePath, `(${data.length} items)`);
+  } catch (e) {
+    console.error('[PERMANENT DISK SAVE ERROR]', filePath, e.message);
+  }
+}
+
+let globalJobsStore = loadJsonDisk(JOBS_FILE, [
   {
     id: 'job-1',
     title: 'Senior Backend Engineer',
@@ -1435,9 +1469,9 @@ let globalJobsStore = [
     techStack: ['Python', 'Selenium', 'BeautifulSoup'],
     createdAt: new Date().toISOString()
   }
-];
+]);
 
-let globalJobApplicationsStore = [
+let globalJobApplicationsStore = loadJsonDisk(APPS_FILE, [
   {
     id: 'app-101',
     jobId: 'job-1',
@@ -1461,7 +1495,63 @@ let globalJobApplicationsStore = [
     workAuth: 'US Citizen (No Sponsorship Needed)',
     appliedAt: '2 hours ago'
   }
-];
+]);
+
+let globalProjectsStore = loadJsonDisk(PROJECTS_FILE, [
+  {
+    id: 'proj_101',
+    title: 'Enterprise AI Vector Search Engine & RAG Pipeline Architecture',
+    client: 'Apex AI Systems',
+    logo: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=150&q=80',
+    contractType: 'Fixed Price',
+    budget: '$35,000 Fixed',
+    duration: '4 Weeks',
+    proposalsCount: 14,
+    status: 'Hiring',
+    verifiedEscrow: true,
+    clientRole: 'VP of AI Engineering',
+    tags: ['Python', 'Pinecone', 'LangChain', 'FastAPI', 'AWS'],
+    description: 'We are building a multi-tenant vector database pipeline with sub-50ms query latency. Seeking a Lead AI Engineer to architect the vector index, chunking strategies, and hybrid search ranking.'
+  },
+  {
+    id: 'proj_102',
+    title: 'Fintech Mobile Payment & Digital Wallet Infrastructure',
+    client: 'Velox Pay',
+    logo: 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&w=150&q=80',
+    contractType: 'Hourly Retainer',
+    budget: '$140 / hr',
+    duration: '6 Months Retainer',
+    proposalsCount: 9,
+    status: 'Hiring',
+    verifiedEscrow: true,
+    clientRole: 'Head of Mobile Product',
+    tags: ['React Native', 'TypeScript', 'Node.js', 'Stripe', 'PostgreSQL'],
+    description: 'Seeking a senior mobile engineer to build real-time biometric payment flows, ledger synchronization, and PCI-compliant security protocols for our iOS/Android application.'
+  }
+]);
+
+let globalProjectBidsStore = loadJsonDisk(BIDS_FILE, []);
+
+let globalGroupsStore = loadJsonDisk(GROUPS_FILE, [
+  {
+    id: 'grp-1',
+    name: 'AI Engineering & LLM Architecture',
+    membersCount: 1420,
+    category: 'AI / Machine Learning',
+    description: 'Community for AI engineers building vector search, RAG pipelines, fine-tuned models, and agentic workflows.',
+    image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=300&q=80',
+    joined: true
+  },
+  {
+    id: 'grp-2',
+    name: 'React Native & Cross-Platform Mobile',
+    membersCount: 980,
+    category: 'Mobile Development',
+    description: 'Best practices for high-performance React Native, Expo, and native iOS/Android bridge architectures.',
+    image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=300&q=80',
+    joined: false
+  }
+]);
 
 app.get('/api/jobs/applications', (req, res) => {
   res.json(globalJobApplicationsStore);
@@ -1493,11 +1583,12 @@ app.post('/api/jobs', (req, res) => {
     };
 
     globalJobsStore.unshift(newJob);
-    console.log('[GLOBAL JOBS] New job posted to central server:', newJob.title, 'by', newJob.company);
+    saveJsonDisk(JOBS_FILE, globalJobsStore);
+    console.log('[PERMANENT CLOUD JOBS] New job posted & saved permanently:', newJob.title);
     res.status(201).json(newJob);
   } catch (err) {
     console.error('Post job error:', err);
-    res.status(500).json({ error: 'Failed to post job to central server.' });
+    res.status(500).json({ error: 'Failed to post job.' });
   }
 });
 
@@ -1596,7 +1687,8 @@ app.post('/api/projects', (req, res) => {
     };
 
     globalProjectsStore.unshift(newProj);
-    console.log('[GLOBAL PROJECTS] New project RFP posted:', newProj.title);
+    saveJsonDisk(PROJECTS_FILE, globalProjectsStore);
+    console.log('[PERMANENT CLOUD PROJECTS] New project RFP posted:', newProj.title);
     res.status(201).json(newProj);
   } catch (err) {
     console.error('Post project error:', err);
@@ -1627,7 +1719,9 @@ app.post('/api/projects/bids', (req, res) => {
       globalProjectsStore[projIndex].proposalsCount += 1;
     }
 
-    console.log('[GLOBAL BIDS] New project bid submitted:', newBid.title, 'Bid:', newBid.bidAmount);
+    saveJsonDisk(BIDS_FILE, globalProjectBidsStore);
+    saveJsonDisk(PROJECTS_FILE, globalProjectsStore);
+    console.log('[PERMANENT CLOUD BIDS] New project bid submitted:', newBid.title, 'Bid:', newBid.bidAmount);
     res.status(201).json(newBid);
   } catch (err) {
     console.error('Submit bid error:', err);
@@ -1638,36 +1732,6 @@ app.post('/api/projects/bids', (req, res) => {
 // ──────────────────────────────────────────────────────────────────────────────
 // LIVE GLOBAL GROUPS & COMMUNITIES ROUTES
 // ──────────────────────────────────────────────────────────────────────────────
-
-let globalGroupsStore = [
-  {
-    id: 'grp-1',
-    name: 'AI Engineering & LLM Architecture',
-    membersCount: 1420,
-    category: 'AI / Machine Learning',
-    description: 'Community for AI engineers building vector search, RAG pipelines, fine-tuned models, and agentic workflows.',
-    image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=300&q=80',
-    joined: true
-  },
-  {
-    id: 'grp-2',
-    name: 'React Native & Cross-Platform Mobile',
-    membersCount: 980,
-    category: 'Mobile Development',
-    description: 'Best practices for high-performance React Native, Expo, and native iOS/Android bridge architectures.',
-    image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=300&q=80',
-    joined: false
-  },
-  {
-    id: 'grp-3',
-    name: 'DevOps, K8s & Cloud Infrastructure',
-    membersCount: 840,
-    category: 'DevOps & Cloud',
-    description: 'Cloud architects sharing Terraform modules, Kubernetes cluster configs, CI/CD, and site reliability tricks.',
-    image: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=300&q=80',
-    joined: true
-  }
-];
 
 app.get('/api/groups', (req, res) => {
   res.json(globalGroupsStore);
@@ -1689,7 +1753,8 @@ app.post('/api/groups', (req, res) => {
     };
 
     globalGroupsStore.unshift(newGroup);
-    console.log('[GLOBAL GROUPS] New group created:', newGroup.name);
+    saveJsonDisk(GROUPS_FILE, globalGroupsStore);
+    console.log('[PERMANENT CLOUD GROUPS] New group created:', newGroup.name);
     res.status(201).json(newGroup);
   } catch (err) {
     console.error('Create group error:', err);
@@ -2239,6 +2304,7 @@ app.post('/api/jobs/apply', async (req, res) => {
           appliedAt: 'Just now'
         };
         globalJobApplicationsStore.unshift(newApp);
+        saveJsonDisk(APPS_FILE, globalJobApplicationsStore);
 
         const apiKey = process.env.BREVO_API_KEY;
         if (!apiKey) {

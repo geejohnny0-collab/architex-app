@@ -1930,6 +1930,8 @@ app.post('/api/jobs/apply', async (req, res) => {
             });
         }
 
+        const senderEmail = process.env.BREVO_SENDER_EMAIL || 'architexjobs@gmail.com';
+
         // Fire HTTP POST request to Brevo API over HTTPS Port 443 (bypasses Render SMTP port blocking)
         const response = await fetch('https://api.brevo.com/v3/smtp/email', {
             method: 'POST',
@@ -1939,9 +1941,9 @@ app.post('/api/jobs/apply', async (req, res) => {
                 'content-type': 'application/json'
             },
             body: JSON.stringify({
-                sender: { name: 'Architex Jobs', email: 'architexjobs@gmail.com' },
+                sender: { name: 'Architex Jobs', email: senderEmail },
                 to: [{ email: targetEmail, name: targetName }],
-                replyTo: { email: 'architexjobs@gmail.com', name: 'Architex Jobs' },
+                replyTo: { email: senderEmail, name: 'Architex Jobs' },
                 subject: `Application Confirmed: ${jobTitle || 'Position'} at ${targetCompany}`,
                 htmlContent: `
                     <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e1e1e1; border-radius: 8px;">
@@ -1950,7 +1952,7 @@ app.post('/api/jobs/apply', async (req, res) => {
                         <p>Your application for <strong>${jobTitle || 'Position'}</strong> at <strong>${targetCompany}</strong> has been logged successfully!</p>
                         <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
                         <p><strong>Applicant Email:</strong> ${targetEmail}</p>
-                        <p><strong>Sent From:</strong> architexjobs@gmail.com</p>
+                        <p><strong>Sent From:</strong> ${senderEmail}</p>
                         <p><strong>Timestamp:</strong> ${new Date().toLocaleString()}</p>
                         <br>
                         <p>Best regards,</p>
@@ -1961,6 +1963,16 @@ app.post('/api/jobs/apply', async (req, res) => {
         });
 
         const data = await response.json();
+
+        if (!response.ok) {
+            console.error('[BREVO REJECTED]', response.status, JSON.stringify(data));
+            return res.status(response.status).json({
+                success: false,
+                error: data.message || data.code || 'Brevo API rejected sending email.',
+                details: data
+            });
+        }
+
         console.log('[BREVO SUCCESS] Email dispatched via Brevo HTTP API:', JSON.stringify(data));
 
         return res.status(200).json({ 

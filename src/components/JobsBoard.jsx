@@ -288,11 +288,13 @@ export default function JobsBoard({ user }) {
     e.preventDefault();
     if (!newTitle.trim() || !newCompany.trim()) return;
 
+    const currentActiveEmail = (userEmail || user?.email || '').toLowerCase().trim();
+
     const newJobObj = {
       id: 'j_' + Date.now(),
       title: newTitle.trim(),
       company: newCompany.trim(),
-      posterEmail: userEmail || user?.email || 'architexjobs@gmail.com',
+      posterEmail: currentActiveEmail,
       posterName: user?.name || 'Hiring Lead',
       type: newWorkType,
       c2hRate: newC2hRate.trim() || null,
@@ -331,8 +333,9 @@ export default function JobsBoard({ user }) {
   const [activeBoardTab, setActiveBoardTab] = useState('ALL_JOBS'); // 'ALL_JOBS' | 'MY_POSTED_JOBS'
 
   // Strictly filter jobs posted by current user so a user sees ONLY their own posted jobs & applicants
+  const currentUserEmail = (userEmail || user?.email || '').toLowerCase().trim();
   const myPostedJobs = jobs.filter(j => 
-    (j.posterEmail && userEmail && j.posterEmail.toLowerCase() === userEmail.toLowerCase())
+    currentUserEmail && j.posterEmail && j.posterEmail.toLowerCase().trim() === currentUserEmail
   );
 
   return (
@@ -436,7 +439,7 @@ export default function JobsBoard({ user }) {
         ) : (
           (activeBoardTab === 'MY_POSTED_JOBS' ? myPostedJobs : jobs).map((job) => {
             const hasApplied = appliedJobs.includes(job.id);
-            const isJobOwner = userEmail && job.posterEmail && job.posterEmail.toLowerCase() === userEmail.toLowerCase();
+            const isJobOwner = currentUserEmail && job.posterEmail && job.posterEmail.toLowerCase().trim() === currentUserEmail;
 
             return (
               <div key={job.id} className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>

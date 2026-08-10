@@ -1405,6 +1405,269 @@ app.post('/api/conversations/:id/messages', requireAuth,
 );
 
 // ──────────────────────────────────────────────────────────────────────────────
+// LIVE GLOBAL JOBS BOARD ROUTES
+// ──────────────────────────────────────────────────────────────────────────────
+
+let globalJobsStore = [
+  {
+    id: 'job-1',
+    title: 'Senior Backend Engineer',
+    company: 'Architex Systems',
+    location: 'Remote (US/TX)',
+    type: 'Full-Time W2',
+    c2hRate: '$130 - $150/hr',
+    salaryW2: '$195,000/yr',
+    hiringManager: 'Alex Mercer (CTO)',
+    description: 'Build high-throughput data pipelines, custom APIs, and backend architectures. You will lead the infrastructure migration to distributed clusters and integrate high-concurrency microservices.',
+    techStack: ['Node.js', 'Python', 'PostgreSQL', 'Docker'],
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: 'job-2',
+    title: 'Automation & Scraping Engineer',
+    company: 'DataFlow Metrics',
+    location: 'Remote',
+    type: 'Contract-to-Hire',
+    c2hRate: '$110 - $130/hr',
+    salaryW2: '$170,000/yr',
+    hiringManager: 'Sarah Jenkins (VP Engineering)',
+    description: 'Develop autonomous market scrapers, lead generation scripts, and multi-platform sync tools. Responsible for maintaining web scrapers against strict anti-bot systems.',
+    techStack: ['Python', 'Selenium', 'BeautifulSoup'],
+    createdAt: new Date().toISOString()
+  }
+];
+
+app.get('/api/jobs', (req, res) => {
+  res.json(globalJobsStore);
+});
+
+app.post('/api/jobs', (req, res) => {
+  try {
+    const jobData = req.body;
+    if (!jobData || !jobData.title) {
+      return res.status(400).json({ error: 'Job title is required.' });
+    }
+
+    const newJob = {
+      id: 'job-' + Date.now(),
+      title: jobData.title,
+      company: jobData.company || 'Architex Business',
+      location: jobData.location || 'Remote',
+      type: jobData.type || 'Full-Time W2',
+      c2hRate: jobData.c2hRate || '$100/hr',
+      salaryW2: jobData.salaryW2 || '$150,000/yr',
+      hiringManager: jobData.hiringManager || 'Hiring Lead',
+      description: jobData.description || 'Engineering role posted live on Architex.',
+      techStack: Array.isArray(jobData.techStack) ? jobData.techStack : (jobData.techStack || 'React, Node.js').split(',').map(s => s.trim()).filter(Boolean),
+      createdAt: new Date().toISOString()
+    };
+
+    globalJobsStore.unshift(newJob);
+    console.log('[GLOBAL JOBS] New job posted to central server:', newJob.title, 'by', newJob.company);
+    res.status(201).json(newJob);
+  } catch (err) {
+    console.error('Post job error:', err);
+    res.status(500).json({ error: 'Failed to post job to central server.' });
+  }
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
+// LIVE GLOBAL PROJECTS & RFP ROUTES
+// ──────────────────────────────────────────────────────────────────────────────
+
+let globalProjectsStore = [
+  {
+    id: 'proj_101',
+    title: 'Enterprise AI Vector Search Engine & RAG Pipeline Architecture',
+    client: 'Apex AI Systems',
+    logo: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=150&q=80',
+    contractType: 'Fixed Price',
+    budget: '$35,000 Fixed',
+    duration: '4 Weeks',
+    proposalsCount: 14,
+    status: 'Hiring',
+    verifiedEscrow: true,
+    clientRole: 'VP of AI Engineering',
+    tags: ['Python', 'Pinecone', 'LangChain', 'FastAPI', 'AWS'],
+    description: 'We are building a multi-tenant vector database pipeline with sub-50ms query latency. Seeking a Lead AI Engineer to architect the vector index, chunking strategies, and hybrid search ranking.'
+  },
+  {
+    id: 'proj_102',
+    title: 'Fintech Mobile Payment & Digital Wallet Infrastructure',
+    client: 'Velox Pay',
+    logo: 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&w=150&q=80',
+    contractType: 'Hourly Retainer',
+    budget: '$140 / hr',
+    duration: '6 Months Retainer',
+    proposalsCount: 9,
+    status: 'Hiring',
+    verifiedEscrow: true,
+    clientRole: 'Head of Mobile Product',
+    tags: ['React Native', 'TypeScript', 'Node.js', 'Stripe', 'PostgreSQL'],
+    description: 'Seeking a senior mobile engineer to build real-time biometric payment flows, ledger synchronization, and PCI-compliant security protocols for our iOS/Android application.'
+  },
+  {
+    id: 'proj_103',
+    title: 'Full-Stack Next.js 14 Developer Marketplace Platform',
+    client: 'Architex Ecosystem',
+    logo: 'https://images.unsplash.com/photo-1572021335469-31706a17aaef?auto=format&fit=crop&w=150&q=80',
+    contractType: 'Fixed Price',
+    budget: '$22,500 Fixed',
+    duration: '3 Weeks',
+    proposalsCount: 21,
+    status: 'Hiring',
+    verifiedEscrow: true,
+    clientRole: 'CTO & Product Lead',
+    tags: ['Next.js 14', 'TailwindCSS', 'Prisma', 'PostgreSQL', 'WebSockets'],
+    description: 'Build responsive developer dashboards, escrow milestone tracking, and real-time socket chat channels for high-performing engineering squads.'
+  },
+  {
+    id: 'proj_104',
+    title: 'Multi-Cloud Kubernetes & Terraform Infrastructure Automation',
+    client: 'CloudScale Labs',
+    logo: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=150&q=80',
+    contractType: 'Fixed Price',
+    budget: '$18,000 Fixed',
+    duration: '2 Weeks',
+    proposalsCount: 7,
+    status: 'Hiring',
+    verifiedEscrow: true,
+    clientRole: 'DevOps Architect',
+    tags: ['Kubernetes', 'Terraform', 'Docker', 'AWS EKS', 'GitHub Actions'],
+    description: 'Design zero-downtime CI/CD deployment pipelines, automated auto-scaling node groups, and Prometheus/Grafana infrastructure monitoring clusters.'
+  }
+];
+
+let globalProjectBidsStore = [];
+
+app.get('/api/projects', (req, res) => {
+  res.json(globalProjectsStore);
+});
+
+app.post('/api/projects', (req, res) => {
+  try {
+    const data = req.body;
+    if (!data || !data.title) return res.status(400).json({ error: 'Project title is required.' });
+
+    const newProj = {
+      id: 'proj_' + Date.now(),
+      title: data.title,
+      client: data.client || 'Client Lead',
+      logo: data.logo || 'https://images.unsplash.com/photo-1549923746-c502d488b3ea?auto=format&fit=crop&w=150&q=80',
+      contractType: data.contractType || 'Fixed Price',
+      budget: data.budget || '$20,000 Fixed',
+      duration: data.duration || '4 Weeks',
+      proposalsCount: 0,
+      status: 'Hiring',
+      verifiedEscrow: true,
+      clientRole: data.clientRole || 'You (Project Client Lead)',
+      tags: Array.isArray(data.tags) ? data.tags : (data.tags || 'React, AWS').split(',').map(s => s.trim()).filter(Boolean),
+      description: data.description || 'Engineering RFP contract.'
+    };
+
+    globalProjectsStore.unshift(newProj);
+    console.log('[GLOBAL PROJECTS] New project RFP posted:', newProj.title);
+    res.status(201).json(newProj);
+  } catch (err) {
+    console.error('Post project error:', err);
+    res.status(500).json({ error: 'Failed to post project RFP.' });
+  }
+});
+
+app.get('/api/projects/bids', (req, res) => {
+  res.json(globalProjectBidsStore);
+});
+
+app.post('/api/projects/bids', (req, res) => {
+  try {
+    const bidData = req.body;
+    const newBid = {
+      id: 'bid_' + Date.now(),
+      ...bidData,
+      submittedAt: new Date().toLocaleString(),
+      status: 'Under Client Review',
+      statusColor: '#0a66c2'
+    };
+
+    globalProjectBidsStore.unshift(newBid);
+
+    // Increment proposal count on target project
+    const projIndex = globalProjectsStore.findIndex(p => p.id === bidData.projectId);
+    if (projIndex !== -1) {
+      globalProjectsStore[projIndex].proposalsCount += 1;
+    }
+
+    console.log('[GLOBAL BIDS] New project bid submitted:', newBid.title, 'Bid:', newBid.bidAmount);
+    res.status(201).json(newBid);
+  } catch (err) {
+    console.error('Submit bid error:', err);
+    res.status(500).json({ error: 'Failed to submit project bid.' });
+  }
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
+// LIVE GLOBAL GROUPS & COMMUNITIES ROUTES
+// ──────────────────────────────────────────────────────────────────────────────
+
+let globalGroupsStore = [
+  {
+    id: 'grp-1',
+    name: 'AI Engineering & LLM Architecture',
+    membersCount: 1420,
+    category: 'AI / Machine Learning',
+    description: 'Community for AI engineers building vector search, RAG pipelines, fine-tuned models, and agentic workflows.',
+    image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=300&q=80',
+    joined: true
+  },
+  {
+    id: 'grp-2',
+    name: 'React Native & Cross-Platform Mobile',
+    membersCount: 980,
+    category: 'Mobile Development',
+    description: 'Best practices for high-performance React Native, Expo, and native iOS/Android bridge architectures.',
+    image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=300&q=80',
+    joined: false
+  },
+  {
+    id: 'grp-3',
+    name: 'DevOps, K8s & Cloud Infrastructure',
+    membersCount: 840,
+    category: 'DevOps & Cloud',
+    description: 'Cloud architects sharing Terraform modules, Kubernetes cluster configs, CI/CD, and site reliability tricks.',
+    image: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=300&q=80',
+    joined: true
+  }
+];
+
+app.get('/api/groups', (req, res) => {
+  res.json(globalGroupsStore);
+});
+
+app.post('/api/groups', (req, res) => {
+  try {
+    const data = req.body;
+    if (!data || !data.name) return res.status(400).json({ error: 'Group name required.' });
+
+    const newGroup = {
+      id: 'grp-' + Date.now(),
+      name: data.name,
+      category: data.category || 'Tech Community',
+      membersCount: 1,
+      description: data.description || 'Developer community on Architex.',
+      image: data.image || 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=300&q=80',
+      joined: true
+    };
+
+    globalGroupsStore.unshift(newGroup);
+    console.log('[GLOBAL GROUPS] New group created:', newGroup.name);
+    res.status(201).json(newGroup);
+  } catch (err) {
+    console.error('Create group error:', err);
+    res.status(500).json({ error: 'Failed to create group.' });
+  }
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
 // NOTIFICATION ROUTES
 // ──────────────────────────────────────────────────────────────────────────────
 

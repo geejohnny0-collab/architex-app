@@ -34,20 +34,19 @@ export default function JobsBoard({ user }) {
     }
   ];
 
-  const [jobs, setJobs] = useState(() => {
-    try {
-      const saved = localStorage.getItem('architex_published_jobs');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+  const [jobs, setJobs] = useState(DEFAULT_JOBS);
+
+  useEffect(() => {
+    // Fetch live jobs globally from central server
+    fetch('/api/jobs')
+      .then(res => res.json())
+      .then(serverJobs => {
+        if (Array.isArray(serverJobs) && serverJobs.length > 0) {
+          setJobs(serverJobs);
         }
-      }
-    } catch (e) {
-      console.error('Failed to load published jobs from storage:', e);
-    }
-    return DEFAULT_JOBS;
-  });
+      })
+      .catch(err => console.log('Using default jobs fallback:', err));
+  }, []);
 
   const [appliedJobs, setAppliedJobs] = useState([]);
   const [activeJobModal, setActiveJobModal] = useState(null);
@@ -294,11 +293,16 @@ export default function JobsBoard({ user }) {
 
     const updatedJobsList = [newJobObj, ...jobs];
     setJobs(updatedJobsList);
-    try {
-      localStorage.setItem('architex_published_jobs', JSON.stringify(updatedJobsList));
-    } catch (err) {
-      console.error('Failed to save to localStorage:', err);
-    }
+
+    // Save to central live server so every phone and computer sees it instantly
+    fetch('/api/jobs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newJobObj)
+    })
+    .then(res => res.json())
+    .then(savedJob => console.log('[GLOBAL JOB SYNC SUCCESS]', savedJob.title))
+    .catch(err => console.error('[GLOBAL JOB SYNC FAILED]', err));
 
     setNewTitle('');
     setNewCompany('');

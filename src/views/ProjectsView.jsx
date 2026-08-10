@@ -71,11 +71,33 @@ const INITIAL_PROJECTS = [
 
 export default function ProjectsView({ onSendApplicationMessage }) {
   const [projects, setProjects] = useState(INITIAL_PROJECTS);
+  const [myBids, setMyBids] = useState([]);
+
+  React.useEffect(() => {
+    // Fetch live projects globally from central server
+    fetch('/api/projects')
+      .then(res => res.json())
+      .then(serverProjects => {
+        if (Array.isArray(serverProjects) && serverProjects.length > 0) {
+          setProjects(serverProjects);
+        }
+      })
+      .catch(err => console.log('Using initial projects fallback:', err));
+
+    // Fetch live bids
+    fetch('/api/projects/bids')
+      .then(res => res.json())
+      .then(serverBids => {
+        if (Array.isArray(serverBids)) {
+          setMyBids(serverBids);
+        }
+      })
+      .catch(err => console.log('Bids fetch fallback:', err));
+  }, []);
 
   const [activeTab, setActiveTab] = useState('ALL_PROJECTS'); // 'ALL_PROJECTS' | 'MY_BIDS'
   const [filterType, setFilterType] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
-  const [myBids, setMyBids] = useState([]);
 
   // Modals
   const [bidModalProject, setBidModalProject] = useState(null);
@@ -125,6 +147,13 @@ export default function ProjectsView({ onSendApplicationMessage }) {
     setMyBids([bidObj, ...myBids]);
     setProjects(projects.map(p => p.id === bidModalProject.id ? { ...p, proposalsCount: p.proposalsCount + 1 } : p));
 
+    // Save bid to central cloud server
+    fetch('/api/projects/bids', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(bidObj)
+    }).catch(err => console.error('Bid cloud sync error:', err));
+
     // Dispatch real message to Client Messages Inbox
     if (onSendApplicationMessage) {
       onSendApplicationMessage({
@@ -168,6 +197,14 @@ export default function ProjectsView({ onSendApplicationMessage }) {
     };
 
     setProjects([newProjectObj, ...projects]);
+
+    // Save project RFP to central cloud server
+    fetch('/api/projects', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newProjectObj)
+    }).catch(err => console.error('Project cloud sync error:', err));
+
     setNewTitle('');
     setNewClient('');
     setNewLogo('');

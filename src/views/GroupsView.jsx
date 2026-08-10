@@ -7,8 +7,49 @@ import {
   Radio, Layout, Layers, UserCheck, Flame, AtSign, CornerDownLeft
 } from 'lucide-react';
 
+const DEFAULT_GROUPS = [
+  {
+    id: 'grp-1',
+    name: 'AI Engineering & LLM Architecture',
+    membersCount: 1420,
+    category: 'AI / Machine Learning',
+    description: 'Community for AI engineers building vector search, RAG pipelines, fine-tuned models, and agentic workflows.',
+    image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=300&q=80',
+    joined: true
+  },
+  {
+    id: 'grp-2',
+    name: 'React Native & Cross-Platform Mobile',
+    membersCount: 980,
+    category: 'Mobile Development',
+    description: 'Best practices for high-performance React Native, Expo, and native iOS/Android bridge architectures.',
+    image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=300&q=80',
+    joined: false
+  },
+  {
+    id: 'grp-3',
+    name: 'DevOps, K8s & Cloud Infrastructure',
+    membersCount: 840,
+    category: 'DevOps & Cloud',
+    description: 'Cloud architects sharing Terraform modules, Kubernetes cluster configs, CI/CD, and site reliability tricks.',
+    image: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=300&q=80',
+    joined: true
+  }
+];
+
 export default function GroupsView() {
-  const [groups, setGroups] = useState(MOCK_GROUPS);
+  const [groups, setGroups] = useState(DEFAULT_GROUPS);
+
+  React.useEffect(() => {
+    fetch('/api/groups')
+      .then(res => res.json())
+      .then(serverGroups => {
+        if (Array.isArray(serverGroups) && serverGroups.length > 0) {
+          setGroups(serverGroups);
+        }
+      })
+      .catch(err => console.log('Groups fetch fallback:', err));
+  }, []);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [filterTab, setFilterTab] = useState('ALL'); // 'ALL' | 'JOINED'
@@ -93,6 +134,14 @@ export default function GroupsView() {
     };
 
     setGroups([newGroupObj, ...groups]);
+
+    // Save created group to central cloud server
+    fetch('/api/groups', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newGroupObj)
+    }).catch(err => console.error('Group cloud sync error:', err));
+
     setNewGroupName('');
     setNewGroupDescription('');
     setNewGroupTags('');

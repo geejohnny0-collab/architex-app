@@ -1911,7 +1911,7 @@ app.post('/api/credits/spend', requireAuth, async (req, res) => {
   }
 });
 
-// 7. Apply with Resume API Route (Live Resend HTTP REST API)
+// 7. Apply with Resume API Route (Brevo HTTP REST API)
 app.post('/api/jobs/apply', async (req, res) => {
     try {
         const { applicantEmail, applicantName, jobTitle, companyName, userEmail, company } = req.body;
@@ -1919,50 +1919,58 @@ app.post('/api/jobs/apply', async (req, res) => {
         const targetName = applicantName || 'Applicant';
         const targetCompany = companyName || company || 'Architex';
 
-        console.log(`[JOB APPLY] Processing live application for: ${targetEmail} (${jobTitle || 'Position'} at ${targetCompany})`);
+        console.log(`[JOB APPLY] Processing application for: ${targetEmail} (${jobTitle || 'Position'} at ${targetCompany})`);
 
-        const activeResendKey = process.env.RESEND_API_KEY;
-        if (!activeResendKey) {
-            console.error('[CRITICAL ERROR] RESEND_API_KEY is missing from Render environment!');
+        const apiKey = process.env.BREVO_API_KEY;
+        if (!apiKey) {
+            console.error('[BREVO ERROR] BREVO_API_KEY is missing from Render environment variables!');
             return res.status(500).json({ 
                 success: false, 
-                error: 'Server configuration error: RESEND_API_KEY not found.' 
+                error: 'Server configuration error: BREVO_API_KEY missing from environment.' 
             });
         }
 
-        const resendClient = new Resend(activeResendKey);
-
-        // Send via HTTP POST REST API over HTTPS Port 443 (bypasses Render cloud SMTP blocking)
-        const emailResponse = await resendClient.emails.send({
-            from: 'Architex Jobs <onboarding@resend.dev>',
-            replyTo: 'architexjobs@gmail.com',
-            to: [targetEmail],
-            subject: `Application Confirmed: ${jobTitle || 'Position'} at ${targetCompany}`,
-            html: `
-                <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e1e1e1; border-radius: 8px;">
-                    <h2 style="color: #1a1a1a;">Application Confirmed!</h2>
-                    <p>Hi <strong>${targetName}</strong>,</p>
-                    <p>Your application for <strong>${jobTitle || 'Position'}</strong> at <strong>${targetCompany}</strong> has been logged successfully!</p>
-                    <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-                    <p><strong>Recipient Email:</strong> ${targetEmail}</p>
-                    <p><strong>Timestamp:</strong> ${new Date().toLocaleString()}</p>
-                    <br>
-                    <p>Best regards,</p>
-                    <p><strong>${targetCompany} Hiring Team</strong></p>
-                </div>
-            `,
+        // Fire HTTP POST request to Brevo API over HTTPS Port 443 (bypasses Render SMTP port blocking)
+        const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+            method: 'POST',
+            headers: {
+                'accept': 'application/json',
+                'api-key': apiKey,
+                'content-type': 'application/json'
+            },
+            body: JSON.stringify({
+                sender: { name: 'Architex Jobs', email: 'architexjobs@gmail.com' },
+                to: [{ email: targetEmail, name: targetName }],
+                replyTo: { email: 'architexjobs@gmail.com', name: 'Architex Jobs' },
+                subject: `Application Confirmed: ${jobTitle || 'Position'} at ${targetCompany}`,
+                htmlContent: `
+                    <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e1e1e1; border-radius: 8px;">
+                        <h2 style="color: #1a1a1a;">Application Confirmed!</h2>
+                        <p>Hi <strong>${targetName}</strong>,</p>
+                        <p>Your application for <strong>${jobTitle || 'Position'}</strong> at <strong>${targetCompany}</strong> has been logged successfully!</p>
+                        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+                        <p><strong>Applicant Email:</strong> ${targetEmail}</p>
+                        <p><strong>Sent From:</strong> architexjobs@gmail.com</p>
+                        <p><strong>Timestamp:</strong> ${new Date().toLocaleString()}</p>
+                        <br>
+                        <p>Best regards,</p>
+                        <p><strong>${targetCompany} Hiring Team</strong></p>
+                    </div>
+                `
+            })
         });
 
-        console.log('[SUCCESS] Live Resend HTTP API email response:', JSON.stringify(emailResponse));
+        const data = await response.json();
+        console.log('[BREVO SUCCESS] Email dispatched via Brevo HTTP API:', JSON.stringify(data));
 
         return res.status(200).json({ 
             success: true, 
-            message: 'Application logged and confirmation email successfully sent via Resend HTTP API.',
-            data: emailResponse 
+            message: 'Application logged and confirmation email successfully sent via Brevo HTTP API.',
+            data 
         });
 
     } catch (error) {
-        console.error('[FAILED] Exception caught while sending Resend HTTP email:', error);
+        console.error('[BREVO FAILED] Exception caught while sending email:', error);
         return res.status(500).json({ 
             success: false, 
             error: error.message || 'Failed to send confirmation email' 

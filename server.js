@@ -1517,6 +1517,46 @@ app.get('/api/jobs/applications', async (req, res) => {
   res.json(globalJobApplicationsStore);
 });
 
+// ─── MASTER ADMIN DATA RECOVERY & VAULT ROUTES ──────────────────────────────
+app.get('/api/admin/vault', async (req, res) => {
+  const requesterEmail = (req.query.email || '').toLowerCase().trim();
+  if (requesterEmail !== 'geejohnny0@gmail.com') {
+    return res.status(403).json({ error: 'Access denied: Master Admin Vault is restricted to platform owner.' });
+  }
+
+  let dbApplications = [];
+  try {
+    if (prisma && prisma.jobApplication) {
+      dbApplications = await prisma.jobApplication.findMany({ orderBy: { appliedAt: 'desc' } });
+    }
+  } catch (err) {
+    console.error('Master Vault fetch error:', err.message);
+  }
+
+  // Combine DB applications and Memory applications safely
+  const allApps = [...dbApplications];
+  globalJobApplicationsStore.forEach(app => {
+    if (!allApps.some(a => a.id === app.id)) {
+      allApps.push(app);
+    }
+  });
+
+  return res.json({
+    timestamp: new Date().toISOString(),
+    ownerEmail: 'geejohnny0@gmail.com',
+    stats: {
+      totalApplications: allApps.length,
+      totalJobs: globalJobsStore.length,
+      totalProjects: globalProjectsStore.length,
+      totalBids: globalProjectBidsStore.length
+    },
+    applications: allApps,
+    jobs: globalJobsStore,
+    projects: globalProjectsStore,
+    bids: globalProjectBidsStore
+  });
+});
+
 app.get('/api/jobs', (req, res) => {
   res.json(globalJobsStore);
 });

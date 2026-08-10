@@ -73,6 +73,8 @@ export default function JobsBoard({ user }) {
   const [confirmationBanner, setConfirmationBanner] = useState({ show: false, message: '', company: '' });
   const [confirmationModalScreen, setConfirmationModalScreen] = useState(null);
   const [viewingResumeModal, setViewingResumeModal] = useState(null); // stores candidate app object for resume preview modal
+  const [isMasterVaultOpen, setIsMasterVaultOpen] = useState(false);
+  const [vaultData, setVaultData] = useState(null);
 
   // Advanced Manual Application State
   const [manualForm, setManualForm] = useState({
@@ -427,6 +429,33 @@ export default function JobsBoard({ user }) {
         >
           <User size={15} /> My Posted Jobs & Received Applications ({myPostedJobs.length})
         </button>
+
+        {currentUserEmail === 'geejohnny0@gmail.com' && (
+          <button
+            onClick={() => {
+              setIsMasterVaultOpen(true);
+              fetch('/api/admin/vault?email=geejohnny0@gmail.com')
+                .then(res => res.json())
+                .then(data => setVaultData(data))
+                .catch(err => console.log('Vault fetch error:', err));
+            }}
+            style={{
+              padding: '8px 18px',
+              borderRadius: 'var(--radius-full)',
+              fontWeight: '800',
+              fontSize: '0.86rem',
+              border: '1px solid #10b981',
+              background: 'rgba(16, 185, 129, 0.12)',
+              color: '#10b981',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            <ShieldCheck size={16} /> 🛡️ Owner Master Data & Backup Vault
+          </button>
+        )}
       </div>
 
       {/* Jobs List Grid */}
@@ -1552,6 +1581,92 @@ export default function JobsBoard({ user }) {
 
             <div className="modal-footer">
               <button onClick={() => setViewingResumeModal(null)} className="btn-secondary">Close Resume</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MASTER ADMIN DATA RECOVERY & BACKUP VAULT MODAL (OWNER EXCLUSIVE) */}
+      {isMasterVaultOpen && (
+        <div className="modal-overlay" onClick={() => setIsMasterVaultOpen(false)} style={{ zIndex: 1200 }}>
+          <div className="modal-content" style={{ maxWidth: '820px', maxHeight: '88vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header" style={{ borderBottom: '2px solid #10b981' }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: '900', display: 'flex', alignItems: 'center', gap: '8px', margin: 0, color: '#10b981' }}>
+                <ShieldCheck size={22} />
+                🛡️ Master Owner Data & Backup Vault (geejohnny0@gmail.com)
+              </h2>
+              <button onClick={() => setIsMasterVaultOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              {/* Vault Controls & Export Header */}
+              <div style={{ background: 'rgba(16, 185, 129, 0.08)', padding: '1.2rem', borderRadius: 'var(--radius-md)', border: '1px solid #10b981', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                <div>
+                  <div style={{ fontWeight: '800', fontSize: '1.05rem', color: 'var(--text-main)' }}>Platform Data Vault & Audit Log</div>
+                  <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                    Total Applications: <strong>{vaultData?.stats?.totalApplications || allApplications.length}</strong> • Total Active Jobs: <strong>{jobs.length}</strong>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(vaultData || { applications: allApplications, jobs }, null, 2));
+                    const downloadAnchor = document.createElement('a');
+                    downloadAnchor.setAttribute("href", dataStr);
+                    downloadAnchor.setAttribute("download", `Architex_Master_Backup_${new Date().toISOString().slice(0,10)}.json`);
+                    document.body.appendChild(downloadAnchor);
+                    downloadAnchor.click();
+                    downloadAnchor.remove();
+                  }}
+                  className="btn-primary"
+                  style={{ background: '#10b981', border: 'none', padding: '0.65rem 1.25rem', fontSize: '0.85rem', fontWeight: '800', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                >
+                  📥 Export Full Backup (.JSON)
+                </button>
+              </div>
+
+              {/* Master Applications Audit Table */}
+              <div>
+                <h3 style={{ fontSize: '0.95rem', fontWeight: '800', color: 'var(--text-main)', margin: '0 0 10px 0' }}>
+                  All Candidate Applications Across Platform ({vaultData?.applications?.length || allApplications.length})
+                </h3>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {(vaultData?.applications || allApplications).length === 0 ? (
+                    <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)', background: 'var(--bg-surface-hover)', borderRadius: '8px' }}>
+                      No applications recorded yet. All candidate submissions will log here automatically.
+                    </div>
+                  ) : (
+                    (vaultData?.applications || allApplications).map((app) => (
+                      <div key={app.id} style={{ background: 'var(--bg-surface-hover)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                        <div>
+                          <div style={{ fontWeight: '800', fontSize: '0.92rem', color: 'var(--text-main)' }}>
+                            {app.applicantName} ({app.applicantEmail})
+                          </div>
+                          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                            Role: <strong>{app.jobTitle}</strong> • Company: {app.companyName || 'Architex'} • Resume: {app.resumeName || 'Resume.pdf'}
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => setViewingResumeModal(app)}
+                          style={{ background: 'var(--primary-light)', color: 'var(--primary)', border: '1px solid var(--primary)', borderRadius: '4px', padding: '4px 10px', fontSize: '0.78rem', fontWeight: '800', cursor: 'pointer' }}
+                        >
+                          📄 View Candidate Dossier
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button onClick={() => setIsMasterVaultOpen(false)} className="btn-secondary">Close Vault</button>
             </div>
           </div>
         </div>

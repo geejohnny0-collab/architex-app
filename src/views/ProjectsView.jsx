@@ -1,14 +1,76 @@
 import React, { useState } from 'react';
-import { MOCK_PROJECTS } from '../data/mockData';
 import { 
   Briefcase, DollarSign, Clock, Tag, Send, Sparkles, Filter, 
   Search, ShieldCheck, CheckCircle2, BadgeCheck, Plus, X, 
-  Bookmark, Check, UserCheck, ArrowUpRight, ChevronRight, FileText
+  Bookmark, Check, UserCheck, ArrowUpRight, ChevronRight, FileText, Video, Image, Link, Upload
 } from 'lucide-react';
+import api from '../services/apiService';
+
+const INITIAL_PROJECTS = [
+  {
+    id: 'proj_101',
+    title: 'Enterprise AI Vector Search Engine & RAG Pipeline Architecture',
+    client: 'Apex AI Systems',
+    logo: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=150&q=80',
+    contractType: 'Fixed Price',
+    budget: '$35,000 Fixed',
+    duration: '4 Weeks',
+    proposalsCount: 14,
+    status: 'Hiring',
+    verifiedEscrow: true,
+    clientRole: 'VP of AI Engineering',
+    tags: ['Python', 'Pinecone', 'LangChain', 'FastAPI', 'AWS'],
+    description: 'We are building a multi-tenant vector database pipeline with sub-50ms query latency. Seeking a Lead AI Engineer to architect the vector index, chunking strategies, and hybrid search ranking.'
+  },
+  {
+    id: 'proj_102',
+    title: 'Fintech Mobile Payment & Digital Wallet Infrastructure',
+    client: 'Velox Pay',
+    logo: 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&w=150&q=80',
+    contractType: 'Hourly Retainer',
+    budget: '$140 / hr',
+    duration: '6 Months Retainer',
+    proposalsCount: 9,
+    status: 'Hiring',
+    verifiedEscrow: true,
+    clientRole: 'Head of Mobile Product',
+    tags: ['React Native', 'TypeScript', 'Node.js', 'Stripe', 'PostgreSQL'],
+    description: 'Seeking a senior mobile engineer to build real-time biometric payment flows, ledger synchronization, and PCI-compliant security protocols for our iOS/Android application.'
+  },
+  {
+    id: 'proj_103',
+    title: 'Full-Stack Next.js 14 Developer Marketplace Platform',
+    client: 'Architex Ecosystem',
+    logo: 'https://images.unsplash.com/photo-1572021335469-31706a17aaef?auto=format&fit=crop&w=150&q=80',
+    contractType: 'Fixed Price',
+    budget: '$22,500 Fixed',
+    duration: '3 Weeks',
+    proposalsCount: 21,
+    status: 'Hiring',
+    verifiedEscrow: true,
+    clientRole: 'CTO & Product Lead',
+    tags: ['Next.js 14', 'TailwindCSS', 'Prisma', 'PostgreSQL', 'WebSockets'],
+    description: 'Build responsive developer dashboards, escrow milestone tracking, and real-time socket chat channels for high-performing engineering squads.'
+  },
+  {
+    id: 'proj_104',
+    title: 'Multi-Cloud Kubernetes & Terraform Infrastructure Automation',
+    client: 'CloudScale Labs',
+    logo: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=150&q=80',
+    contractType: 'Fixed Price',
+    budget: '$18,000 Fixed',
+    duration: '2 Weeks',
+    proposalsCount: 7,
+    status: 'Hiring',
+    verifiedEscrow: true,
+    clientRole: 'DevOps Architect',
+    tags: ['Kubernetes', 'Terraform', 'Docker', 'AWS EKS', 'GitHub Actions'],
+    description: 'Design zero-downtime CI/CD deployment pipelines, automated auto-scaling node groups, and Prometheus/Grafana infrastructure monitoring clusters.'
+  }
+];
 
 export default function ProjectsView({ onSendApplicationMessage }) {
-  // Expanded Projects Database
-  const [projects, setProjects] = useState([]);
+  const [projects, setProjects] = useState(INITIAL_PROJECTS);
 
   const [activeTab, setActiveTab] = useState('ALL_PROJECTS'); // 'ALL_PROJECTS' | 'MY_BIDS'
   const [filterType, setFilterType] = useState('ALL');
@@ -24,17 +86,21 @@ export default function ProjectsView({ onSendApplicationMessage }) {
   const [bidAmount, setBidAmount] = useState('');
   const [bidTimeline, setBidTimeline] = useState('3 Weeks');
   const [bidPitch, setBidPitch] = useState('');
+  const [bidVideoDemo, setBidVideoDemo] = useState('');
+  const [bidScreenshot, setBidScreenshot] = useState('');
+  const [bidLiveLink, setBidLiveLink] = useState('');
 
   // New Project Form State (For Businesses)
   const [newTitle, setNewTitle] = useState('');
   const [newClient, setNewClient] = useState('');
+  const [newLogo, setNewLogo] = useState('');
   const [newContractType, setNewContractType] = useState('Fixed Price');
   const [newBudget, setNewBudget] = useState('$20,000 Fixed');
   const [newDuration, setNewDuration] = useState('4 Weeks');
   const [newTags, setNewTags] = useState('React, Python, AWS');
   const [newDescription, setNewDescription] = useState('');
 
-  const handleBidSubmit = (e) => {
+  const handleBidSubmit = async (e) => {
     e.preventDefault();
     if (!bidModalProject) return;
 
@@ -48,6 +114,9 @@ export default function ProjectsView({ onSendApplicationMessage }) {
       bidAmount: finalBid,
       timeline: bidTimeline,
       pitch: bidPitch,
+      videoDemoUrl: bidVideoDemo,
+      screenshotUrl: bidScreenshot,
+      liveRepoUrl: bidLiveLink,
       submittedAt: 'Just now',
       status: 'Under Client Review',
       statusColor: '#0a66c2'
@@ -63,25 +132,30 @@ export default function ProjectsView({ onSendApplicationMessage }) {
         jobTitle: `PROJECT BID: ${bidModalProject.title}`,
         applyType: `${bidModalProject.contractType} Bid`,
         applyRate: finalBid,
-        pitch: `Bid Proposal (${finalBid} - ${bidTimeline}): ${bidPitch}`
+        pitch: `Bid Proposal (${finalBid} - ${bidTimeline}): ${bidPitch}${bidVideoDemo ? ' | Demo: ' + bidVideoDemo : ''}${bidLiveLink ? ' | Repo: ' + bidLiveLink : ''}`
       });
     }
 
-    alert(`Bid Proposal (${finalBid}) sent directly to ${bidModalProject.clientRole}'s Messages Inbox!`);
+    alert(`Bid Proposal & Portfolio Proof sent directly to ${bidModalProject.clientRole}!`);
     setBidModalProject(null);
     setBidAmount('');
     setBidPitch('');
+    setBidVideoDemo('');
+    setBidScreenshot('');
+    setBidLiveLink('');
   };
 
   const handlePostProjectSubmit = (e) => {
     e.preventDefault();
     if (!newTitle.trim() || !newClient.trim()) return;
 
+    const defaultLogo = 'https://images.unsplash.com/photo-1549923746-c502d488b3ea?auto=format&fit=crop&w=150&q=80';
+
     const newProjectObj = {
       id: 'proj_' + Date.now(),
       title: newTitle.trim(),
       client: newClient.trim(),
-      logo: 'https://images.unsplash.com/photo-1549923746-c502d488b3ea?auto=format&fit=crop&w=150&q=80',
+      logo: newLogo.trim() || defaultLogo,
       contractType: newContractType,
       budget: newBudget,
       duration: newDuration,
@@ -96,6 +170,7 @@ export default function ProjectsView({ onSendApplicationMessage }) {
     setProjects([newProjectObj, ...projects]);
     setNewTitle('');
     setNewClient('');
+    setNewLogo('');
     setNewDescription('');
     setIsPostProjectModalOpen(false);
   };
@@ -303,20 +378,47 @@ export default function ProjectsView({ onSendApplicationMessage }) {
             </div>
           ) : (
             myBids.map((bid) => (
-              <div key={bid.id} className="glass-panel" style={{ padding: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-                <div>
-                  <div style={{ fontSize: '0.76rem', color: bid.statusColor, fontWeight: '800', marginBottom: '4px' }}>
-                    Status: {bid.status}
+              <div key={bid.id} className="glass-panel" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                  <div>
+                    <div style={{ fontSize: '0.76rem', color: bid.statusColor, fontWeight: '800', marginBottom: '4px' }}>
+                      Status: {bid.status}
+                    </div>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--text-main)', margin: 0 }}>{bid.title}</h3>
+                    <div style={{ fontSize: '0.84rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                      Client: <strong>{bid.client}</strong> • Bid Amount: <strong>{bid.bidAmount}</strong> ({bid.timeline}) • {bid.submittedAt}
+                    </div>
                   </div>
-                  <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--text-main)', margin: 0 }}>{bid.title}</h3>
-                  <div style={{ fontSize: '0.84rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                    Client: <strong>{bid.client}</strong> • Bid Amount: <strong>{bid.bidAmount}</strong> ({bid.timeline}) • {bid.submittedAt}
-                  </div>
+
+                  <button className="btn-secondary" style={{ padding: '0.45rem 1rem', fontSize: '0.82rem' }}>
+                    View Bid Thread
+                  </button>
                 </div>
 
-                <button className="btn-secondary" style={{ padding: '0.45rem 1rem', fontSize: '0.82rem' }}>
-                  View Bid Thread
-                </button>
+                {/* Portfolio Proof Attachments Row */}
+                {(bid.videoDemoUrl || bid.screenshotUrl || bid.liveRepoUrl) && (
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', paddingTop: '8px', borderTop: '1px solid var(--border-color)' }}>
+                    <span style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--primary)' }}>Attached Proof of Work:</span>
+
+                    {bid.videoDemoUrl && (
+                      <a href={bid.videoDemoUrl} target="_blank" rel="noopener noreferrer" className="badge badge-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none' }}>
+                        <Video size={13} /> Watch Demo Video
+                      </a>
+                    )}
+
+                    {bid.screenshotUrl && (
+                      <a href={bid.screenshotUrl} target="_blank" rel="noopener noreferrer" className="badge badge-success" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none' }}>
+                        <Image size={13} /> View Screenshot Proof
+                      </a>
+                    )}
+
+                    {bid.liveRepoUrl && (
+                      <a href={bid.liveRepoUrl} target="_blank" rel="noopener noreferrer" className="badge badge-warning" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none' }}>
+                        <Link size={13} /> Live Demo / Repo
+                      </a>
+                    )}
+                  </div>
+                )}
               </div>
             ))
           )}
@@ -326,7 +428,7 @@ export default function ProjectsView({ onSendApplicationMessage }) {
       {/* 4. SUBMIT BID PROPOSAL MODAL */}
       {bidModalProject && (
         <div className="modal-overlay">
-          <div className="modal-content" style={{ maxWidth: '540px' }}>
+          <div className="modal-content" style={{ maxWidth: '560px' }}>
             <div className="modal-header">
               <h2 style={{ fontSize: '1.15rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
                 <Send size={18} style={{ color: 'var(--primary)' }} /> Submit Project Bid Proposal
@@ -368,15 +470,84 @@ export default function ProjectsView({ onSendApplicationMessage }) {
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>Proposal Pitch & Architecture Approach *:</label>
+                  <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>Proposal Pitch & Scope Approach *</label>
                   <textarea 
                     rows={4}
                     required
-                    placeholder="Describe how you will execute this build, previous relevant architecture work, and milestones..."
+                    placeholder="Describe your technical execution plan and relevant experience..."
                     value={bidPitch}
                     onChange={(e) => setBidPitch(e.target.value)}
                     style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.86rem', boxSizing: 'border-box' }}
                   />
+                </div>
+
+                {/* Portfolio Attachments Section */}
+                <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '10px', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                  <div style={{ fontSize: '0.84rem', fontWeight: '700', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Sparkles size={15} /> Attach Proof of Work & Demo Portfolio
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.78rem', fontWeight: '600', color: 'var(--text-muted)', display: 'block', marginBottom: '3px' }}>🎥 Video Demo URL (Loom, YouTube, MP4)</label>
+                    <input 
+                      type="url" 
+                      placeholder="https://www.loom.com/share/..."
+                      value={bidVideoDemo}
+                      onChange={(e) => setBidVideoDemo(e.target.value)}
+                      style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.82rem' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.78rem', fontWeight: '600', color: 'var(--text-muted)', display: 'block', marginBottom: '3px' }}>🖼️ Screenshot Proof (Upload image or paste URL)</label>
+                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                      <input 
+                        type="text" 
+                        placeholder="Paste image URL or browse..."
+                        value={bidScreenshot}
+                        onChange={(e) => setBidScreenshot(e.target.value)}
+                        style={{ flex: 1, padding: '0.5rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.82rem' }}
+                      />
+                      <label className="btn-secondary" style={{ padding: '0.45rem 0.75rem', fontSize: '0.78rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        📁 Browse
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          style={{ display: 'none' }}
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              try {
+                                const uploaded = await api.uploadFile(file, 'proposal');
+                                if (uploaded?.url) setBidScreenshot(uploaded.url);
+                              } catch (err) {
+                                const localUrl = URL.createObjectURL(file);
+                                setBidScreenshot(localUrl);
+                              }
+                            }
+                          }}
+                        />
+                      </label>
+                    </div>
+
+                    {bidScreenshot && (
+                      <div style={{ marginTop: '6px', position: 'relative', width: '100%', maxHeight: '110px', overflow: 'hidden', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                        <img src={bidScreenshot} alt="Screenshot Preview" style={{ width: '100%', height: '110px', objectFit: 'cover' }} />
+                        <button type="button" onClick={() => setBidScreenshot('')} style={{ position: 'absolute', top: '4px', right: '4px', background: 'rgba(0,0,0,0.7)', color: 'white', border: 'none', borderRadius: '50%', width: '20px', height: '20px', cursor: 'pointer' }}>×</button>
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.78rem', fontWeight: '600', color: 'var(--text-muted)', display: 'block', marginBottom: '3px' }}>🔗 Live App / GitHub Repo Link</label>
+                    <input 
+                      type="url" 
+                      placeholder="https://github.com/yourhandle/repo"
+                      value={bidLiveLink}
+                      onChange={(e) => setBidLiveLink(e.target.value)}
+                      style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.82rem' }}
+                    />
+                  </div>
                 </div>
 
                 <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>
@@ -445,6 +616,50 @@ export default function ProjectsView({ onSendApplicationMessage }) {
                       <option>Hourly Retainer</option>
                     </select>
                   </div>
+                </div>
+
+                {/* Company / Project Logo & Photo Upload Field */}
+                <div>
+                  <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>
+                    Company Logo / Project Image
+                  </label>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <input 
+                      type="text" 
+                      placeholder="Paste image URL or upload photo..."
+                      value={newLogo}
+                      onChange={(e) => setNewLogo(e.target.value)}
+                      style={{ flex: 1, padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-surface-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '0.86rem' }}
+                    />
+                    <label className="btn-secondary" style={{ padding: '0.55rem 0.85rem', fontSize: '0.8rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <Upload size={15} /> Upload Photo
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        style={{ display: 'none' }}
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            try {
+                              const uploaded = await api.uploadFile(file, 'logo');
+                              if (uploaded?.url) setNewLogo(uploaded.url);
+                            } catch (err) {
+                              const localUrl = URL.createObjectURL(file);
+                              setNewLogo(localUrl);
+                            }
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+
+                  {newLogo && (
+                    <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '10px', background: 'var(--bg-surface-hover)', padding: '6px 10px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                      <img src={newLogo} alt="Logo Preview" style={{ width: '38px', height: '38px', borderRadius: '8px', objectFit: 'cover' }} />
+                      <span style={{ fontSize: '0.8rem', color: 'var(--accent-green)', fontWeight: '600' }}>✓ Custom Logo Active</span>
+                      <button type="button" onClick={() => setNewLogo('')} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#ef4444', fontSize: '0.8rem', cursor: 'pointer' }}>Remove</button>
+                    </div>
+                  )}
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>

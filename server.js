@@ -2214,28 +2214,31 @@ app.post('/api/jobs/apply', async (req, res) => {
 
         console.log(`[JOB APPLY] Processing application for: ${targetEmail} (${jobTitle || 'Position'} at ${targetCompany})`);
 
+        const manualDetails = req.body.manualDetails || null;
+
         // Save application into global store for Business Owner Applicant Review
         const newApp = {
           id: 'app-' + Date.now(),
           jobId: req.body.jobId || 'job-1',
           jobTitle: jobTitle || 'Engineering Position',
           companyName: targetCompany,
-          applicantName: targetName,
-          applicantEmail: targetEmail,
-          phone: req.body.phone || '(555) 019-2831',
-          cityState: req.body.cityState || 'Remote',
+          applicantName: req.body.applicantName || (manualDetails ? `${manualDetails.firstName || ''} ${manualDetails.lastName || ''}`.trim() : targetName),
+          applicantEmail: manualDetails?.email || targetEmail,
+          phone: manualDetails?.phone || req.body.phone || '(555) 019-2831',
+          cityState: manualDetails?.cityState || req.body.cityState || 'Remote',
           resumeName: req.body.resumeName || 'Applicant_Resume.pdf',
-          currentTitle: req.body.currentTitle || 'Software Engineer',
-          currentEmployer: req.body.currentEmployer || 'Independent Tech Lead',
-          yearsExperience: req.body.yearsExperience || '3-5 Years',
-          technicalSkills: req.body.technicalSkills || 'Full-Stack Software Engineering',
-          desiredSalary: req.body.desiredSalary || '$160,000/yr',
-          desiredRate: req.body.desiredRate || '$110/hr',
-          linkedIn: req.body.linkedIn || '',
-          gitHub: req.body.gitHub || '',
-          portfolio: req.body.portfolio || '',
-          noticePeriod: req.body.noticePeriod || '2 Weeks',
-          workAuth: req.body.workAuth || 'Authorized to work without restriction',
+          currentTitle: manualDetails?.experiences?.[0]?.title || req.body.currentTitle || 'Software Specialist',
+          currentEmployer: manualDetails?.experiences?.[0]?.company || req.body.currentEmployer || 'Enterprise Tech',
+          yearsExperience: manualDetails?.yearsExperience || req.body.yearsExperience || '3-5 Years',
+          technicalSkills: manualDetails?.technicalSkills || req.body.technicalSkills || 'Full-Stack Software Engineering',
+          desiredSalary: manualDetails?.desiredSalary || req.body.desiredSalary || '$160,000/yr',
+          desiredRate: manualDetails?.desiredRate || req.body.desiredRate || '$110/hr',
+          linkedIn: manualDetails?.linkedIn || req.body.linkedIn || '',
+          gitHub: manualDetails?.gitHub || req.body.gitHub || '',
+          portfolio: manualDetails?.portfolio || req.body.portfolio || '',
+          noticePeriod: manualDetails?.noticePeriod || req.body.noticePeriod || 'Immediate',
+          workAuth: manualDetails?.workAuth || req.body.workAuth || 'Authorized to work without restriction',
+          manualDetails: manualDetails, // store complete work history, projects, education
           appliedAt: 'Just now'
         };
         globalJobApplicationsStore.unshift(newApp);

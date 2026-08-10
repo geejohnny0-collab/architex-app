@@ -1536,13 +1536,27 @@ export default function JobsBoard({ user }) {
                   <div style={{ fontSize: '0.78rem', color: 'var(--primary)', marginTop: '2px', fontWeight: '700' }}>Attached File: {viewingResumeModal.resumeName || 'Resume.pdf'}</div>
                 </div>
 
-                <a 
-                  href={`mailto:${viewingResumeModal.applicantEmail}?subject=Resume Review: ${viewingResumeModal.applicantName}`}
-                  className="btn-primary" 
-                  style={{ padding: '0.55rem 1rem', fontSize: '0.82rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                >
-                  <Mail size={14} /> Email Candidate
-                </a>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <a 
+                    href={`mailto:${viewingResumeModal.applicantEmail}?subject=Resume Review: ${viewingResumeModal.applicantName}`}
+                    className="btn-primary" 
+                    style={{ padding: '0.55rem 1rem', fontSize: '0.82rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    <Mail size={14} /> Email Candidate
+                  </a>
+
+                  {(viewingResumeModal.resumeUrl || viewingResumeModal.resumeFile) && (
+                    <a
+                      href={viewingResumeModal.resumeUrl || viewingResumeModal.resumeFile}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn-secondary"
+                      style={{ padding: '0.55rem 1rem', fontSize: '0.82rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      <Upload size={14} /> Download File
+                    </a>
+                  )}
+                </div>
               </div>
 
               {/* Formatted Resume Body Preview */}
@@ -1554,12 +1568,53 @@ export default function JobsBoard({ user }) {
                   </p>
                 </div>
 
-                <div style={{ marginBottom: '1rem' }}>
-                  <h3 style={{ fontSize: '0.85rem', fontWeight: '800', color: '#2563eb', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 4px 0' }}>Executive Summary & Experience</h3>
-                  <p style={{ fontSize: '0.88rem', color: '#374151', lineHeight: '1.6', margin: 0 }}>
-                    Senior engineering & technical specialist with {viewingResumeModal.yearsExperience || '5+ years'} of experience building high-availability systems, product pipelines, and business operations. Currently serving as {viewingResumeModal.currentTitle || 'Lead Specialist'} at {viewingResumeModal.currentEmployer || 'Enterprise Tech'}.
-                  </p>
-                </div>
+                {/* 1. WORK EXPERIENCES */}
+                {viewingResumeModal.manualDetails?.experiences?.length > 0 ? (
+                  <div style={{ marginBottom: '1.25rem' }}>
+                    <h3 style={{ fontSize: '0.85rem', fontWeight: '800', color: '#2563eb', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 8px 0' }}>Professional Work Experience</h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      {viewingResumeModal.manualDetails.experiences.map((exp, idx) => (
+                        <div key={idx} style={{ background: '#f8fafc', padding: '0.85rem', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                          <div style={{ fontWeight: '800', fontSize: '0.9rem', color: '#0f172a' }}>{exp.title || 'Specialist'} - {exp.company || 'Enterprise'}</div>
+                          <div style={{ fontSize: '0.78rem', color: '#64748b', marginBottom: '4px' }}>{exp.dates || '2021 - Present'} {exp.current ? '(Current Position)' : ''}</div>
+                          <p style={{ fontSize: '0.84rem', color: '#334155', margin: 0, lineHeight: '1.5' }}>{exp.responsibilities || 'Key contributions, system development, and client operations.'}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ marginBottom: '1rem' }}>
+                    <h3 style={{ fontSize: '0.85rem', fontWeight: '800', color: '#2563eb', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 4px 0' }}>Executive Summary & Experience</h3>
+                    <p style={{ fontSize: '0.88rem', color: '#374151', lineHeight: '1.6', margin: 0 }}>
+                      Specialist with {viewingResumeModal.yearsExperience || '5+ years'} of experience building high-availability systems, product pipelines, and business operations. Currently serving as {viewingResumeModal.currentTitle || 'Lead Specialist'} at {viewingResumeModal.currentEmployer || 'Enterprise Tech'}.
+                    </p>
+                  </div>
+                )}
+
+                {/* 2. PROJECTS & PORTFOLIO */}
+                {viewingResumeModal.manualDetails?.projects?.length > 0 && (
+                  <div style={{ marginBottom: '1.25rem' }}>
+                    <h3 style={{ fontSize: '0.85rem', fontWeight: '800', color: '#2563eb', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 8px 0' }}>Key Projects & Portfolio</h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {viewingResumeModal.manualDetails.projects.map((proj, idx) => (
+                        <div key={idx} style={{ background: '#f8fafc', padding: '0.75rem', borderRadius: '6px', border: '1px solid #e2e8f0', fontSize: '0.84rem' }}>
+                          <strong style={{ color: '#0f172a' }}>{proj.name || `Project #${idx+1}`}</strong> - <span style={{ color: '#2563eb' }}>{proj.techUsed || 'Tech Stack'}</span>
+                          {proj.description && <p style={{ margin: '3px 0 0 0', color: '#334155' }}>{proj.description}</p>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 3. EDUCATION */}
+                {viewingResumeModal.manualDetails?.school && (
+                  <div style={{ marginBottom: '1.25rem' }}>
+                    <h3 style={{ fontSize: '0.85rem', fontWeight: '800', color: '#2563eb', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 4px 0' }}>Education & Credentials</h3>
+                    <p style={{ fontSize: '0.86rem', color: '#1e293b', margin: 0, fontWeight: '700' }}>
+                      {viewingResumeModal.manualDetails.educationLevel} in {viewingResumeModal.manualDetails.degree} - {viewingResumeModal.manualDetails.school} ({viewingResumeModal.manualDetails.graduationYear})
+                    </p>
+                  </div>
+                )}
 
                 {viewingResumeModal.technicalSkills && (
                   <div style={{ marginBottom: '1rem' }}>

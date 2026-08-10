@@ -1441,34 +1441,7 @@ function saveJsonDisk(filePath, data) {
   }
 }
 
-let globalJobsStore = loadJsonDisk(JOBS_FILE, [
-  {
-    id: 'job-1',
-    title: 'Senior Backend Engineer',
-    company: 'Architex Systems',
-    location: 'Remote (US/TX)',
-    type: 'Full-Time W2',
-    c2hRate: '$130 - $150/hr',
-    salaryW2: '$195,000/yr',
-    hiringManager: 'Alex Mercer (CTO)',
-    description: 'Build high-throughput data pipelines, custom APIs, and backend architectures. You will lead the infrastructure migration to distributed clusters and integrate high-concurrency microservices.',
-    techStack: ['Node.js', 'Python', 'PostgreSQL', 'Docker'],
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: 'job-2',
-    title: 'Automation & Scraping Engineer',
-    company: 'DataFlow Metrics',
-    location: 'Remote',
-    type: 'Contract-to-Hire',
-    c2hRate: '$110 - $130/hr',
-    salaryW2: '$170,000/yr',
-    hiringManager: 'Sarah Jenkins (VP Engineering)',
-    description: 'Develop autonomous market scrapers, lead generation scripts, and multi-platform sync tools. Responsible for maintaining web scrapers against strict anti-bot systems.',
-    techStack: ['Python', 'Selenium', 'BeautifulSoup'],
-    createdAt: new Date().toISOString()
-  }
-]);
+let globalJobsStore = loadJsonDisk(JOBS_FILE, []);
 
 let globalJobApplicationsStore = loadJsonDisk(APPS_FILE, []);
 

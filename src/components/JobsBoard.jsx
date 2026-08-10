@@ -330,12 +330,9 @@ export default function JobsBoard({ user }) {
 
   const [activeBoardTab, setActiveBoardTab] = useState('ALL_JOBS'); // 'ALL_JOBS' | 'MY_POSTED_JOBS'
 
-  // Filter jobs posted by current user / owner so EVERY poster sees their own posted jobs & applicants
+  // Strictly filter jobs posted by current user so a user sees ONLY their own posted jobs & applicants
   const myPostedJobs = jobs.filter(j => 
-    isOwnerAccount || 
-    (j.posterEmail && userEmail && j.posterEmail.toLowerCase() === userEmail.toLowerCase()) ||
-    (j.hiringManager && user?.name && j.hiringManager.toLowerCase() === user.name.toLowerCase()) ||
-    (!j.posterEmail && isBusinessOrRecruiter)
+    (j.posterEmail && userEmail && j.posterEmail.toLowerCase() === userEmail.toLowerCase())
   );
 
   return (

@@ -35,6 +35,8 @@ export default function JobsBoard({ user }) {
   ];
 
   const [jobs, setJobs] = useState(DEFAULT_JOBS);
+  const [allApplications, setAllApplications] = useState([]);
+  const [viewApplicantsJob, setViewApplicantsJob] = useState(null);
 
   useEffect(() => {
     // Fetch live jobs globally from central server
@@ -46,6 +48,16 @@ export default function JobsBoard({ user }) {
         }
       })
       .catch(err => console.log('Using default jobs fallback:', err));
+
+    // Fetch live candidate applications
+    fetch('/api/jobs/applications')
+      .then(res => res.json())
+      .then(serverApps => {
+        if (Array.isArray(serverApps)) {
+          setAllApplications(serverApps);
+        }
+      })
+      .catch(err => console.log('Applications fetch fallback:', err));
   }, []);
 
   const [appliedJobs, setAppliedJobs] = useState([]);
@@ -387,7 +399,17 @@ export default function JobsBoard({ user }) {
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  {/* Business Owner / Poster View Applicants Button */}
+                  <button
+                    onClick={() => setViewApplicantsJob(job)}
+                    className="badge badge-primary"
+                    style={{ padding: '0.55rem 0.95rem', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', border: '1px solid var(--primary-light)' }}
+                    title="View candidate applications submitted for this role"
+                  >
+                    <User size={15} /> View Applicants ({allApplications.filter(a => a.jobId === job.id || a.jobTitle === job.title).length})
+                  </button>
+
                   <button
                     onClick={() => setJobDetailDrawer(job)}
                     className="btn-secondary"
@@ -1270,10 +1292,112 @@ export default function JobsBoard({ user }) {
             <button 
               onClick={() => setConfirmationModalScreen(null)} 
               className="btn-primary" 
-              style={{ width: '100%', padding: '0.75rem', fontSize: '0.95rem', fontWeight: '800' }}
+              style={{ width: '100%', padding: '0.75rem', fontWeight: '800' }}
             >
-              Return to Jobs Board
+              Done & Return to Jobs
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* VIEW APPLICANTS REVIEW MODAL FOR BUSINESS OWNERS */}
+      {viewApplicantsJob && (
+        <div className="modal-overlay" onClick={() => setViewApplicantsJob(null)}>
+          <div className="modal-content" style={{ maxWidth: '680px', maxHeight: '85vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 style={{ fontSize: '1.2rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                <User size={20} style={{ color: 'var(--primary)' }} />
+                Candidate Applications ({allApplications.filter(a => a.jobId === viewApplicantsJob.id || a.jobTitle === viewApplicantsJob.title).length})
+              </h2>
+              <button onClick={() => setViewApplicantsJob(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div style={{ background: 'var(--bg-surface-hover)', padding: '0.85rem 1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
+                <div style={{ fontWeight: '800', fontSize: '1rem', color: 'var(--text-main)' }}>{viewApplicantsJob.title}</div>
+                <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Company: {viewApplicantsJob.company} • {viewApplicantsJob.location}</div>
+              </div>
+
+              {allApplications.filter(a => a.jobId === viewApplicantsJob.id || a.jobTitle === viewApplicantsJob.title).length === 0 ? (
+                <div style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  <Briefcase size={36} style={{ margin: '0 auto 0.75rem', opacity: 0.5 }} />
+                  <div style={{ fontWeight: '700', fontSize: '0.95rem' }}>No Candidate Applications Logged Yet</div>
+                  <div style={{ fontSize: '0.82rem', marginTop: '4px' }}>Candidates applying for this role will appear here automatically with their complete profile & resume details.</div>
+                </div>
+              ) : (
+                allApplications.filter(a => a.jobId === viewApplicantsJob.id || a.jobTitle === viewApplicantsJob.title).map((app) => (
+                  <div key={app.id} className="glass-panel" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.85rem', border: '1px solid var(--border-color)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+                      <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                        <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: 'var(--primary-light)', color: 'var(--primary)', fontWeight: '800', fontSize: '1.1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          {app.applicantName.charAt(0)}
+                        </div>
+                        <div>
+                          <div style={{ fontWeight: '800', fontSize: '1.05rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            {app.applicantName}
+                            <span className="badge badge-success" style={{ fontSize: '0.72rem' }}>Applied {app.appliedAt}</span>
+                          </div>
+                          <div style={{ fontSize: '0.84rem', color: 'var(--text-muted)' }}>
+                            {app.currentTitle} • {app.currentEmployer} ({app.yearsExperience})
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <a href={`mailto:${app.applicantEmail}?subject=Requisition: ${viewApplicantsJob.title}`} className="btn-secondary" style={{ padding: '0.4rem 0.85rem', fontSize: '0.78rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          <Mail size={13} /> Email Candidate
+                        </a>
+                      </div>
+                    </div>
+
+                    {/* Candidate Details Grid */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px', background: 'var(--bg-surface-hover)', padding: '0.85rem', borderRadius: '6px', fontSize: '0.82rem' }}>
+                      <div><span style={{ color: 'var(--text-muted)' }}>Email:</span> <strong style={{ color: 'var(--text-main)' }}>{app.applicantEmail}</strong></div>
+                      <div><span style={{ color: 'var(--text-muted)' }}>Phone:</span> <strong style={{ color: 'var(--text-main)' }}>{app.phone || 'N/A'}</strong></div>
+                      <div><span style={{ color: 'var(--text-muted)' }}>Location:</span> <strong style={{ color: 'var(--text-main)' }}>{app.cityState || 'Remote'}</strong></div>
+                      <div><span style={{ color: 'var(--text-muted)' }}>Resume:</span> <strong style={{ color: 'var(--primary)' }}>📄 {app.resumeName}</strong></div>
+                      <div><span style={{ color: 'var(--text-muted)' }}>Desired Salary:</span> <strong style={{ color: '#10b981' }}>{app.desiredSalary || 'Negotiable'}</strong></div>
+                      <div><span style={{ color: 'var(--text-muted)' }}>Desired Rate:</span> <strong style={{ color: '#10b981' }}>{app.desiredRate || 'Negotiable'}</strong></div>
+                      <div><span style={{ color: 'var(--text-muted)' }}>Work Auth:</span> <strong style={{ color: 'var(--text-main)' }}>{app.workAuth}</strong></div>
+                      <div><span style={{ color: 'var(--text-muted)' }}>Notice Period:</span> <strong style={{ color: 'var(--text-main)' }}>{app.noticePeriod}</strong></div>
+                    </div>
+
+                    {/* Skills & Portfolio Links */}
+                    {app.technicalSkills && (
+                      <div style={{ fontSize: '0.82rem' }}>
+                        <span style={{ color: 'var(--text-muted)', fontWeight: '700' }}>Tech Skills:</span> {app.technicalSkills}
+                      </div>
+                    )}
+
+                    {(app.linkedIn || app.gitHub || app.portfolio) && (
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', paddingTop: '4px' }}>
+                        {app.linkedIn && (
+                          <a href={app.linkedIn} target="_blank" rel="noopener noreferrer" className="badge badge-primary" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            <LinkIcon size={12} /> LinkedIn Profile
+                          </a>
+                        )}
+                        {app.gitHub && (
+                          <a href={app.gitHub} target="_blank" rel="noopener noreferrer" className="badge badge-success" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            <LinkIcon size={12} /> GitHub Profile
+                          </a>
+                        )}
+                        {app.portfolio && (
+                          <a href={app.portfolio} target="_blank" rel="noopener noreferrer" className="badge badge-warning" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            <Globe size={12} /> Portfolio Website
+                          </a>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="modal-footer">
+              <button onClick={() => setViewApplicantsJob(null)} className="btn-secondary">Close</button>
+            </div>
           </div>
         </div>
       )}

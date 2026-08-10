@@ -1437,6 +1437,36 @@ let globalJobsStore = [
   }
 ];
 
+let globalJobApplicationsStore = [
+  {
+    id: 'app-101',
+    jobId: 'job-1',
+    jobTitle: 'Senior Backend Engineer',
+    companyName: 'Architex Systems',
+    applicantName: 'David Johnson',
+    applicantEmail: 'david.j.tech@gmail.com',
+    phone: '(512) 890-3411',
+    cityState: 'Austin, TX',
+    resumeName: 'David_Johnson_Backend_Resume.pdf',
+    currentTitle: 'Senior Infrastructure Engineer',
+    currentEmployer: 'CloudScale Tech',
+    yearsExperience: '6+ Years',
+    technicalSkills: 'Node.js, Python, PostgreSQL, Docker, Redis, Kubernetes',
+    desiredSalary: '$185,000/yr',
+    desiredRate: '$135/hr',
+    linkedIn: 'https://linkedin.com/in/david-johnson-dev',
+    gitHub: 'https://github.com/djohnson-arch',
+    portfolio: 'https://davidjohnson.dev',
+    noticePeriod: '2 Weeks',
+    workAuth: 'US Citizen (No Sponsorship Needed)',
+    appliedAt: '2 hours ago'
+  }
+];
+
+app.get('/api/jobs/applications', (req, res) => {
+  res.json(globalJobApplicationsStore);
+});
+
 app.get('/api/jobs', (req, res) => {
   res.json(globalJobsStore);
 });
@@ -2183,6 +2213,32 @@ app.post('/api/jobs/apply', async (req, res) => {
         const targetCompany = companyName || company || 'Architex';
 
         console.log(`[JOB APPLY] Processing application for: ${targetEmail} (${jobTitle || 'Position'} at ${targetCompany})`);
+
+        // Save application into global store for Business Owner Applicant Review
+        const newApp = {
+          id: 'app-' + Date.now(),
+          jobId: req.body.jobId || 'job-1',
+          jobTitle: jobTitle || 'Engineering Position',
+          companyName: targetCompany,
+          applicantName: targetName,
+          applicantEmail: targetEmail,
+          phone: req.body.phone || '(555) 019-2831',
+          cityState: req.body.cityState || 'Remote',
+          resumeName: req.body.resumeName || 'Applicant_Resume.pdf',
+          currentTitle: req.body.currentTitle || 'Software Engineer',
+          currentEmployer: req.body.currentEmployer || 'Independent Tech Lead',
+          yearsExperience: req.body.yearsExperience || '3-5 Years',
+          technicalSkills: req.body.technicalSkills || 'Full-Stack Software Engineering',
+          desiredSalary: req.body.desiredSalary || '$160,000/yr',
+          desiredRate: req.body.desiredRate || '$110/hr',
+          linkedIn: req.body.linkedIn || '',
+          gitHub: req.body.gitHub || '',
+          portfolio: req.body.portfolio || '',
+          noticePeriod: req.body.noticePeriod || '2 Weeks',
+          workAuth: req.body.workAuth || 'Authorized to work without restriction',
+          appliedAt: 'Just now'
+        };
+        globalJobApplicationsStore.unshift(newApp);
 
         const apiKey = process.env.BREVO_API_KEY;
         if (!apiKey) {

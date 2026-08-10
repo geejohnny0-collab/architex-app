@@ -103,6 +103,7 @@ export default function ProjectsView({ onSendApplicationMessage }) {
   const [bidModalProject, setBidModalProject] = useState(null);
   const [isPostProjectModalOpen, setIsPostProjectModalOpen] = useState(false);
   const [scopeDrawerProject, setScopeDrawerProject] = useState(null);
+  const [viewBidsProject, setViewBidsProject] = useState(null);
 
   // Bid Form State
   const [bidAmount, setBidAmount] = useState('');
@@ -383,7 +384,17 @@ export default function ProjectsView({ onSendApplicationMessage }) {
                   ))}
                 </div>
 
-                <div style={{ display: 'flex', gap: '8px' }}>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  {/* Business Owner / Poster View Proposals Button */}
+                  <button 
+                    onClick={() => setViewBidsProject(proj)}
+                    className="badge badge-primary"
+                    style={{ padding: '0.45rem 0.85rem', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', border: '1px solid var(--primary-light)' }}
+                    title="View all submitted developer proposals and bids"
+                  >
+                    <User size={14} /> View Proposals ({myBids.filter(b => b.projectId === proj.id || b.title === proj.title).length})
+                  </button>
+
                   <button 
                     onClick={() => setScopeDrawerProject(proj)}
                     className="btn-secondary"
@@ -813,6 +824,99 @@ export default function ProjectsView({ onSendApplicationMessage }) {
               >
                 Submit Proposal Bid
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 7. VIEW PROJECT BIDS / PROPOSALS REVIEW MODAL FOR BUSINESS OWNERS */}
+      {viewBidsProject && (
+        <div className="modal-overlay" onClick={() => setViewBidsProject(null)}>
+          <div className="modal-content" style={{ maxWidth: '680px', maxHeight: '85vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 style={{ fontSize: '1.2rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                <Send size={20} style={{ color: 'var(--primary)' }} />
+                Developer Proposals & Bids ({myBids.filter(b => b.projectId === viewBidsProject.id || b.title === viewBidsProject.title).length})
+              </h2>
+              <button onClick={() => setViewBidsProject(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div style={{ background: 'var(--bg-surface-hover)', padding: '0.85rem 1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
+                <div style={{ fontWeight: '800', fontSize: '1rem', color: 'var(--text-main)' }}>{viewBidsProject.title}</div>
+                <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Posted by: {viewBidsProject.client} • Est. Budget: {viewBidsProject.budget}</div>
+              </div>
+
+              {myBids.filter(b => b.projectId === viewBidsProject.id || b.title === viewBidsProject.title).length === 0 ? (
+                <div style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  <Send size={36} style={{ margin: '0 auto 0.75rem', opacity: 0.5 }} />
+                  <div style={{ fontWeight: '700', fontSize: '0.95rem' }}>No Proposal Bids Logged Yet</div>
+                  <div style={{ fontSize: '0.82rem', marginTop: '4px' }}>Developer proposals and attached proof of work for this RFP contract will display here live.</div>
+                </div>
+              ) : (
+                myBids.filter(b => b.projectId === viewBidsProject.id || b.title === viewBidsProject.title).map((bid) => (
+                  <div key={bid.id} className="glass-panel" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.85rem', border: '1px solid var(--border-color)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+                      <div>
+                        <div style={{ fontSize: '0.76rem', color: bid.statusColor, fontWeight: '800', marginBottom: '4px' }}>
+                          Status: {bid.status}
+                        </div>
+                        <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--text-main)', margin: 0 }}>{bid.title}</h3>
+                        <div style={{ fontSize: '0.88rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                          Proposed Bid Amount: <strong style={{ color: '#10b981', fontSize: '1rem' }}>{bid.bidAmount}</strong> ({bid.timeline}) • {bid.submittedAt}
+                        </div>
+                      </div>
+
+                      <button 
+                        onClick={() => alert(`Accepting bid of ${bid.bidAmount} for "${bid.title}"! Escrow lock initiated.`)} 
+                        className="btn-primary" 
+                        style={{ padding: '0.45rem 1rem', fontSize: '0.82rem' }}
+                      >
+                        <ShieldCheck size={14} /> Accept & Lock Escrow
+                      </button>
+                    </div>
+
+                    {/* Pitch Description */}
+                    {bid.pitch && (
+                      <div style={{ background: 'var(--bg-surface-hover)', padding: '0.85rem', borderRadius: '6px', fontSize: '0.85rem', lineHeight: '1.5', color: 'var(--text-main)', border: '1px solid var(--border-color)' }}>
+                        <strong style={{ color: 'var(--primary)', display: 'block', marginBottom: '4px' }}>Technical Pitch & Scope Plan:</strong>
+                        {bid.pitch}
+                      </div>
+                    )}
+
+                    {/* Attached Proof of Work */}
+                    {(bid.videoDemoUrl || bid.screenshotUrl || bid.liveRepoUrl) && (
+                      <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', paddingTop: '8px', borderTop: '1px solid var(--border-color)' }}>
+                        <span style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--primary)' }}>Attached Proof of Work:</span>
+
+                        {bid.videoDemoUrl && (
+                          <a href={bid.videoDemoUrl} target="_blank" rel="noopener noreferrer" className="badge badge-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none' }}>
+                            <Video size={13} /> Watch Demo Video
+                          </a>
+                        )}
+
+                        {bid.screenshotUrl && (
+                          <a href={bid.screenshotUrl} target="_blank" rel="noopener noreferrer" className="badge badge-success" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none' }}>
+                            <Image size={13} /> View Screenshot Proof
+                          </a>
+                        )}
+
+                        {bid.liveRepoUrl && (
+                          <a href={bid.liveRepoUrl} target="_blank" rel="noopener noreferrer" className="badge badge-warning" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none' }}>
+                            <Link size={13} /> Live Demo / Repo
+                          </a>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="modal-footer">
+              <button onClick={() => setViewBidsProject(null)} className="btn-secondary">Close</button>
             </div>
           </div>
         </div>

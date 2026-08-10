@@ -302,3 +302,56 @@ model Bid {
   @@index([freelancerId])
   @@index([status])
 }
+
+// ─── Jobs & Candidate Applications (Permanent Database Models) ───────────────
+model JobListing {
+  id            String   @id @default(uuid())
+  title         String
+  company       String
+  location      String
+  type          String
+  c2hRate       String?
+  salaryW2      String?
+  hiringManager String?
+  posterEmail   String
+  description   String
+  techStack     String   @default("[]") // stored as JSON array string
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  applications  JobApplication[]
+
+  @@index([posterEmail])
+  @@index([createdAt])
+}
+
+model JobApplication {
+  id              String   @id @default(uuid())
+  jobId           String
+  jobTitle        String
+  companyName     String
+  applicantName   String
+  applicantEmail  String
+  phone           String?
+  cityState       String?
+  resumeName      String?
+  resumeUrl       String?
+  currentTitle    String?
+  currentEmployer String?
+  yearsExperience String?
+  technicalSkills String?
+  desiredSalary   String?
+  desiredRate     String?
+  linkedIn        String?
+  gitHub          String?
+  portfolio       String?
+  noticePeriod    String?
+  workAuth        String?
+  appliedAt       DateTime @default(now())
+
+  job             JobListing? @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+  @@index([applicantEmail])
+  @@index([appliedAt])
+}

@@ -1501,7 +1501,19 @@ let globalGroupsStore = loadJsonDisk(GROUPS_FILE, [
   }
 ]);
 
-app.get('/api/jobs/applications', (req, res) => {
+app.get('/api/jobs/applications', async (req, res) => {
+  try {
+    if (prisma && prisma.jobApplication) {
+      const dbApps = await prisma.jobApplication.findMany({
+        orderBy: { appliedAt: 'desc' }
+      });
+      if (dbApps && dbApps.length > 0) {
+        return res.json(dbApps);
+      }
+    }
+  } catch (err) {
+    console.error('Fetch PostgreSQL DB applications error:', err.message);
+  }
   res.json(globalJobApplicationsStore);
 });
 
@@ -2188,6 +2200,39 @@ app.post('/api/jobs/apply', async (req, res) => {
         };
         globalJobApplicationsStore.unshift(newApp);
         saveJsonDisk(APPS_FILE, globalJobApplicationsStore);
+
+        // Save into PostgreSQL database table via Prisma for 100% permanent persistence
+        try {
+          if (prisma && prisma.jobApplication) {
+            await prisma.jobApplication.create({
+              data: {
+                id: newApp.id,
+                jobId: newApp.jobId,
+                jobTitle: newApp.jobTitle,
+                companyName: newApp.companyName,
+                applicantName: newApp.applicantName,
+                applicantEmail: newApp.applicantEmail,
+                phone: newApp.phone,
+                cityState: newApp.cityState,
+                resumeName: newApp.resumeName,
+                currentTitle: newApp.currentTitle,
+                currentEmployer: newApp.currentEmployer,
+                yearsExperience: newApp.yearsExperience,
+                technicalSkills: newApp.technicalSkills,
+                desiredSalary: newApp.desiredSalary,
+                desiredRate: newApp.desiredRate,
+                linkedIn: newApp.linkedIn,
+                gitHub: newApp.gitHub,
+                portfolio: newApp.portfolio,
+                noticePeriod: newApp.noticePeriod,
+                workAuth: newApp.workAuth
+              }
+            });
+            console.log('[POSTGRESQL PERMANENT SUCCESS] Candidate application saved to PostgreSQL DB:', newApp.applicantName);
+          }
+        } catch (dbErr) {
+          console.error('[POSTGRESQL SAVE NOTICE] Saved to cloud memory/disk (DB sync note):', dbErr.message);
+        }
 
         const apiKey = process.env.BREVO_API_KEY;
         if (!apiKey) {

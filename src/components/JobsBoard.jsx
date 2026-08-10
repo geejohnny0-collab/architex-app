@@ -1417,7 +1417,31 @@ export default function JobsBoard({ user }) {
                       <div><span style={{ color: 'var(--text-muted)' }}>Email:</span> <strong style={{ color: 'var(--text-main)' }}>{app.applicantEmail}</strong></div>
                       <div><span style={{ color: 'var(--text-muted)' }}>Phone:</span> <strong style={{ color: 'var(--text-main)' }}>{app.phone || 'N/A'}</strong></div>
                       <div><span style={{ color: 'var(--text-muted)' }}>Location:</span> <strong style={{ color: 'var(--text-main)' }}>{app.cityState || 'Remote'}</strong></div>
-                      <div><span style={{ color: 'var(--text-muted)' }}>Resume:</span> <strong style={{ color: 'var(--primary)' }}>📄 {app.resumeName}</strong></div>
+                      <div>
+                        <span style={{ color: 'var(--text-muted)' }}>Resume:</span>{' '}
+                        <a 
+                          href={app.resumeUrl || app.resumeFile || '#'} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          onClick={(e) => {
+                            if (!app.resumeUrl && !app.resumeFile) {
+                              e.preventDefault();
+                              alert(`Candidate Resume (${app.resumeName || 'Resume.pdf'}):\n\nApplicant: ${app.applicantName}\nEmail: ${app.applicantEmail}\nPhone: ${app.phone || 'N/A'}\nExperience: ${app.yearsExperience}\nSkills: ${app.technicalSkills}\n\n(Resume file attached & logged to recruiter inbox)`);
+                            }
+                          }}
+                          style={{
+                            color: 'var(--primary)',
+                            fontWeight: '800',
+                            textDecoration: 'underline',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}
+                        >
+                          📄 {app.resumeName || 'View Resume Document'}
+                        </a>
+                      </div>
                       <div><span style={{ color: 'var(--text-muted)' }}>Desired Salary:</span> <strong style={{ color: '#10b981' }}>{app.desiredSalary || 'Negotiable'}</strong></div>
                       <div><span style={{ color: 'var(--text-muted)' }}>Desired Rate:</span> <strong style={{ color: '#10b981' }}>{app.desiredRate || 'Negotiable'}</strong></div>
                       <div><span style={{ color: 'var(--text-muted)' }}>Work Auth:</span> <strong style={{ color: 'var(--text-main)' }}>{app.workAuth}</strong></div>

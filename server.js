@@ -2466,6 +2466,14 @@ async function startServer() {
 
 startServer();
 
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[UNHANDLED REJECTION PREVENTED]', reason);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('[UNCAUGHT EXCEPTION PREVENTED]', err);
+});
+
 process.on('SIGTERM', async () => {
   console.log('SIGTERM received – shutting down gracefully');
   await prisma.$disconnect();

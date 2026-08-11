@@ -1498,7 +1498,7 @@ export default function JobsBoard({ user }) {
                             <span className="badge badge-success" style={{ fontSize: '0.72rem' }}>Applied {app.appliedAt}</span>
                           </div>
                           <div style={{ fontSize: '0.84rem', color: 'var(--text-muted)' }}>
-                            {app.currentTitle} • {app.currentEmployer} ({app.yearsExperience})
+                            {app.currentTitle || 'Applicant'} {app.currentEmployer ? `• ${app.currentEmployer}` : ''} {app.yearsExperience ? `(${app.yearsExperience})` : ''}
                           </div>
                         </div>
                       </div>
@@ -1510,13 +1510,24 @@ export default function JobsBoard({ user }) {
                       </div>
                     </div>
 
+                    {/* Application Type Notice */}
+                    {app.resumeName && app.resumeName !== 'Comprehensive Manual Application' ? (
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.25)', padding: '4px 10px', borderRadius: '4px', fontSize: '0.78rem', fontWeight: '700', alignSelf: 'flex-start' }}>
+                        ℹ️ Candidate applied using Resume Upload only
+                      </div>
+                    ) : (
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.25)', padding: '4px 10px', borderRadius: '4px', fontSize: '0.78rem', fontWeight: '700', alignSelf: 'flex-start' }}>
+                        📝 Candidate submitted detailed Manual Application Form
+                      </div>
+                    )}
+
                     {/* Candidate Details Grid */}
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px', background: 'var(--bg-surface-hover)', padding: '0.85rem', borderRadius: '6px', fontSize: '0.82rem' }}>
                       <div><span style={{ color: 'var(--text-muted)' }}>Email:</span> <strong style={{ color: 'var(--text-main)' }}>{app.applicantEmail}</strong></div>
-                      <div><span style={{ color: 'var(--text-muted)' }}>Phone:</span> <strong style={{ color: 'var(--text-main)' }}>{app.phone || 'N/A'}</strong></div>
+                      <div><span style={{ color: 'var(--text-muted)' }}>Phone:</span> <strong style={{ color: 'var(--text-main)' }}>{app.phone || 'Not Provided'}</strong></div>
                       <div><span style={{ color: 'var(--text-muted)' }}>Location:</span> <strong style={{ color: 'var(--text-main)' }}>{app.cityState || 'Remote'}</strong></div>
                       <div>
-                        <span style={{ color: 'var(--text-muted)' }}>Resume:</span>{' '}
+                        <span style={{ color: 'var(--text-muted)' }}>Resume File:</span>{' '}
                         <button 
                           type="button"
                           onClick={() => handleOpenDownloadResume(app)}
@@ -1549,13 +1560,13 @@ export default function JobsBoard({ user }) {
                             marginLeft: '6px'
                           }}
                         >
-                          (View Summary)
+                          (View Dossier)
                         </button>
                       </div>
-                      <div><span style={{ color: 'var(--text-muted)' }}>Desired Salary:</span> <strong style={{ color: '#10b981' }}>{app.desiredSalary || 'Negotiable'}</strong></div>
-                      <div><span style={{ color: 'var(--text-muted)' }}>Desired Rate:</span> <strong style={{ color: '#10b981' }}>{app.desiredRate || 'Negotiable'}</strong></div>
-                      <div><span style={{ color: 'var(--text-muted)' }}>Work Auth:</span> <strong style={{ color: 'var(--text-main)' }}>{app.workAuth}</strong></div>
-                      <div><span style={{ color: 'var(--text-muted)' }}>Notice Period:</span> <strong style={{ color: 'var(--text-main)' }}>{app.noticePeriod}</strong></div>
+                      <div><span style={{ color: 'var(--text-muted)' }}>Desired Salary:</span> <strong style={{ color: '#10b981' }}>{app.desiredSalary || 'Included in Resume File'}</strong></div>
+                      <div><span style={{ color: 'var(--text-muted)' }}>Desired Rate:</span> <strong style={{ color: '#10b981' }}>{app.desiredRate || 'Included in Resume File'}</strong></div>
+                      <div><span style={{ color: 'var(--text-muted)' }}>Work Auth:</span> <strong style={{ color: 'var(--text-main)' }}>{app.workAuth || 'Included in Resume File'}</strong></div>
+                      <div><span style={{ color: 'var(--text-muted)' }}>Notice Period:</span> <strong style={{ color: 'var(--text-main)' }}>{app.noticePeriod || 'Included in Resume File'}</strong></div>
                     </div>
 
                     {/* Skills & Portfolio Links */}

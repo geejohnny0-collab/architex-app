@@ -67,6 +67,7 @@ export default function JobsBoard({ user }) {
   const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
   const [selectedResume, setSelectedResume] = useState('Primary_Software_Resume.pdf');
   const [uploadedFile, setUploadedFile] = useState(null);
+  const [uploadedFileBase64, setUploadedFileBase64] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [applyMode, setApplyMode] = useState('resume');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -179,10 +180,14 @@ export default function JobsBoard({ user }) {
   };
 
   const handleFileUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
       setUploadedFile(file);
       setSelectedResume(file.name);
+      
+      const reader = new FileReader();
+      reader.onload = (ev) => setUploadedFileBase64(ev.target.result);
+      reader.readAsDataURL(file);
     }
   };
 
@@ -191,8 +196,7 @@ export default function JobsBoard({ user }) {
     setIsDragging(true);
   };
 
-  const handleDragLeave = (e) => {
-    e.preventDefault();
+  const handleDragLeave = () => {
     setIsDragging(false);
   };
 
@@ -203,6 +207,10 @@ export default function JobsBoard({ user }) {
       const file = e.dataTransfer.files[0];
       setUploadedFile(file);
       setSelectedResume(file.name);
+
+      const reader = new FileReader();
+      reader.onload = (ev) => setUploadedFileBase64(ev.target.result);
+      reader.readAsDataURL(file);
     }
   };
 
@@ -271,7 +279,7 @@ export default function JobsBoard({ user }) {
           company: activeJobModal.company,
           userEmail: emailToTarget,
           resumeName: resumeNameToSubmit,
-          resumeUrl: fileBase64 || `/resumes/${resumeNameToSubmit}`
+          resumeUrl: uploadedFileBase64 || fileBase64 || null
         };
       }
 

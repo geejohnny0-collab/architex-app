@@ -81,17 +81,46 @@ export default function JobsBoard({ user }) {
   const handleOpenDownloadResume = (app) => {
     if (!app) return;
     const targetUrl = app.resumeUrl || app.resumeFile;
-    if (targetUrl && (targetUrl.startsWith('data:') || targetUrl.startsWith('http') || targetUrl.startsWith('blob:'))) {
-      window.open(targetUrl, '_blank');
-      return;
+    const fileName = app.resumeName || 'Candidate_Resume.pdf';
+
+    if (targetUrl) {
+      if (targetUrl.startsWith('data:')) {
+        try {
+          const arr = targetUrl.split(',');
+          const mimeMatch = arr[0].match(/:(.*?);/);
+          const mime = mimeMatch ? mimeMatch[1] : 'application/pdf';
+          const bstr = atob(arr[1]);
+          let n = bstr.length;
+          const u8arr = new Uint8Array(n);
+          while (n--) {
+            u8arr[n] = bstr.charCodeAt(n);
+          }
+          const blob = new Blob([u8arr], { type: mime });
+          const blobUrl = URL.createObjectURL(blob);
+
+          const win = window.open(blobUrl, '_blank');
+          if (!win || win.closed || typeof win.closed === 'undefined') {
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+          }
+          return;
+        } catch (e) {
+          console.error('Base64 blob conversion error:', e);
+        }
+      }
+
+      if (targetUrl.startsWith('http') || targetUrl.startsWith('blob:')) {
+        window.open(targetUrl, '_blank');
+        return;
+      }
     }
 
-    // Open dedicated PDF previewer modal
-    setPdfPreviewModal({
-      url: targetUrl || null,
-      fileName: app.resumeName || 'Candidate_Resume.pdf',
-      applicantName: app.applicantName || 'Applicant'
-    });
+    // Direct server PDF file fallback route
+    window.open(`/api/files/resume/${encodeURIComponent(fileName)}`, '_blank');
   };
 
   // Advanced Manual Application State

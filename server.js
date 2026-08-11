@@ -1513,15 +1513,13 @@ app.get('/api/jobs/applications', async (req, res) => {
     console.error('Fetch PostgreSQL DB applications error:', err.message);
   }
 
-  // Always prioritize database records, fallback/combine with memory store
-  const combined = [...dbApps];
-  globalJobApplicationsStore.forEach(app => {
-    if (!combined.some(a => a.id === app.id)) {
-      combined.push(app);
-    }
-  });
+  // Clean any fake 555 phone numbers from returned records
+  const cleanCombined = combined.map(app => ({
+    ...app,
+    phone: (!app.phone || app.phone.includes('555')) ? null : app.phone
+  }));
 
-  res.json(combined);
+  res.json(cleanCombined);
 });
 
 // ─── MASTER ADMIN DATA RECOVERY & VAULT ROUTES ──────────────────────────────

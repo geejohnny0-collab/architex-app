@@ -1524,7 +1524,7 @@ export default function JobsBoard({ user }) {
                     {/* Candidate Details Grid */}
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px', background: 'var(--bg-surface-hover)', padding: '0.85rem', borderRadius: '6px', fontSize: '0.82rem' }}>
                       <div><span style={{ color: 'var(--text-muted)' }}>Email:</span> <strong style={{ color: 'var(--text-main)' }}>{app.applicantEmail}</strong></div>
-                      <div><span style={{ color: 'var(--text-muted)' }}>Phone:</span> <strong style={{ color: 'var(--text-main)' }}>{app.phone || 'Not Provided'}</strong></div>
+                      <div><span style={{ color: 'var(--text-muted)' }}>Phone:</span> <strong style={{ color: 'var(--text-main)' }}>{(!app.phone || app.phone.includes('555') || app.phone === 'Not Provided') ? 'Not Provided' : app.phone}</strong></div>
                       <div><span style={{ color: 'var(--text-muted)' }}>Location:</span> <strong style={{ color: 'var(--text-main)' }}>{app.cityState || 'Remote'}</strong></div>
                       <div>
                         <span style={{ color: 'var(--text-muted)' }}>Resume File:</span>{' '}

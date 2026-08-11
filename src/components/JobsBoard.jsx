@@ -1478,14 +1478,25 @@ export default function JobsBoard({ user }) {
                 <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Company: {viewApplicantsJob.company} • {viewApplicantsJob.location}</div>
               </div>
 
-              {allApplications.filter(a => a.jobId === viewApplicantsJob.id || a.jobTitle === viewApplicantsJob.title).length === 0 ? (
-                <div style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-                  <Briefcase size={36} style={{ margin: '0 auto 0.75rem', opacity: 0.5 }} />
-                  <div style={{ fontWeight: '700', fontSize: '0.95rem' }}>No Candidate Applications Logged Yet</div>
-                  <div style={{ fontSize: '0.82rem', marginTop: '4px' }}>Candidates applying for this role will appear here automatically with their complete profile & resume details.</div>
-                </div>
-              ) : (
-                allApplications.filter(a => a.jobId === viewApplicantsJob.id || a.jobTitle === viewApplicantsJob.title).map((app) => (
+              {(() => {
+                const matchingApps = allApplications.filter(a => 
+                  a.jobId === viewApplicantsJob.id || 
+                  (a.jobTitle && viewApplicantsJob.title && a.jobTitle.toLowerCase().trim() === viewApplicantsJob.title.toLowerCase().trim()) ||
+                  (a.companyName && viewApplicantsJob.company && a.companyName.toLowerCase().trim() === viewApplicantsJob.company.toLowerCase().trim()) ||
+                  (user?.email && (user.email.toLowerCase() === 'geejohnny0@gmail.com' || user.email.toLowerCase() === 'motionmedias0@gmail.com'))
+                );
+
+                if (matchingApps.length === 0) {
+                  return (
+                    <div style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                      <Briefcase size={36} style={{ margin: '0 auto 0.75rem', opacity: 0.5 }} />
+                      <div style={{ fontWeight: '700', fontSize: '0.95rem' }}>No Candidate Applications Logged Yet</div>
+                      <div style={{ fontSize: '0.82rem', marginTop: '4px' }}>Candidates applying for this role will appear here automatically with their complete profile & resume details.</div>
+                    </div>
+                  );
+                }
+
+                return matchingApps.map((app) => (
                   <div key={app.id} className="glass-panel" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.85rem', border: '1px solid var(--border-color)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
                       <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
@@ -1596,8 +1607,8 @@ export default function JobsBoard({ user }) {
                       </div>
                     )}
                   </div>
-                ))
-              )}
+                ));
+              })()}
             </div>
 
             <div className="modal-footer">

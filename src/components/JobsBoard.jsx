@@ -76,6 +76,29 @@ export default function JobsBoard({ user }) {
   const [isMasterVaultOpen, setIsMasterVaultOpen] = useState(false);
   const [vaultData, setVaultData] = useState(null);
 
+  const handleOpenDownloadResume = (app) => {
+    if (!app) return;
+    const targetUrl = app.resumeUrl || app.resumeFile;
+    if (targetUrl && (targetUrl.startsWith('data:') || targetUrl.startsWith('http') || targetUrl.startsWith('blob:'))) {
+      window.open(targetUrl, '_blank');
+      return;
+    }
+
+    // Generate downloadable candidate document file directly
+    const fileName = app.resumeName || 'Candidate_Resume_Document.pdf';
+    const content = `========================================================\nARCHITEX RECRUITMENT CANDIDATE DOSSIER\n========================================================\nCandidate: ${app.applicantName}\nEmail: ${app.applicantEmail}\nPhone: ${app.phone || 'N/A'}\nCity/State: ${app.cityState || 'Remote'}\nRole Applied: ${app.jobTitle}\nCompany: ${app.companyName}\nResume File Name: ${fileName}\n\nWORK EXPERIENCE & BACKGROUND:\nYears Experience: ${app.yearsExperience || 'N/A'}\nCurrent Title: ${app.currentTitle || 'N/A'}\nCurrent Employer: ${app.currentEmployer || 'N/A'}\n\nTECHNICAL SKILLS & COMPETENCIES:\n${app.technicalSkills || 'N/A'}\n\nWORK AUTHORIZATION & COMPENSATION:\nWork Auth: ${app.workAuth || 'Authorized'}\nNotice Period: ${app.noticePeriod || 'Immediate'}\nDesired Salary: ${app.desiredSalary || 'Negotiable'}\nDesired Rate: ${app.desiredRate || 'Negotiable'}\n========================================================`;
+    
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName.endsWith('.pdf') ? fileName.replace(/\.pdf$/i, '_Dossier.txt') : `${fileName}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   // Advanced Manual Application State
   const [manualForm, setManualForm] = useState({
     firstName: user?.name ? user.name.split(' ')[0] : '',
@@ -235,12 +258,26 @@ export default function JobsBoard({ user }) {
         };
       } else {
         const resumeNameToSubmit = uploadedFile ? uploadedFile.name : selectedResume;
+        let fileBase64 = null;
+        if (uploadedFile) {
+          try {
+            fileBase64 = await new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.onload = (e) => resolve(e.target.result);
+              reader.onerror = () => resolve(null);
+              reader.readAsDataURL(uploadedFile);
+            });
+          } catch (err) {
+            console.log('FileReader notice:', err);
+          }
+        }
         submissionData = {
           jobId: activeJobModal.id,
           jobTitle: activeJobModal.title,
           company: activeJobModal.company,
           userEmail: emailToTarget,
-          resumeName: resumeNameToSubmit
+          resumeName: resumeNameToSubmit,
+          resumeUrl: fileBase64 || `/resumes/${resumeNameToSubmit}`
         };
       }
 
@@ -1451,22 +1488,37 @@ export default function JobsBoard({ user }) {
                         <span style={{ color: 'var(--text-muted)' }}>Resume:</span>{' '}
                         <button 
                           type="button"
-                          onClick={() => setViewingResumeModal(app)}
+                          onClick={() => handleOpenDownloadResume(app)}
                           style={{
                             background: 'var(--primary-light)',
                             color: 'var(--primary)',
                             border: '1px solid var(--primary)',
                             borderRadius: '4px',
-                            padding: '3px 8px',
+                            padding: '4px 10px',
                             fontWeight: '800',
-                            fontSize: '0.8rem',
+                            fontSize: '0.82rem',
                             cursor: 'pointer',
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: '4px'
                           }}
                         >
-                          📄 {app.resumeName || 'View Resume Document'}
+                          📄 Open / Download {app.resumeName || 'Resume File'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setViewingResumeModal(app)}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: 'var(--text-muted)',
+                            fontSize: '0.76rem',
+                            cursor: 'pointer',
+                            textDecoration: 'underline',
+                            marginLeft: '6px'
+                          }}
+                        >
+                          (View Summary)
                         </button>
                       </div>
                       <div><span style={{ color: 'var(--text-muted)' }}>Desired Salary:</span> <strong style={{ color: '#10b981' }}>{app.desiredSalary || 'Negotiable'}</strong></div>
@@ -1529,14 +1581,21 @@ export default function JobsBoard({ user }) {
 
             <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               {/* Document Header Box */}
-              <div style={{ background: 'var(--bg-surface-hover)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ background: 'var(--bg-surface-hover)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
                 <div>
                   <div style={{ fontWeight: '800', fontSize: '1.1rem', color: 'var(--text-main)' }}>{viewingResumeModal.applicantName}</div>
                   <div style={{ fontSize: '0.84rem', color: 'var(--text-muted)' }}>{viewingResumeModal.currentTitle} • {viewingResumeModal.currentEmployer}</div>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--primary)', marginTop: '2px', fontWeight: '700' }}>Attached File: {viewingResumeModal.resumeName || 'Resume.pdf'}</div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '8px' }}>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenDownloadResume(viewingResumeModal)}
+                    style={{ background: '#10b981', color: '#ffffff', border: 'none', borderRadius: '6px', padding: '0.55rem 1rem', fontSize: '0.82rem', fontWeight: '800', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    📥 Open / Download {viewingResumeModal.resumeName || 'Resume File'}
+                  </button>
+
                   <a 
                     href={`mailto:${viewingResumeModal.applicantEmail}?subject=Resume Review: ${viewingResumeModal.applicantName}`}
                     className="btn-primary" 
@@ -1544,18 +1603,6 @@ export default function JobsBoard({ user }) {
                   >
                     <Mail size={14} /> Email Candidate
                   </a>
-
-                  {(viewingResumeModal.resumeUrl || viewingResumeModal.resumeFile) && (
-                    <a
-                      href={viewingResumeModal.resumeUrl || viewingResumeModal.resumeFile}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn-secondary"
-                      style={{ padding: '0.55rem 1rem', fontSize: '0.82rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                    >
-                      <Upload size={14} /> Download File
-                    </a>
-                  )}
                 </div>
               </div>
 

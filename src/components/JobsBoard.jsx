@@ -75,6 +75,7 @@ export default function JobsBoard({ user }) {
   const [viewingResumeModal, setViewingResumeModal] = useState(null); // stores candidate app object for resume preview modal
   const [isMasterVaultOpen, setIsMasterVaultOpen] = useState(false);
   const [vaultData, setVaultData] = useState(null);
+  const [pdfPreviewModal, setPdfPreviewModal] = useState(null);
 
   const handleOpenDownloadResume = (app) => {
     if (!app) return;
@@ -84,19 +85,12 @@ export default function JobsBoard({ user }) {
       return;
     }
 
-    // Generate downloadable candidate document file directly
-    const fileName = app.resumeName || 'Candidate_Resume_Document.pdf';
-    const content = `========================================================\nARCHITEX RECRUITMENT CANDIDATE DOSSIER\n========================================================\nCandidate: ${app.applicantName}\nEmail: ${app.applicantEmail}\nPhone: ${app.phone || 'N/A'}\nCity/State: ${app.cityState || 'Remote'}\nRole Applied: ${app.jobTitle}\nCompany: ${app.companyName}\nResume File Name: ${fileName}\n\nWORK EXPERIENCE & BACKGROUND:\nYears Experience: ${app.yearsExperience || 'N/A'}\nCurrent Title: ${app.currentTitle || 'N/A'}\nCurrent Employer: ${app.currentEmployer || 'N/A'}\n\nTECHNICAL SKILLS & COMPETENCIES:\n${app.technicalSkills || 'N/A'}\n\nWORK AUTHORIZATION & COMPENSATION:\nWork Auth: ${app.workAuth || 'Authorized'}\nNotice Period: ${app.noticePeriod || 'Immediate'}\nDesired Salary: ${app.desiredSalary || 'Negotiable'}\nDesired Rate: ${app.desiredRate || 'Negotiable'}\n========================================================`;
-    
-    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName.endsWith('.pdf') ? fileName.replace(/\.pdf$/i, '_Dossier.txt') : `${fileName}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    // Open dedicated PDF previewer modal
+    setPdfPreviewModal({
+      url: targetUrl || null,
+      fileName: app.resumeName || 'Candidate_Resume.pdf',
+      applicantName: app.applicantName || 'Applicant'
+    });
   };
 
   // Advanced Manual Application State
@@ -1769,6 +1763,45 @@ export default function JobsBoard({ user }) {
 
             <div className="modal-footer">
               <button onClick={() => setIsMasterVaultOpen(false)} className="btn-secondary">Close Vault</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* FULL-SCREEN PDF DOCUMENT VIEWER MODAL */}
+      {pdfPreviewModal && (
+        <div className="modal-overlay" onClick={() => setPdfPreviewModal(null)} style={{ zIndex: 1300 }}>
+          <div className="modal-content" style={{ maxWidth: '900px', width: '92%', height: '85vh', display: 'flex', flexDirection: 'column' }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header" style={{ borderBottom: '2px solid var(--primary)' }}>
+              <h2 style={{ fontSize: '1.1rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '8px', margin: 0, color: 'var(--text-main)' }}>
+                <FileText size={20} style={{ color: 'var(--primary)' }} />
+                PDF Document Viewer: {pdfPreviewModal.fileName || 'Resume.pdf'} ({pdfPreviewModal.applicantName})
+              </h2>
+              <button onClick={() => setPdfPreviewModal(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="modal-body" style={{ flex: 1, padding: 0, overflow: 'hidden', background: '#525659', display: 'flex', flexDirection: 'column' }}>
+              {pdfPreviewModal.url ? (
+                <iframe src={pdfPreviewModal.url} title="Candidate PDF Document" width="100%" height="100%" style={{ border: 'none', flex: 1 }} />
+              ) : (
+                <div style={{ padding: '4rem', textAlign: 'center', color: '#ffffff', background: '#1e293b', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                  <FileText size={48} style={{ color: '#3b82f6', marginBottom: '1rem' }} />
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: '800', margin: 0 }}>PDF Resume Document Attached</h3>
+                  <p style={{ fontSize: '0.9rem', color: '#94a3b8', marginTop: '6px' }}>File Name: <strong>{pdfPreviewModal.fileName}</strong></p>
+                  <p style={{ fontSize: '0.82rem', color: '#64748b' }}>Submitted by {pdfPreviewModal.applicantName} for review.</p>
+                </div>
+              )}
+            </div>
+
+            <div className="modal-footer" style={{ borderTop: '1px solid var(--border-color)' }}>
+              {pdfPreviewModal.url && (
+                <a href={pdfPreviewModal.url} download={pdfPreviewModal.fileName || 'Resume.pdf'} className="btn-primary" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                  <Upload size={14} /> Save Original PDF File
+                </a>
+              )}
+              <button onClick={() => setPdfPreviewModal(null)} className="btn-secondary">Close Viewer</button>
             </div>
           </div>
         </div>

@@ -2367,8 +2367,54 @@ app.use(express.static(distPath, {
   }
 }));
 
+// Dedicated PDF Resume File Route (Serves PDF with application/pdf header)
+app.get(['/resumes/:filename', '/api/files/resume/:filename'], (req, res) => {
+  const filename = req.params.filename;
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+
+  // Check if application has base64 data url or file payload
+  const matchedApp = globalJobApplicationsStore.find(a => a.resumeName === filename || (a.resumeUrl && a.resumeUrl.includes(filename)));
+  if (matchedApp && matchedApp.resumeUrl && matchedApp.resumeUrl.startsWith('data:application/pdf')) {
+    try {
+      const base64Data = matchedApp.resumeUrl.split(',')[1];
+      const buffer = Buffer.from(base64Data, 'base64');
+      return res.send(buffer);
+    } catch (e) {
+      console.error('Base64 PDF decode error:', e);
+    }
+  }
+
+  // Generic valid PDF document stream fallback for pre-seeded resumes
+  const pdfMock = `%PDF-1.4
+1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj
+2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj
+3 0 obj << /Type /Page /Parent 2 0 R /Resources << /Font << /F1 4 0 R >> >> /MediaBox [0 0 612 792] /Contents 5 0 R >> endobj
+4 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj
+5 0 obj << /Length 120 >> stream
+BT
+/F1 16 Tf
+50 700 Td
+(${filename} - Applicant PDF Document) Tj
+ET
+endstream endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000244 00000 n 
+0000000323 00000 n 
+trailer << /Size 6 /Root 1 0 R >>
+startxref
+495
+%%EOF`;
+  res.send(Buffer.from(pdfMock));
+});
+
 app.get('*', (req, res, next) => {
-  if (req.path.startsWith('/api')) return next();
+  if (req.path.startsWith('/api') || req.path.startsWith('/resumes')) return next();
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');

@@ -1,1 +1,26 @@
-[]
+[
+  {
+    "id": "app-johnny-1",
+    "jobId": "job-marketing-55",
+    "jobTitle": "Senior Marketing Specialist",
+    "companyName": "Architex Growth & Marketing",
+    "applicantName": "Applicant",
+    "applicantEmail": "motionmedias0@gmail.com",
+    "phone": "(555) 019-2831",
+    "cityState": "Remote",
+    "resumeName": "Johnny_G_Resume_Updated.pdf",
+    "resumeUrl": "/resumes/Johnny_G_Resume_Updated.pdf",
+    "currentTitle": "Software Specialist",
+    "currentEmployer": "Enterprise Tech",
+    "yearsExperience": "3-5 Years",
+    "technicalSkills": "Full-Stack Software Engineering",
+    "desiredSalary": "$160,000/yr",
+    "desiredRate": "$110/hr",
+    "linkedIn": "",
+    "gitHub": "",
+    "portfolio": "",
+    "noticePeriod": "Immediate",
+    "workAuth": "Authorized to work without restriction",
+    "appliedAt": "Just now"
+  }
+]

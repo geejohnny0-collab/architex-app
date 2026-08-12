@@ -355,3 +355,16 @@ model JobApplication {
   @@index([applicantEmail])
   @@index([appliedAt])
 }
+
+// ─── Unique Visitor & Page View Analytics ────────────────────────────────────
+model PageView {
+  id        String   @id @default(uuid())
+  ipAddress String
+  userAgent String?
+  path      String
+  visitedAt DateTime @default(now())
+
+  @@index([ipAddress])
+  @@index([visitedAt])
+  @@index([path])
+}

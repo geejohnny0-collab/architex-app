@@ -76,6 +76,58 @@ app.use(cors({
 app.use(express.json({ limit: '5mb' }));
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
+// ─── Unique Visitor & Page View Analytics Middleware ──────────────────────────
+const isBotOrScanner = (ua) => {
+  if (!ua) return true;
+  const botPattern = /bot|crawler|spider|slurp|lighthouse|pingdom|googlebot|bingbot|yandexbot|duckduckbot|baidu|semrush|ahrefs|facebookexternalhit|whatsapp|telegrambot|twitterbot|uptimerobot/i;
+  return botPattern.test(ua);
+};
+
+const isStaticAssetOrAPI = (urlPath) => {
+  if (!urlPath) return true;
+  if (urlPath.startsWith('/api') || urlPath.startsWith('/socket.io') || urlPath.startsWith('/resumes') || urlPath.startsWith('/health')) return true;
+  const staticExtPattern = /\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|json|map|xml|txt)$/i;
+  return staticExtPattern.test(urlPath);
+};
+
+const pageViewTracker = async (req, res, next) => {
+  if (req.method !== 'GET') return next();
+
+  const urlPath = req.path || '/';
+  if (isStaticAssetOrAPI(urlPath)) return next();
+
+  const userAgent = req.headers['user-agent'] || '';
+  if (isBotOrScanner(userAgent)) return next();
+
+  const forwarded = req.headers['x-forwarded-for'];
+  let rawIp = forwarded ? forwarded.split(',')[0].trim() : (req.ip || req.socket.remoteAddress || '127.0.0.1');
+
+  if (rawIp.startsWith('::ffff:')) {
+    rawIp = rawIp.replace('::ffff:', '');
+  }
+
+  const isLocalOrAdminIp = rawIp === '127.0.0.1' || rawIp === '::1' || rawIp.startsWith('192.168.') || rawIp.startsWith('10.') || rawIp.startsWith('172.16.');
+  if (isLocalOrAdminIp) return next();
+
+  try {
+    if (prisma && prisma.pageView) {
+      await prisma.pageView.create({
+        data: {
+          ipAddress: rawIp,
+          userAgent: userAgent.substring(0, 500),
+          path: urlPath
+        }
+      });
+    }
+  } catch (err) {
+    console.error('[PAGEVIEW TRACKER NOTICE]', err.message);
+  }
+
+  next();
+};
+
+app.use(pageViewTracker);
+
 // ─── Rate Limiting ────────────────────────────────────────────────────────────
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -1560,6 +1612,44 @@ app.get('/api/admin/vault', async (req, res) => {
     projects: globalProjectsStore,
     bids: globalProjectBidsStore
   });
+});
+
+// ─── Unique Visitor Analytics API Endpoint ───────────────────────────────────
+app.get('/api/analytics/unique-visitors', async (req, res) => {
+  try {
+    if (!prisma || !prisma.pageView) {
+      return res.status(500).json({ success: false, error: 'PageView model not configured' });
+    }
+
+    const [totalViews, uniqueResult, recentViews] = await Promise.all([
+      prisma.pageView.count(),
+      prisma.$queryRaw`SELECT COUNT(DISTINCT "ipAddress")::int as "count" FROM "PageView"`,
+      prisma.pageView.findMany({
+        orderBy: { visitedAt: 'desc' },
+        take: 50,
+        select: {
+          id: true,
+          ipAddress: true,
+          userAgent: true,
+          path: true,
+          visitedAt: true
+        }
+      })
+    ]);
+
+    const uniqueVisitors = Number(uniqueResult?.[0]?.count || 0);
+
+    return res.json({
+      success: true,
+      totalViews,
+      uniqueVisitors,
+      recentViewsCount: recentViews.length,
+      recentViews
+    });
+  } catch (err) {
+    console.error('Analytics unique visitors error:', err.message);
+    return res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 app.get('/api/jobs', (req, res) => {
